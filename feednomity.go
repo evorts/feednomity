@@ -26,10 +26,6 @@ type commands struct {
 }
 
 func routes(o *http.ServeMux, cmd *commands) {
-	fmt.Printf("[%T] %+v\n", cmd.session, cmd.session)
-	fmt.Printf("[%T] %+v\n", cmd.logger, cmd.logger)
-	fmt.Printf("[%T] %+v\n", cmd.view, cmd.view)
-	fmt.Printf("[%T] %+v\n", cmd.crypt, cmd.crypt)
 	// serving assets
 	fs := http.FileServer(http.Dir(cmd.config.GetConfig().App.AssetDirectory))
 	o.Handle("/assets/", http.StripPrefix("/assets", fs))
