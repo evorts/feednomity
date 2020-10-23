@@ -3,6 +3,7 @@ package logger
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 )
 
 type logField struct {
@@ -14,6 +15,7 @@ type logger struct{}
 
 type IManager interface {
 	Log(key string, value interface{})
+	Fatal(value interface{})
 }
 
 func NewLogger() IManager {
@@ -24,4 +26,9 @@ func (l logger) Log(key string, value interface{}) {
 	if j, err := json.Marshal(logField{ key, value}); err == nil {
 		fmt.Println(string(j))
 	}
+}
+
+func (l logger) Fatal(value interface{}) {
+	j, _ := json.Marshal(logField{ "fatal", value})
+	log.Fatal(j)
 }

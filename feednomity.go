@@ -10,7 +10,6 @@ import (
 	"github.com/evorts/godash/pkg/reqio"
 	"github.com/evorts/godash/pkg/session"
 	"github.com/evorts/godash/pkg/template"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -102,9 +101,11 @@ func routes(o *http.ServeMux, cmd *commands) {
 }
 
 func main() {
+	logging := logger.NewLogger()
 	cfg, err := config.NewConfig("config.main.yml", "config.yml").Initiate()
 	if err != nil {
-		log.Fatal("error reading configuration")
+		logging.Fatal("error reading configuration")
+		return
 	}
 	sm := session.NewSession(
 		cfg.GetConfig().App.SessionExpiration,
@@ -127,7 +128,6 @@ func main() {
 			"LogoAlt": cfg.GetConfig().App.Logo.Alt,
 		},
 	}).LoadTemplates()
-	logging := logger.NewLogger()
 	o := http.NewServeMux()
 	routes(o, &commands{
 		logging, cfg, sm, crypt.NewCrypt(cfg.GetConfig().App.Salt),
@@ -135,6 +135,6 @@ func main() {
 	})
 	logging.Log("started", "Dashboard app started.")
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.GetConfig().App.Port), sm.LoadAndSave(o)); err != nil {
-		log.Fatal(err)
+		logging.Fatal(err)
 	}
 }
