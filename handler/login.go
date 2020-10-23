@@ -1,12 +1,12 @@
 package handler
 
 import (
-	"github.com/evorts/godash/pkg/crypt"
-	"github.com/evorts/godash/pkg/db"
-	"github.com/evorts/godash/pkg/logger"
-	"github.com/evorts/godash/pkg/reqio"
-	"github.com/evorts/godash/pkg/session"
-	"github.com/evorts/godash/pkg/template"
+	"github.com/evorts/feednomity/pkg/crypt"
+	"github.com/evorts/feednomity/pkg/db"
+	"github.com/evorts/feednomity/pkg/logger"
+	"github.com/evorts/feednomity/pkg/reqio"
+	"github.com/evorts/feednomity/pkg/session"
+	"github.com/evorts/feednomity/pkg/template"
 	"net/http"
 	"strings"
 	"time"

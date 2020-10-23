@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"github.com/evorts/godash/pkg/logger"
-	"github.com/evorts/godash/pkg/reqio"
-	"github.com/evorts/godash/pkg/template"
+	"github.com/evorts/feednomity/pkg/logger"
+	"github.com/evorts/feednomity/pkg/reqio"
+	"github.com/evorts/feednomity/pkg/template"
 	"net/http"
 )
 

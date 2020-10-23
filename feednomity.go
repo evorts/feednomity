@@ -1,21 +1,26 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/evorts/godash/handler"
-	"github.com/evorts/godash/pkg/config"
-	"github.com/evorts/godash/pkg/crypt"
-	"github.com/evorts/godash/pkg/logger"
-	"github.com/evorts/godash/pkg/middleware"
-	"github.com/evorts/godash/pkg/reqio"
-	"github.com/evorts/godash/pkg/session"
-	"github.com/evorts/godash/pkg/template"
+	"github.com/evorts/feednomity/handler"
+	"github.com/evorts/feednomity/pkg/config"
+	"github.com/evorts/feednomity/pkg/crypt"
+	"github.com/evorts/feednomity/pkg/db"
+	"github.com/evorts/feednomity/pkg/logger"
+	"github.com/evorts/feednomity/pkg/middleware"
+	"github.com/evorts/feednomity/pkg/reqio"
+	"github.com/evorts/feednomity/pkg/session"
+	"github.com/evorts/feednomity/pkg/template"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 	"time"
 )
 
 type commands struct {
+	db      db.IManager
 	logger  logger.IManager
 	config  config.IManager
 	session session.IManager
@@ -107,6 +112,27 @@ func main() {
 		logging.Fatal("error reading configuration")
 		return
 	}
+	ds := db.NewDB(
+		cfg.GetConfig().DB.Dsn,
+		cfg.GetConfig().DB.MaxConnectionLifetime,
+		cfg.GetConfig().DB.MaxIdleConnection,
+		cfg.GetConfig().DB.MaxOpenConnection,
+	)
+
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	appSignal := make(chan os.Signal, 3)
+	signal.Notify(appSignal, os.Interrupt)
+	go func() {
+		select {
+		case <-appSignal:
+			stop()
+		}
+	}()
+
+	ds.MustConnect(ctx)
+	//goland:noinspection GoUnhandledErrorResult
+	defer ds.Close(ctx)
 	sm := session.NewSession(
 		cfg.GetConfig().App.SessionExpiration,
 		time.Duration(30),
@@ -130,7 +156,7 @@ func main() {
 	}).LoadTemplates()
 	o := http.NewServeMux()
 	routes(o, &commands{
-		logging, cfg, sm, crypt.NewCrypt(cfg.GetConfig().App.Salt),
+		ds, logging, cfg, sm, crypt.NewCrypt(cfg.GetConfig().App.Salt),
 		crypt.NewCrypt(""), tm,
 	})
 	logging.Log("started", "Dashboard app started.")

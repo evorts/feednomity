@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/evorts/godash/pkg/reqio"
-	"github.com/evorts/godash/pkg/session"
+	"github.com/evorts/feednomity/pkg/reqio"
+	"github.com/evorts/feednomity/pkg/session"
 	"net/http"
 )
 

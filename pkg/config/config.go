@@ -29,8 +29,13 @@ type App struct {
 }
 
 type Config struct {
-	App    App     `yaml:"app"`
-	DB map[string]interface{} `yaml:"db"`
+	App App `yaml:"app"`
+	DB  struct {
+		Dsn                   string `yaml:"dsn"`
+		MaxConnectionLifetime int64  `yaml:"max_connection_lifetime"`
+		MaxIdleConnection     int64  `yaml:"max_idle_connection"`
+		MaxOpenConnection     int64  `yaml:"max_open_connection"`
+	} `yaml:"db"`
 }
 
 type config struct {

@@ -1,8 +1,8 @@
 package reqio
 
 import (
-	"github.com/evorts/godash/pkg/crypt"
-	"github.com/evorts/godash/pkg/session"
+	"github.com/evorts/feednomity/pkg/crypt"
+	"github.com/evorts/feednomity/pkg/session"
 	"net/http"
 	"strings"
 	"time"
