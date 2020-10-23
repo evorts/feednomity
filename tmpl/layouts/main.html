@@ -29,7 +29,6 @@
                     <img src="{{ .PageAttributes.LogoUrl }}" alt="{{ .PageAttributes.LogoAlt }}"/>
                 </a>
                 {{ if .LoggedIn }}
-                    {{ block "menu" . }}{{ end }}
                     <a class="btn btn-primary-light" href="/logout">Logout</a>
                 {{ end }}
             </div>
@@ -39,23 +38,6 @@
         {{template "content" .}}
     </section>
     <footer>
-        <div class="bg-dark-primary d-md-flex p-sm-3 py-4">
-            <div class="container m-auto">
-                <div class="row">
-                    <div class="col-12 text-center">
-                        <div class="mb-2 mt-1">
-                            <a class="fs-14 text-white" href="mailto:eco@onelabs.co">
-                                {{ .PageAttributes.ContactEmail }} |
-                            </a>
-                            <a class="fs-14 text-white" href="tel:{{ .PageAttributes.ContactPhone1 }}">
-                                {{ .PageAttributes.ContactPhone2 }}
-                            </a>
-                        </div>
-                        <div class="text-white fs-12 alamat"> {{ .PageAttributes.ContactAddress }} </div>
-                    </div>
-                </div>
-            </div>
-        </div>
         <div class="bg-dark">
             <div class="col-12 text-center text-white p-3">
                 <div class="fs-12 copyright">© {{ .PageAttributes.Year }} {{ .PageAttributes.LogoAlt }} • All rights reserved</div>
