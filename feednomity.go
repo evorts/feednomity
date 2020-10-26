@@ -6,21 +6,19 @@ import (
 	"github.com/evorts/feednomity/handler"
 	"github.com/evorts/feednomity/pkg/config"
 	"github.com/evorts/feednomity/pkg/crypt"
-	"github.com/evorts/feednomity/pkg/db"
+	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/middleware"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/session"
 	"github.com/evorts/feednomity/pkg/template"
 	"net/http"
-	"os"
-	"os/signal"
 	"strconv"
 	"time"
 )
 
 type commands struct {
-	db      db.IManager
+	db      database.IManager
 	logger  logger.IManager
 	config  config.IManager
 	session session.IManager
@@ -102,6 +100,20 @@ func routes(o *http.ServeMux, cmd *commands) {
 			),
 			MemberOnly: false,
 		},
+		{
+			Pattern: "/api/login",
+			Handler: middleware.WithInjection(
+				http.HandlerFunc(handler.LoginAPI),
+				map[string]interface{}{
+					"logger": cmd.logger,
+					"view": cmd.view,
+					"sm": cmd.session,
+					"hash":   cmd.hash,
+					"db":   cmd.db,
+				},
+			),
+			MemberOnly: false,
+		},
 	}).ExecRoutes(o)
 }
 
@@ -112,27 +124,17 @@ func main() {
 		logging.Fatal("error reading configuration")
 		return
 	}
-	ds := db.NewDB(
+	ds := database.NewDB(
 		cfg.GetConfig().DB.Dsn,
 		cfg.GetConfig().DB.MaxConnectionLifetime,
 		cfg.GetConfig().DB.MaxIdleConnection,
 		cfg.GetConfig().DB.MaxOpenConnection,
+		true,
 	)
-
-	ctx, stop := context.WithCancel(context.Background())
-	defer stop()
-	appSignal := make(chan os.Signal, 3)
-	signal.Notify(appSignal, os.Interrupt)
-	go func() {
-		select {
-		case <-appSignal:
-			stop()
-		}
+	ds.MustConnect(context.Background())
+	defer func() {
+		_ = ds.Close(context.Background())
 	}()
-
-	ds.MustConnect(ctx)
-	//goland:noinspection GoUnhandledErrorResult
-	defer ds.Close(ctx)
 	sm := session.NewSession(
 		cfg.GetConfig().App.SessionExpiration,
 		time.Duration(30),
@@ -147,12 +149,10 @@ func main() {
 		},
 	)
 	tm, _ := template.NewTemplates(cfg.GetConfig().App.TemplateDirectory, map[string]interface{}{
-		"PageAttributes": map[string]interface{}{
-			"Year":    strconv.Itoa(time.Now().Year()),
-			"FavIcon": cfg.GetConfig().App.Logo.FavIcon,
-			"LogoUrl": cfg.GetConfig().App.Logo.Url,
-			"LogoAlt": cfg.GetConfig().App.Logo.Alt,
-		},
+		"CopyrightYear": strconv.Itoa(time.Now().Year()),
+		"FavIcon":       cfg.GetConfig().App.Logo.FavIcon,
+		"LogoUrl":       cfg.GetConfig().App.Logo.Url,
+		"LogoAlt":       cfg.GetConfig().App.Logo.Alt,
 	}).LoadTemplates()
 	o := http.NewServeMux()
 	routes(o, &commands{

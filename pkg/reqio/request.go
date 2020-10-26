@@ -1,8 +1,10 @@
 package reqio
 
 import (
+	"encoding/json"
 	"github.com/evorts/feednomity/pkg/crypt"
 	"github.com/evorts/feednomity/pkg/session"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -21,9 +23,11 @@ type IRequest interface {
 	IsMethodGet() bool
 	IsLoggedIn() bool
 	Prepare() IRequest
-	ParseForm() error
+	UnmarshallForm(dst interface{}) error
+	UnmarshallBody(dst interface{}) error
 	GetFormValue(field string) []string
 	GetToken() string
+	RenewToken() IRequest
 	GetContext() IContext
 }
 
@@ -51,12 +55,41 @@ func (req *request) GetToken() string {
 	return req.token
 }
 
+func (req *request) RenewToken() IRequest {
+	req.Prepare()
+	return req
+}
+
 func (req *request) IsMethodGet() bool {
 	return strings.ToUpper(req.r.Method) == "GET"
 }
 
-func (req *request) ParseForm() error {
-	return req.r.ParseForm()
+func (req *request) UnmarshallForm(dst interface{}) error {
+	err := req.r.ParseForm()
+	if err != nil {
+		return err
+	}
+	result := make(map[string]interface{})
+	for k, v := range req.r.Form {
+		if len(v) == 1 {
+			result[k] = v[0]
+		} else {
+			result[k] = v
+		}
+	}
+	rs, err2 := json.Marshal(result)
+	if err2 != nil {
+		return err2
+	}
+	return json.Unmarshal(rs, dst)
+}
+
+func (req *request) UnmarshallBody(dst interface{}) error {
+	body, err := ioutil.ReadAll(req.r.Body)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(body, dst)
 }
 
 func (req *request) GetFormValue(field string) []string {

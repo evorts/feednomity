@@ -13,9 +13,7 @@ func Forms(w http.ResponseWriter, r *http.Request) {
 	view := req.GetContext().Get("view").(template.IManager)
 	log.Log("forms_handler", "request received")
 	if err := view.Render(w, "forms.html", map[string]interface{}{
-		"PageAttributes": map[string]interface{}{
-			"Title": "Feedback Form Page",
-		},
+		"PageTitle": "Anonymous Feedback Submission Page",
 	}); err != nil {
 		log.Log("forms_handler", err.Error())
 	}

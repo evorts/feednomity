@@ -26,9 +26,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	}*/
 	// render dashboard page
 	if err := view.Render(w, "dashboard.html", map[string]interface{}{
-		"PageAttributes": map[string]interface{}{
-			"Title": "Dashboard Page",
-		},
+		"PageTitle": "Admin Dashboard Page",
 	}); err != nil {
 		log.Log("dashboard_handler", err.Error())
 	}

@@ -24,9 +24,25 @@ $$
     END
 $$;
 
+-- remove existing enum type if exist
+DO
+$$
+    DECLARE
+        r RECORD;
+    BEGIN
+        FOR r IN (
+            SELECT pe.enumtypid, pe.enumlabel, pt.typname
+            FROM pg_enum pe
+                JOIN pg_type pt ON pt.oid = pe.enumtypid)
+            LOOP
+                EXECUTE 'DROP TYPE IF EXISTS ' || quote_ident(r.typname) || ' CASCADE';
+            END LOOP;
+    END
+$$;
+
 create table audience
 (
-    id     serial,
+    id     serial primary key,
     title  varchar(50),
     emails varchar(100)[]
 );
@@ -35,7 +51,7 @@ create type invitation_type as enum ('multi-link','single-link');
 
 create table groups
 (
-    id              serial,
+    id              serial primary key,
     title           varchar(100),
     invitation_type invitation_type,
     audience        integer[], /** audience collection **/
@@ -50,7 +66,7 @@ create type question_type as enum ('essay','choice');
 
 create table questions
 (
-    id           serial,
+    id           serial primary key,
     question     varchar(500),
     expect       question_type,
     options      jsonb   default '[]',
@@ -63,7 +79,7 @@ create table questions
 
 create table links
 (
-    id           serial,
+    id           serial primary key,
     hash         varchar(128) unique,
     pin          varchar(10),
     group_id     integer
@@ -76,7 +92,7 @@ create table links
 
 create table link_visits
 (
-    id      serial,
+    id      serial primary key,
     link_id integer,
     at      timestamp,
     agent   text,
@@ -85,7 +101,7 @@ create table link_visits
 
 create table submission
 (
-    id              serial,
+    id              serial primary key,
     hash            varchar(128),
     question_id     integer,
     question        varchar(500),
@@ -102,7 +118,7 @@ create index on submission (hash);
 
 create table submission_audience
 (
-    id                  serial,
+    id                  serial primary key,
     submission_group_id integer,
     audiences           varchar(100)[],
     audience_title      varchar(50)
@@ -110,12 +126,12 @@ create table submission_audience
 
 
 /** for admin dashboard **/
-create type user_role as enum ('sysadmin','admin','member','custom');
+create type user_role as enum ('sysadmin','admin','member','invitation','custom');
 
 create table users
 (
-    id           serial,
-    username     varchar(25),
+    id           serial primary key,
+    username     varchar(25) unique,
     display_name varchar(50),
     email        varchar(50),
     phone        varchar(15),
@@ -131,7 +147,7 @@ create type request_method as enum ('get', 'post', 'put', 'delete', 'head', 'opt
 
 create table role_access
 (
-    id             serial,
+    id             serial primary key,
     role           user_role,
     path           varchar(255),
     method_allowed request_method[],
@@ -141,7 +157,7 @@ create table role_access
 
 create table user_access
 (
-    id             serial,
+    id             serial primary key,
     user_id        integer,
     scope          scope   default 'custom',
     path           varchar(255),

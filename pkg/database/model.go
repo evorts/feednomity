@@ -1,4 +1,4 @@
-package db
+package database
 
 import "time"
 
@@ -41,10 +41,4 @@ type LinkItem struct {
 type QuestionItem struct {
 	Question Question
 	Group    Group
-}
-
-type User struct {
-	Id int64
-	Username string
-	Password string
 }

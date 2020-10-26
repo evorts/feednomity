@@ -13,9 +13,7 @@ func NotFound(w http.ResponseWriter, r *http.Request) {
 	view := req.GetContext().Get("view").(template.IManager)
 	log.Log("404_handler", "request received")
 	if err := view.Render(w, "404.html", map[string]interface{}{
-		"PageAttributes": map[string]interface{}{
-			"Title": "Nothing Found",
-		},
+		"PageTitle": "404 Page Not Found",
 	}); err != nil {
 		log.Log("404_handler", err.Error())
 	}

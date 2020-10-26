@@ -8,7 +8,7 @@
         <title>{{template "title" .}}</title>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no,user-scalable=no">
-        <link rel="shortcut icon" href="{{ .PageAttributes.FavIcon }}">
+        <link rel="shortcut icon" href="{{ .FavIcon }}">
 
         <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600,700&amp;display=swap" rel="stylesheet">
 
@@ -26,7 +26,7 @@
         <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
             <div class="container">
                 <a class="navbar-brand navbar-brand flex-fill text-center text-lg-left pr-3 pr-sm-0" href="/">
-                    <img src="{{ .PageAttributes.LogoUrl }}" alt="{{ .PageAttributes.LogoAlt }}"/>
+                    <img src="{{ .LogoUrl }}" alt="{{ .LogoAlt }}"/>
                 </a>
                 {{ if .LoggedIn }}
                     <a class="btn btn-primary-light" href="/logout">Logout</a>
@@ -40,7 +40,7 @@
     <footer>
         <div class="bg-dark">
             <div class="col-12 text-center text-white p-3">
-                <div class="fs-12 copyright">© {{ .PageAttributes.Year }} {{ .PageAttributes.LogoAlt }} • All rights reserved</div>
+                <div class="fs-12 copyright">© {{ .CopyrightYear }} {{ .LogoAlt }} • All rights reserved</div>
             </div>
         </div>
     </footer>

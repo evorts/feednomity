@@ -21,8 +21,8 @@ type IManager interface {
 	Render(w http.ResponseWriter, template string, data map[string]interface{}) error
 	RenderRaw(w http.ResponseWriter, content interface{}) error
 	RenderJson(w http.ResponseWriter, value interface{}) error
-	AddData(key string, value interface{})
-	InjectData(key string, value interface{})
+	AddData(key string, value interface{}) IManager
+	InjectData(key string, value interface{}) IManager
 }
 
 func NewTemplates(dir string, defaultData map[string]interface{}) IManager {
@@ -84,14 +84,16 @@ func (t *manager) getTemplate(name string) (*template.Template, error) {
 	return nil, fmt.Errorf("template %s not found", name)
 }
 
-func (t *manager) AddData(key string, value interface{}) {
+func (t *manager) AddData(key string, value interface{}) IManager {
 	if _, ok := t.data[key]; !ok {
 		t.data[key] = value
 	}
+	return t
 }
 
-func (t *manager) InjectData(key string, value interface{}) {
+func (t *manager) InjectData(key string, value interface{}) IManager {
 	t.data[key] = value
+	return t
 }
 
 func (t *manager) getData() map[string]interface{} {

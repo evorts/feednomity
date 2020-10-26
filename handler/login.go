@@ -1,104 +1,161 @@
 package handler
 
 import (
+	"github.com/evorts/feednomity/domain/users"
+	"github.com/evorts/feednomity/pkg/api"
 	"github.com/evorts/feednomity/pkg/crypt"
-	"github.com/evorts/feednomity/pkg/db"
+	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/session"
 	"github.com/evorts/feednomity/pkg/template"
+	"github.com/evorts/feednomity/pkg/validate"
 	"net/http"
 	"strings"
 	"time"
 )
+
+func LoginAPI(w http.ResponseWriter, r *http.Request) {
+	req := reqio.NewRequest(w, r).Prepare()
+	log := req.GetContext().Get("logger").(logger.IManager)
+	view := req.GetContext().Get("view").(template.IManager)
+	sm := req.GetContext().Get("sm").(session.IManager)
+	hash := req.GetContext().Get("hash").(crypt.ICrypt)
+	datasource := req.GetContext().Get("db").(database.IManager)
+
+	log.Log("login_api_handler", "request received")
+
+	if req.IsLoggedIn() {
+		_ = view.RenderJson(w, api.Response{
+			Status:  http.StatusContinue,
+			Content: make(map[string]interface{}, 0),
+		})
+		return
+	}
+	var payload struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Remember string    `json:"remember"`
+		Csrf     string `json:"csrf"`
+	}
+	err := req.UnmarshallBody(&payload)
+	if err != nil {
+		_ = view.RenderJson(w, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LOG:ERR:BND",
+				Message: "Bad Request! Something wrong with the payload of your request.",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	// validate request
+	errs := make(map[string]string, 0)
+	if !validate.ValidUsername(payload.Username) {
+		errs["username"] = "Not a valid username!"
+	}
+	if !validate.ValidPassword(payload.Password) {
+		errs["password"] = "Not a valid password!"
+	}
+	// csrf check
+	sessionCsrf := sm.Get(r.Context(), "token")
+	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
+		errs["session"] = "Not a valid request session!"
+	}
+	if len(errs) > 0 {
+		_ = view.RenderJson(w, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LOG:ERR:VAL",
+				Message: "Bad Request! Validation error.",
+				Reasons: errs,
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	var user *users.User
+	user, err = users.NewUserDomain(datasource).FindByUsername(req.GetContext().Value(), payload.Username)
+	if err != nil {
+		_ = view.RenderJson(w, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LOG:ERR:USR",
+				Message: "Bad Request! User not found.",
+				Reasons: map[string]string{"err": err.Error()},
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	// ensure the user and password are correct
+	passCrypt := hash.Renew().Crypt(payload.Password)
+	if strings.ToLower(passCrypt) != strings.ToLower(user.Password) {
+		_ = view.RenderJson(w, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LOG:ERR:ATH",
+				Message: "Bad Request! authentication failed.",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	rememberExpiration := 3 * 24 * time.Hour
+	if len(payload.Remember) > 0 {
+		sm.SetSessionLifetime(rememberExpiration)
+	}
+	if err := sm.RenewToken(req.GetContext().Value()); err != nil {
+		_ = view.RenderJson(w, api.Response{
+			Status:  http.StatusFailedDependency,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LOG:ERR:SES",
+				Message: "Invalid session!",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	sm.Put(req.GetContext().Value(), "user", user)
+	//remove token since login success -- client should redirect to respective protected page
+	sm.Remove(req.GetContext().Value(), "token")
+	_ = view.RenderJson(w, api.Response{
+		Status:  http.StatusOK,
+		Content: make(map[string]interface{}, 0),
+	})
+}
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	view := req.GetContext().Get("view").(template.IManager)
 	sm := req.GetContext().Get("sm").(session.IManager)
-	hash := req.GetContext().Get("hash").(crypt.ICrypt)
+
 	log.Log("login_handler", "request received")
+
 	if req.IsLoggedIn() {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 	renderData := map[string]interface{}{
-		"PageAttributes": map[string]interface{}{
-			"Title": "Login Page",
-		},
+		"PageTitle": "Login Page",
 	}
-	if req.IsMethodGet() {
-		// render login page
-		sm.Put(r.Context(), "token", req.GetToken())
-		if err := view.Render(w, "login.html", renderData); err != nil {
-			log.Log("login_handler", err.Error())
-		}
+	if !req.IsMethodGet() {
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
-	_ = req.ParseForm()
-	// validate form
-	user := req.GetFormValue("username")
-	pass := req.GetFormValue("password")
-	remember := req.GetFormValue("remember")
-	csrf := req.GetFormValue("csrf")
-	validationErrors := make(map[string]string, 0)
-	if len(user) < 1 || strings.TrimSpace(user[0]) == "" {
-		validationErrors["username"] = "Please fill up your username correctly"
+	// render login page
+	sm.Put(r.Context(), "token", req.GetToken())
+	if err := view.InjectData("Csrf", req.GetToken()).Render(w, "login.html", renderData); err != nil {
+		log.Log("login_handler", err.Error())
 	}
-	if len(pass) < 1 || strings.TrimSpace(pass[0]) == "" {
-		validationErrors["password"] = "Please fill up your password correctly"
-	}
-	if len(csrf) < 1 || strings.TrimSpace(csrf[0]) == "" {
-		validationErrors["global"] = "Invalid request session"
-	}
-	if len(validationErrors) > 0 {
-		renderData["Errors"] = validationErrors
-		sm.Put(r.Context(), "token", req.GetToken())
-		if err := view.Render(w, "login.html", renderData); err != nil {
-			log.Log("login_handler", err.Error())
-		}
-		return
-	}
-	// csrf check
-	sessionCsrf := sm.Get(r.Context(), "token")
-	if sessionCsrf == nil || csrf[0] != sessionCsrf.(string) {
-		validationErrors["global"] = "Invalid request session"
-		renderData["Errors"] = validationErrors
-		sm.Put(r.Context(), "token", req.GetToken())
-		if err := view.Render(w, "login.html", renderData); err != nil {
-			log.Log("login_handler", err.Error())
-		}
-		return
-	}
-	// ensure the user and password are correct
-	var userFound = &db.User{
-		Username: "",
-		Password: "",
-	}
-	passCrypt := hash.Renew().Crypt(pass[0])
-	if strings.ToLower(passCrypt) != strings.ToLower(userFound.Password) {
-		validationErrors["global"] = "Invalid authentication"
-		renderData["Errors"] = validationErrors
-		sm.Put(r.Context(), "token", req.GetToken())
-		if err := view.Render(w, "login.html", renderData); err != nil {
-			log.Log("login_handler", err.Error())
-		}
-		return
-	}
-	cookieExpiration := 3 * 24 * time.Hour
-	if len(remember) > 0 && len(remember[0]) > 0 {
-		sm.SetSessionLifetime(cookieExpiration)
-	}
-	sm.Put(r.Context(), "user", user[0])
-	if err := sm.RenewToken(r.Context()); err != nil {
-		validationErrors["global"] = "Failed to process"
-		renderData["Errors"] = validationErrors
-		sm.Put(r.Context(), "token", req.GetToken())
-		if err := view.Render(w, "login.html", renderData); err != nil {
-			log.Log("login_handler", err.Error())
-		}
-		return
-	}
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
