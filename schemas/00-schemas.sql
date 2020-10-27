@@ -33,7 +33,7 @@ $$
         FOR r IN (
             SELECT pe.enumtypid, pe.enumlabel, pt.typname
             FROM pg_enum pe
-                JOIN pg_type pt ON pt.oid = pe.enumtypid)
+                     JOIN pg_type pt ON pt.oid = pe.enumtypid)
             LOOP
                 EXECUTE 'DROP TYPE IF EXISTS ' || quote_ident(r.typname) || ' CASCADE';
             END LOOP;
@@ -42,9 +42,13 @@ $$;
 
 create table audience
 (
-    id     serial primary key,
-    title  varchar(50),
-    emails varchar(100)[]
+    id          serial primary key,
+    title       varchar(50),
+    emails      varchar(100)[],
+    disabled    bool default false,
+    created_at  timestamp,
+    updated_at  timestamp,
+    disabled_at timestamp
 );
 
 create type invitation_type as enum ('multi-link','single-link');
@@ -54,27 +58,29 @@ create table groups
     id              serial primary key,
     title           varchar(100),
     invitation_type invitation_type,
-    audience        integer[], /** audience collection **/
+    audiences       integer[], /** audience collection **/
     disabled        boolean default false,
     published       boolean,
-    created_date    timestamp,
-    updated_date    timestamp,
-    published_date  timestamp
+    created_at      timestamp,
+    updated_at      timestamp,
+    disabled_at     timestamp,
+    published_at    timestamp
 );
 
 create type question_type as enum ('essay','choice');
 
 create table questions
 (
-    id           serial primary key,
-    question     varchar(500),
-    expect       question_type,
-    options      jsonb   default '[]',
-    group_id     integer
+    id          serial primary key,
+    question    varchar(500),
+    expect      question_type,
+    options     varchar(150)[],
+    group_id    integer
         constraint questions_groups_id references groups (id),
-    disabled     boolean default false,
-    created_date timestamp,
-    updated_date timestamp
+    disabled    boolean default false,
+    created_at  timestamp,
+    updated_at  timestamp,
+    disabled_at timestamp
 );
 
 create table links
@@ -86,8 +92,10 @@ create table links
         constraint links_group_id references groups (id),
     disabled     boolean default false,
     usage_limit  integer default 0,
-    created_date timestamp,
-    updated_date timestamp
+    created_at   timestamp,
+    updated_at   timestamp,
+    disabled_at  timestamp,
+    published_at timestamp
 );
 
 create table link_visits
@@ -96,7 +104,7 @@ create table link_visits
     link_id integer,
     at      timestamp,
     agent   text,
-    ref     varchar(255)
+    ref     jsonb default '{}'
 );
 
 create table submission
@@ -111,7 +119,9 @@ create table submission
     expect          question_type,
     options         jsonb default '[]',
     answer_choice   varchar(50),
-    answer_essay    text
+    answer_essay    text,
+    created_at      timestamp,
+    updated_at      timestamp
 );
 
 create index on submission (hash);

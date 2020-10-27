@@ -156,15 +156,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	log.Log("login_handler", "request received")
 
 	if req.IsLoggedIn() {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
 		return
 	}
 	renderData := map[string]interface{}{
 		"PageTitle": "Login Page",
-	}
-	if !req.IsMethodGet() {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
 	}
 	// render login page
 	sm.Put(r.Context(), "token", req.GetToken())

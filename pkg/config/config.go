@@ -14,8 +14,12 @@ type App struct {
 	SessionExpiration time.Duration `yaml:"session_expire"`
 	CookieDomain      string        `yaml:"cookie_domain"`
 	CookieSecure      int           `yaml:"cookie_secure"`
-	TemplateDirectory string        `yaml:"template_dir"`
-	AssetDirectory    string        `yaml:"asset_dir"`
+	Cors              struct {
+		AllowedMethods []string `yaml:"allowed_methods"`
+		AllowedOrigins []string `yaml:"allowed_origins"`
+	} `yaml:"cors"`
+	TemplateDirectory string `yaml:"template_dir"`
+	AssetDirectory    string `yaml:"asset_dir"`
 	Logo              struct {
 		FavIcon string `yaml:"favicon"`
 		Url     string `yaml:"url"`

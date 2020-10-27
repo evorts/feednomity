@@ -117,20 +117,45 @@ func routes(o *http.ServeMux, cmd *commands) {
 		},
 		{
 			Pattern: "/api/login",
-			Handler: middleware.WithMethodFilter(
-				http.MethodPost,
-				middleware.WithInjection(
-					http.HandlerFunc(handler.LoginAPI),
-					map[string]interface{}{
-						"logger": cmd.logger,
-						"view":   cmd.view,
-						"sm":     cmd.session,
-						"hash":   cmd.hash,
-						"db":     cmd.db,
-					},
+			Handler: middleware.WithCors(
+				cmd.config.GetConfig().App.Cors.AllowedMethods,
+				cmd.config.GetConfig().App.Cors.AllowedOrigins,
+				middleware.WithMethodFilter(
+					http.MethodPost,
+					middleware.WithInjection(
+						http.HandlerFunc(handler.LoginAPI),
+						map[string]interface{}{
+							"logger": cmd.logger,
+							"view":   cmd.view,
+							"sm":     cmd.session,
+							"hash":   cmd.hash,
+							"db":     cmd.db,
+						},
+					),
 				),
 			),
 			MemberOnly: false,
+		},
+		{
+			Pattern: "/api/feedback",
+			Handler: middleware.WithCors(
+				cmd.config.GetConfig().App.Cors.AllowedMethods,
+				cmd.config.GetConfig().App.Cors.AllowedOrigins,
+				middleware.WithMethodFilter(
+					http.MethodPost,
+					middleware.WithInjection(
+						http.HandlerFunc(handler.FeedbackSubmissionAPI),
+						map[string]interface{}{
+							"logger": cmd.logger,
+							"view":   cmd.view,
+							"sm":     cmd.session,
+							"hash":   cmd.hash,
+							"db":     cmd.db,
+						},
+					),
+				),
+			),
+			MemberOnly: true,
 		},
 	}).ExecRoutes(o)
 }
