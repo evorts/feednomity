@@ -18,9 +18,9 @@ type manager struct {
 
 type IManager interface {
 	LoadTemplates() (IManager, error)
-	Render(w http.ResponseWriter, template string, data map[string]interface{}) error
-	RenderRaw(w http.ResponseWriter, content interface{}) error
-	RenderJson(w http.ResponseWriter, value interface{}) error
+	Render(w http.ResponseWriter, status int, template string, data map[string]interface{}) error
+	RenderRaw(w http.ResponseWriter, status int, content interface{}) error
+	RenderJson(w http.ResponseWriter, status int, value interface{}) error
 	AddData(key string, value interface{}) IManager
 	InjectData(key string, value interface{}) IManager
 }
@@ -49,26 +49,30 @@ func (t *manager) LoadTemplates() (IManager, error) {
 	return t, nil
 }
 
-func (t *manager) Render(w http.ResponseWriter, template string, data map[string]interface{}) error {
+func (t *manager) Render(w http.ResponseWriter, status int, template string, data map[string]interface{}) error {
 	tmpl, err := t.getTemplate(template)
 	if err != nil {
 		return err
 	}
 	_ = t.mergeData(data)
 	// Render the template 'name' with data
+	w.WriteHeader(status)
 	if err = tmpl.ExecuteTemplate(w, template, t.getData()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (t *manager) RenderRaw(w http.ResponseWriter, content interface{}) error {
+func (t *manager) RenderRaw(w http.ResponseWriter, status int, content interface{}) error {
+	w.WriteHeader(status)
 	_, err := fmt.Fprintln(w, content)
 	return err
 }
 
-func (t *manager) RenderJson(w http.ResponseWriter, value interface{}) error {
+func (t *manager) RenderJson(w http.ResponseWriter, status int, value interface{}) error {
 	v, err := json.Marshal(value)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	if err == nil {
 		_, err = fmt.Fprintln(w, string(v))
 		return err

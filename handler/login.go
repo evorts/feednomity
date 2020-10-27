@@ -25,8 +25,21 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 
 	log.Log("login_api_handler", "request received")
 
+	if !req.IsMethodPost() {
+		_ = view.RenderJson(w, http.StatusNotAcceptable, api.Response{
+			Status:  http.StatusNotAcceptable,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LOG:ERR:MTD",
+				Message: "Bad Request! not acceptable.",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
 	if req.IsLoggedIn() {
-		_ = view.RenderJson(w, api.Response{
+		_ = view.RenderJson(w, http.StatusContinue, api.Response{
 			Status:  http.StatusContinue,
 			Content: make(map[string]interface{}, 0),
 		})
@@ -35,12 +48,12 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
-		Remember string    `json:"remember"`
+		Remember string `json:"remember"`
 		Csrf     string `json:"csrf"`
 	}
 	err := req.UnmarshallBody(&payload)
 	if err != nil {
-		_ = view.RenderJson(w, api.Response{
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -66,7 +79,7 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 		errs["session"] = "Not a valid request session!"
 	}
 	if len(errs) > 0 {
-		_ = view.RenderJson(w, api.Response{
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -81,7 +94,7 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 	var user *users.User
 	user, err = users.NewUserDomain(datasource).FindByUsername(req.GetContext().Value(), payload.Username)
 	if err != nil {
-		_ = view.RenderJson(w, api.Response{
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -96,7 +109,7 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 	// ensure the user and password are correct
 	passCrypt := hash.Renew().Crypt(payload.Password)
 	if strings.ToLower(passCrypt) != strings.ToLower(user.Password) {
-		_ = view.RenderJson(w, api.Response{
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -113,7 +126,7 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 		sm.SetSessionLifetime(rememberExpiration)
 	}
 	if err := sm.RenewToken(req.GetContext().Value()); err != nil {
-		_ = view.RenderJson(w, api.Response{
+		_ = view.RenderJson(w, http.StatusFailedDependency, api.Response{
 			Status:  http.StatusFailedDependency,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -128,7 +141,7 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 	sm.Put(req.GetContext().Value(), "user", user)
 	//remove token since login success -- client should redirect to respective protected page
 	sm.Remove(req.GetContext().Value(), "token")
-	_ = view.RenderJson(w, api.Response{
+	_ = view.RenderJson(w, http.StatusOK, api.Response{
 		Status:  http.StatusOK,
 		Content: make(map[string]interface{}, 0),
 	})
@@ -155,7 +168,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 	// render login page
 	sm.Put(r.Context(), "token", req.GetToken())
-	if err := view.InjectData("Csrf", req.GetToken()).Render(w, "login.html", renderData); err != nil {
+	if err := view.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "login.html", renderData); err != nil {
 		log.Log("login_handler", err.Error())
 	}
 }

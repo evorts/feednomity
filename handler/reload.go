@@ -15,8 +15,8 @@ func Reload(w http.ResponseWriter, r *http.Request) {
 	cfg := req.GetContext().Get("config").(config.IManager)
 	log.Log("reload_handler", "request received")
 	if err := cfg.Reload(); err != nil {
-		_ = view.RenderRaw(w, "Error reloading")
+		_ = view.RenderRaw(w,  http.StatusBadGateway, "Error reloading")
 		return
 	}
-	_ = view.RenderRaw(w, "Reloading done.")
+	_ = view.RenderRaw(w, http.StatusOK, "Reloading done.")
 }

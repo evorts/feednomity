@@ -10,9 +10,8 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	view := req.GetContext().Get("view").(template.IManager)
 	if !req.IsMethodGet() {
-		_ = view.RenderRaw(w, "NOK")
+		_ = view.RenderRaw(w, http.StatusBadRequest, "NOK")
 		return
 	}
-	_ = view.RenderRaw(w, "OK")
+	_ = view.RenderRaw(w, http.StatusOK, "OK")
 }
-

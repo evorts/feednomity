@@ -12,7 +12,7 @@ func Forms(w http.ResponseWriter, r *http.Request) {
 	log := req.GetContext().Get("logger").(logger.IManager)
 	view := req.GetContext().Get("view").(template.IManager)
 	log.Log("forms_handler", "request received")
-	if err := view.Render(w, "forms.html", map[string]interface{}{
+	if err := view.Render(w, http.StatusOK, "forms.html", map[string]interface{}{
 		"PageTitle": "Anonymous Feedback Submission Page",
 	}); err != nil {
 		log.Log("forms_handler", err.Error())

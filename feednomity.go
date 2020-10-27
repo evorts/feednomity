@@ -34,7 +34,7 @@ func routes(o *http.ServeMux, cmd *commands) {
 	// serving pages
 	reqio.NewRoutes([]reqio.Route{
 		{
-			Pattern: "/",
+			Pattern: "/dashboard",
 			Handler: middleware.WithInjection(
 				middleware.WithProtection(http.HandlerFunc(handler.Dashboard)),
 				map[string]interface{}{
@@ -45,7 +45,7 @@ func routes(o *http.ServeMux, cmd *commands) {
 			MemberOnly: true,
 		},
 		{
-			Pattern: "/forms",
+			Pattern: "/",
 			Handler: middleware.WithInjection(
 				http.HandlerFunc(handler.Forms),
 				map[string]interface{}{

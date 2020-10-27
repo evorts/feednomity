@@ -21,6 +21,10 @@ type request struct {
 
 type IRequest interface {
 	IsMethodGet() bool
+	IsMethodPost() bool
+	IsMethodPut() bool
+	IsMethodDelete() bool
+	IsMethodOptions() bool
 	IsLoggedIn() bool
 	Prepare() IRequest
 	UnmarshallForm(dst interface{}) error
@@ -62,6 +66,22 @@ func (req *request) RenewToken() IRequest {
 
 func (req *request) IsMethodGet() bool {
 	return strings.ToUpper(req.r.Method) == "GET"
+}
+
+func (req *request) IsMethodPost() bool {
+	return strings.ToUpper(req.r.Method) == "POST"
+}
+
+func (req *request) IsMethodPut() bool {
+	return strings.ToUpper(req.r.Method) == "PUT"
+}
+
+func (req *request) IsMethodDelete() bool {
+	return strings.ToUpper(req.r.Method) == "DELETE"
+}
+
+func (req *request) IsMethodOptions() bool {
+	return strings.ToUpper(req.r.Method) == "OPTIONS"
 }
 
 func (req *request) UnmarshallForm(dst interface{}) error {

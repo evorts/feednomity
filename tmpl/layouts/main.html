@@ -17,11 +17,14 @@
         <!--Fontawesome CDN-->
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
         {{ block "styles" . }} {{ end }}
-
-        <!-- JS, Popper.js, and jQuery -->
         {{ block "scripts" . }} {{ end }}
     </head>
     <body>
+    <section id="tools" class="hide">
+        <div class="modal-dialog">
+
+        </div>
+    </section>
     <header>
         <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
             <div class="container">
@@ -44,6 +47,7 @@
             </div>
         </div>
     </footer>
+    {{ block "body_scripts" . }} {{ end }}
     </body>
     </html>
 {{end}}
