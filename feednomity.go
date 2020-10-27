@@ -35,12 +35,15 @@ func routes(o *http.ServeMux, cmd *commands) {
 	reqio.NewRoutes([]reqio.Route{
 		{
 			Pattern: "/dashboard",
-			Handler: middleware.WithInjection(
-				middleware.WithProtection(http.HandlerFunc(handler.Dashboard)),
-				map[string]interface{}{
-					"logger": cmd.logger,
-					"view":   cmd.view,
-				},
+			Handler: middleware.WithMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					middleware.WithProtection(http.HandlerFunc(handler.Dashboard)),
+					map[string]interface{}{
+						"logger": cmd.logger,
+						"view":   cmd.view,
+					},
+				),
 			),
 			MemberOnly: true,
 		},
@@ -57,60 +60,75 @@ func routes(o *http.ServeMux, cmd *commands) {
 		},
 		{
 			Pattern: "/login",
-			Handler: middleware.WithInjection(
-				http.HandlerFunc(handler.Login),
-				map[string]interface{}{
-					"logger": cmd.logger,
-					"view":   cmd.view,
-					"sm":     cmd.session,
-					"hash":   cmd.hash,
-				},
+			Handler: middleware.WithMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					http.HandlerFunc(handler.Login),
+					map[string]interface{}{
+						"logger": cmd.logger,
+						"view":   cmd.view,
+						"sm":     cmd.session,
+						"hash":   cmd.hash,
+					},
+				),
 			),
 			MemberOnly: false,
 		},
 		{
 			Pattern: "/logout",
-			Handler: middleware.WithInjection(
-				http.HandlerFunc(handler.Logout),
-				map[string]interface{}{
-					"sm": cmd.session,
-				},
+			Handler: middleware.WithMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					http.HandlerFunc(handler.Logout),
+					map[string]interface{}{
+						"sm": cmd.session,
+					},
+				),
 			),
 			MemberOnly: true,
 		},
 		{
 			Pattern: "/reload",
-			Handler: middleware.WithInjection(
-				http.HandlerFunc(handler.Reload),
-				map[string]interface{}{
-					"logger": cmd.logger,
-					"view":   cmd.view,
-					"config": cmd.config,
-				},
+			Handler: middleware.WithMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					http.HandlerFunc(handler.Reload),
+					map[string]interface{}{
+						"logger": cmd.logger,
+						"view":   cmd.view,
+						"config": cmd.config,
+					},
+				),
 			),
 			MemberOnly: true,
 		},
 		{
 			Pattern: "/ping",
-			Handler: middleware.WithInjection(
-				http.HandlerFunc(handler.Ping),
-				map[string]interface{}{
-					"view": cmd.view,
-				},
+			Handler: middleware.WithMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					http.HandlerFunc(handler.Ping),
+					map[string]interface{}{
+						"view": cmd.view,
+					},
+				),
 			),
 			MemberOnly: false,
 		},
 		{
 			Pattern: "/api/login",
-			Handler: middleware.WithInjection(
-				http.HandlerFunc(handler.LoginAPI),
-				map[string]interface{}{
-					"logger": cmd.logger,
-					"view": cmd.view,
-					"sm": cmd.session,
-					"hash":   cmd.hash,
-					"db":   cmd.db,
-				},
+			Handler: middleware.WithMethodFilter(
+				http.MethodPost,
+				middleware.WithInjection(
+					http.HandlerFunc(handler.LoginAPI),
+					map[string]interface{}{
+						"logger": cmd.logger,
+						"view":   cmd.view,
+						"sm":     cmd.session,
+						"hash":   cmd.hash,
+						"db":     cmd.db,
+					},
+				),
 			),
 			MemberOnly: false,
 		},
