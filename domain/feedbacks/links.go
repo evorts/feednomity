@@ -13,16 +13,16 @@ type Link struct {
 	GroupId     int64
 	Disabled    bool
 	UsageLimit  int64
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DisabledAt  time.Time
-	PublishedAt time.Time
+	CreatedAt   *time.Time
+	UpdatedAt   *time.Time
+	DisabledAt  *time.Time
+	PublishedAt *time.Time
 }
 
 type LinkVisit struct {
 	Id     int64
 	LinkId int64
-	At     time.Time
+	At     *time.Time
 	Agent  string
 	Ref    map[string]interface{}
 }

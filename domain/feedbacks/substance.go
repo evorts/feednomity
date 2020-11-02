@@ -11,9 +11,9 @@ type Audience struct {
 	Title      string
 	Emails     []string
 	Disabled   bool
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DisabledAt time.Time
+	CreatedAt  *time.Time
+	UpdatedAt  *time.Time
+	DisabledAt *time.Time
 }
 
 type InvitationType string
@@ -30,10 +30,10 @@ type Group struct {
 	Audiences      []int64
 	Disabled       bool
 	Published      bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	DisabledAt     time.Time
-	PublishedAt    time.Time
+	CreatedAt      *time.Time
+	UpdatedAt      *time.Time
+	DisabledAt     *time.Time
+	PublishedAt    *time.Time
 }
 
 type QuestionType string
@@ -45,14 +45,15 @@ const (
 
 type Question struct {
 	Id         int64
+	Sequence   int
 	Question   string
 	Expect     QuestionType
 	Options    []string
 	GroupId    int64
 	Disabled   bool
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DisabledAt time.Time
+	CreatedAt  *time.Time
+	UpdatedAt  *time.Time
+	DisabledAt *time.Time
 }
 
 type substanceManager struct {

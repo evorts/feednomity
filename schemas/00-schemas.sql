@@ -72,11 +72,13 @@ create type question_type as enum ('essay','choice');
 create table questions
 (
     id          serial primary key,
+    sequence    integer, -- question number/sequence
     question    varchar(500),
     expect      question_type,
     options     varchar(150)[],
     group_id    integer
         constraint questions_groups_id references groups (id),
+    mandatory   bool,
     disabled    boolean default false,
     created_at  timestamp,
     updated_at  timestamp,
@@ -107,19 +109,23 @@ create table link_visits
     ref     jsonb default '{}'
 );
 
+create type mark_as_type as enum ('favorite');
+
 create table submission
 (
     id              serial primary key,
     hash            varchar(128),
     question_id     integer,
+    question_number integer,
     question        varchar(500),
     group_id        integer,
     group_title     varchar(100),
     invitation_type invitation_type,
     expect          question_type,
     options         jsonb default '[]',
-    answer_choice   varchar(50),
+    answer_choice   smallint,
     answer_essay    text,
+    marked_as       mark_as_type[],
     created_at      timestamp,
     updated_at      timestamp
 );
