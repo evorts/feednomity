@@ -5,7 +5,7 @@ import "net/http"
 type Route struct {
 	Pattern   string
 	Handler   http.Handler
-	MemberOnly bool
+	AdminOnly bool
 }
 
 type manager struct {
@@ -36,7 +36,7 @@ func (m *manager) GetRoutes() []Route {
 func (m *manager) GetMemberOnlyRoutes() (routes []Route) {
 	routes = make([]Route, 0)
 	for _, route := range m.routes {
-		if !route.MemberOnly {
+		if !route.AdminOnly {
 			continue
 		}
 		routes = append(routes, route)
@@ -47,7 +47,7 @@ func (m *manager) GetMemberOnlyRoutes() (routes []Route) {
 func (m *manager) GetPublicRoutes() (routes []Route) {
 	routes = make([]Route, 0)
 	for _, route := range m.routes {
-		if route.MemberOnly {
+		if route.AdminOnly {
 			continue
 		}
 		routes = append(routes, route)

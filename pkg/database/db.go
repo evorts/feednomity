@@ -174,3 +174,33 @@ func (d *database) Close(ctx context.Context) error {
 	}
 	return d.conn.Close(ctx)
 }
+
+// RowsAffected returns the number of rows affected. If the CommandTag was not
+// for a row affecting command (e.g. "CREATE TABLE") then it returns 0.
+func (ct CommandTag) RowsAffected() int64 {
+	return pgconn.CommandTag(ct).RowsAffected()
+}
+
+func (ct CommandTag) String() string {
+	return pgconn.CommandTag(ct).String()
+}
+
+// Insert is true if the command tag starts with "INSERT".
+func (ct CommandTag) Insert() bool {
+	return pgconn.CommandTag(ct).Insert()
+}
+
+// Update is true if the command tag starts with "UPDATE".
+func (ct CommandTag) Update() bool {
+	return pgconn.CommandTag(ct).Update()
+}
+
+// Delete is true if the command tag starts with "DELETE".
+func (ct CommandTag) Delete() bool {
+	return pgconn.CommandTag(ct).Delete()
+}
+
+// Select is true if the command tag starts with "SELECT".
+func (ct CommandTag) Select() bool {
+	return pgconn.CommandTag(ct).Select()
+}

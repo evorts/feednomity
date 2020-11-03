@@ -1,47 +1,45 @@
 package crypt
 
-import (
-	sha12 "crypto/sha1"
-	"fmt"
-	"hash"
-	"io"
-)
-
-type crypt struct {
+type cryptic struct {
 	salt string
-	sha1 hash.Hash
+	hash ICryptHash
+	aes  ICryptAES
 }
 
-type ICrypt interface {
-	CryptWithSalt(value string) string
-	Crypt(value string) string
-	Renew() ICrypt
+type ICryptic interface {
+	ICryptHash
+	ICryptAES
 }
 
-func NewCrypt(salt string) ICrypt {
-	return &crypt{
-		sha1: sha12.New(),
+func NewCryptic(salt string, hash ICryptHash, aes ICryptAES) ICryptic {
+	return &cryptic{
 		salt: salt,
+		hash: hash,
+		aes:  aes,
 	}
 }
 
-func (c *crypt) CryptWithSalt(value string) string {
-	_, err := io.WriteString(c.sha1, fmt.Sprintf("%s%s", c.salt, value))
-	if err != nil {
-		return ""
-	}
-	return fmt.Sprintf("%x", c.sha1.Sum(nil))
+func (c *cryptic) HashWithSalt(value string) string {
+	return c.HashWithSalt(value)
 }
 
-func (c *crypt) Crypt(value string) string {
-	_, err := io.WriteString(c.sha1, value)
-	if err != nil {
-		return ""
-	}
-	return fmt.Sprintf("%x", c.sha1.Sum(nil))
+func (c *cryptic) HashWithoutSalt(value string) string {
+	return c.HashWithoutSalt(value)
 }
 
-func (c *crypt) Renew() ICrypt {
-	c.sha1 = sha12.New()
+func (c *cryptic) RenewHash() ICryptHash {
+	c.RenewHash()
 	return c
+}
+
+func (c *cryptic) Initialize() (ICryptAES, error) {
+	return c.Initialize()
+}
+
+func (c *cryptic) Encrypt(value string) (string, error) {
+	return c.Encrypt(value)
+}
+
+func (c *cryptic) Decrypt(value string) (string, error) {
+	return c.Decrypt(value)
 }

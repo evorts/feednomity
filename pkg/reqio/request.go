@@ -15,7 +15,7 @@ type request struct {
 	r    *http.Request
 	ctx  IContext
 	token   string
-	crypt   crypt.ICrypt
+	crypt   crypt.ICryptHash
 	session session.IManager
 }
 
@@ -46,7 +46,7 @@ func NewRequest(w http.ResponseWriter, r *http.Request) IRequest {
 		req.session = sm.(session.IManager)
 	}
 	if c := ctx.Get("crypt"); c != nil {
-		req.crypt = c.(crypt.ICrypt)
+		req.crypt = c.(crypt.ICryptHash)
 	}
 	return req
 }
@@ -120,7 +120,7 @@ func (req *request) Prepare() IRequest {
 	if req.crypt == nil {
 		return req
 	}
-	req.token = req.crypt.CryptWithSalt(time.Now().String())
+	req.token = req.crypt.HashWithSalt(time.Now().String())
 	return req
 }
 

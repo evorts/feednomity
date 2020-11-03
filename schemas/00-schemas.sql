@@ -40,6 +40,20 @@ $$
     END
 $$;
 
+create table recipients
+(
+    id          serial primary key,
+    name        varchar(100),
+    emails      varchar(100)[],
+    phones      varchar(20)[],
+    disabled    bool default false,
+    created_at  timestamp,
+    updated_at  timestamp,
+    disabled_at timestamp
+);
+
+create unique index recipients_name_unique on recipients(name);
+
 create table audience
 (
     id          serial primary key,
@@ -51,12 +65,14 @@ create table audience
     disabled_at timestamp
 );
 
+create unique index audience_title_unique on audience(title);
+
 create type invitation_type as enum ('multi-link','single-link');
 
 create table groups
 (
     id              serial primary key,
-    title           varchar(100),
+    title           varchar(50),
     invitation_type invitation_type,
     audiences       integer[], /** audience collection **/
     disabled        boolean default false,
@@ -66,6 +82,8 @@ create table groups
     disabled_at     timestamp,
     published_at    timestamp
 );
+
+create unique index groups_title_unique on groups(title);
 
 create type question_type as enum ('essay','choice');
 

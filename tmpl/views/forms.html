@@ -6,6 +6,30 @@
 {{ define "content" }}
     <div class="container" style="min-height: 550px;">
         <div class="d-flex justify-content-center h-100">
+            {{ range $question := .Data }}
+                <div>
+                    Question No.: {{ $question.Sequence }}<br/>
+                    <p>
+                        {{ $question.Question }}
+                    </p>
+                    {{ if eq $question.Expect "essay" }}
+                        <label>
+                            <textarea name="answer_essay"></textarea>
+                        </label>
+                    {{ else }}
+                        {{ range $optionKey, $optionValue := $question.Options }}
+                            {{ if eq $optionKey 0 }}a. {{ end }}
+                            {{ if eq $optionKey 1 }}b. {{ end }}
+                            {{ if eq $optionKey 2 }}c. {{ end }}
+                            {{ if eq $optionKey 3 }}d. {{ end }}
+                            {{ if eq $optionKey 4 }}e. {{ end }}
+                            {{ $optionValue }}
+                        {{ end }}
+                    {{ end }}
+                </div>
+            {{ end }}
+            <input type="hidden" name="csrf" value="{{ .Csrf }}">
+            <input type="button" name="submit" value="Submit">
         </div>
     </div>
 {{ end }}
