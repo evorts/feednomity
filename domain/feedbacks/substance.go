@@ -449,6 +449,9 @@ func (s *substanceManager) SaveQuestions(ctx context.Context, questions ...Quest
 }
 
 func (s *substanceManager) UpdateQuestion(ctx context.Context, question Question) error {
+	if question.Id < 1 {
+		return fmt.Errorf("please provide the correct question identifier")
+	}
 	q := fmt.Sprintf(`
 		UPDATE %s 
 		SET 
@@ -473,7 +476,7 @@ func (s *substanceManager) UpdateQuestion(ctx context.Context, question Question
 	cmd, err2 := s.dbm.Exec(
 		ctx, "update_questions",
 		question.Sequence, question.Question, question.Expect, question.Options, question.GroupId,
-		question.Mandatory, question.Disabled, disabledAt)
+		question.Mandatory, question.Disabled, disabledAt, question.Id)
 	if err2 != nil {
 		return err2
 	}

@@ -52,7 +52,7 @@ create table recipients
     disabled_at timestamp
 );
 
-create unique index recipients_name_unique on recipients(name);
+create unique index recipients_name_unique on recipients (name);
 
 create table audience
 (
@@ -65,7 +65,7 @@ create table audience
     disabled_at timestamp
 );
 
-create unique index audience_title_unique on audience(title);
+create unique index audience_title_unique on audience (title);
 
 create type invitation_type as enum ('multi-link','single-link');
 
@@ -83,7 +83,7 @@ create table groups
     published_at    timestamp
 );
 
-create unique index groups_title_unique on groups(title);
+create unique index groups_title_unique on groups (title);
 
 create type question_type as enum ('essay','choice');
 
@@ -106,17 +106,20 @@ create table questions
 create table links
 (
     id           serial primary key,
-    hash         varchar(128) unique,
+    hash         varchar(128),
     pin          varchar(10),
     group_id     integer
         constraint links_group_id references groups (id),
     disabled     boolean default false,
+    published    bool,
     usage_limit  integer default 0,
     created_at   timestamp,
     updated_at   timestamp,
     disabled_at  timestamp,
     published_at timestamp
 );
+
+create unique index links_hash_unique on links (hash);
 
 create table link_visits
 (
