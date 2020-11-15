@@ -10,7 +10,8 @@ import (
 
 type App struct {
 	Port              int           `yaml:"port"`
-	Salt              string        `yaml:"salt"`
+	HashSalt          string        `yaml:"hash_salt"`
+	AESSalt           string        `yaml:"aes_salt"`
 	SessionExpiration time.Duration `yaml:"session_expire"`
 	CookieDomain      string        `yaml:"cookie_domain"`
 	CookieSecure      int           `yaml:"cookie_secure"`

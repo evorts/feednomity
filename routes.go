@@ -170,7 +170,7 @@ func routesAudience(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/audiences",
+			Pattern: "/api/audiences/create",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
@@ -191,7 +191,7 @@ func routesAudience(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/audiences",
+			Pattern: "/api/audiences/update",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
@@ -212,7 +212,7 @@ func routesAudience(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/audiences",
+			Pattern: "/api/audiences/remove",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
@@ -259,7 +259,7 @@ func routesLink(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/links",
+			Pattern: "/api/links/create",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
@@ -280,7 +280,7 @@ func routesLink(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/links",
+			Pattern: "/api/links/update",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
@@ -301,7 +301,7 @@ func routesLink(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/links",
+			Pattern: "/api/links/remove",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
@@ -348,7 +348,7 @@ func routesGroups(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/groups",
+			Pattern: "/api/groups/create",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
@@ -369,7 +369,7 @@ func routesGroups(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/groups",
+			Pattern: "/api/groups/update",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
@@ -390,7 +390,7 @@ func routesGroups(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/groups",
+			Pattern: "/api/groups/remove",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
@@ -437,7 +437,7 @@ func routesQuestions(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/questions",
+			Pattern: "/api/questions/create",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
@@ -458,7 +458,7 @@ func routesQuestions(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/questions",
+			Pattern: "/api/questions/update",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
@@ -479,7 +479,7 @@ func routesQuestions(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/questions",
+			Pattern: "/api/questions/remove",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,

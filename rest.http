@@ -8,3 +8,9 @@ Referer: https://anonymity.onelabs.co
 }
 
 ###
+
+GET http://localhost:3700/api/links
+Content-Type: application/json
+Referer: https://anonymity.onelabs.co
+
+###

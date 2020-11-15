@@ -2,9 +2,11 @@ package feedbacks
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/jackc/pgtype"
+	"github.com/pkg/errors"
 	"strings"
 	"time"
 )
@@ -35,7 +37,8 @@ type linksManager struct {
 	dbm database.IManager
 }
 
-type IFeedbacks interface {
+type ILinks interface {
+	FindLinks(ctx context.Context, page, limit int) ([]Link, error)
 	FindByHash(ctx context.Context, hash string) (Link, error)
 	SaveLinks(ctx context.Context, links []Link) error
 	UpdateLink(ctx context.Context, link Link) error
@@ -48,8 +51,54 @@ const (
 	tableLinkVisits = "link_visits"
 )
 
-func NewLinksDomain(dbm database.IManager) IFeedbacks {
+func NewLinksDomain(dbm database.IManager) ILinks {
 	return &linksManager{dbm: dbm}
+}
+
+func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []Link, err error) {
+	q := fmt.Sprintf(`SELECT count(id) FROM %s`, tableLinks)
+	var (
+		total int
+		rows  database.Rows
+	)
+	links = make([]Link, 0)
+	err = l.dbm.QueryRowAndBind(ctx, q, nil, &total)
+	if err != nil || total < 1 {
+		err = errors.Wrap(err, "It looks like the data is not exist")
+		return
+	}
+	q = fmt.Sprintf(`
+		SELECT 
+			id, hash, pin, group_id, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
+		FROM %s ORDER BY id DESC LIMIT %d OFFSET %d`, tableLinks, limit, (page-1)*limit)
+	rows, err = l.dbm.Query(ctx, q, nil)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return links, nil
+		}
+		return
+	}
+	for rows.Next() {
+		var link Link
+		err = rows.Scan(
+			&link.Id,
+			&link.Hash,
+			&link.PIN,
+			&link.GroupId,
+			&link.Disabled,
+			&link.UsageLimit,
+			&link.Published,
+			&link.CreatedAt,
+			&link.UpdatedAt,
+			&link.DisabledAt,
+			&link.PublishedAt,
+		)
+		if err != nil {
+			return
+		}
+		links = append(links, link)
+	}
+	return
 }
 
 func (l *linksManager) FindByHash(ctx context.Context, hash string) (link Link, err error) {

@@ -23,7 +23,7 @@ type ICryptAES interface {
 
 func NewCryptAES(salt string) ICryptAES {
 	return &cryptAES{
-		salt: salt,
+		salt: hex.EncodeToString([]byte(salt)),
 	}
 }
 

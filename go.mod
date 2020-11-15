@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/alexedwards/scs/v2 v2.4.0
 	github.com/jackc/pgconn v1.7.0
+	github.com/jackc/pgtype v1.5.0
 	github.com/jackc/pgx/v4 v4.9.0
 	github.com/pkg/errors v0.8.1
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect

@@ -31,7 +31,7 @@ func main() {
 		logging.Fatal("error reading configuration")
 		return
 	}
-	aesCryptic := crypt.NewCryptAES(cfg.GetConfig().App.Salt)
+	aesCryptic := crypt.NewCryptAES(cfg.GetConfig().App.AESSalt)
 	if _, err = aesCryptic.Initialize(); err != nil {
 		logging.Fatal("error initialize cryptic modules")
 		return
@@ -46,7 +46,7 @@ func main() {
 	ds.MustConnect(context.Background())
 	defer func() {
 		_ = ds.Close(context.Background())
-	}()
+	}()              
 	sm := session.NewSession(
 		cfg.GetConfig().App.SessionExpiration,
 		time.Duration(30),
@@ -69,7 +69,7 @@ func main() {
 	o := http.NewServeMux()
 	routes(o, &commands{
 		ds, logging, cfg, sm,
-		aesCryptic, crypt.NewHashEncryption(cfg.GetConfig().App.Salt), tm,
+		aesCryptic, crypt.NewHashEncryption(cfg.GetConfig().App.HashSalt), tm,
 	})
 	logging.Log("started", "Dashboard app started.")
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.GetConfig().App.Port), sm.LoadAndSave(o)); err != nil {

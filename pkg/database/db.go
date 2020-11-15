@@ -51,9 +51,6 @@ func NewDB(dsn string, maxConnectionLifetime, maxIdleConnection, maxOpenConnecti
 	}
 }
 
-func (d *database) getConnection() {
-
-}
 func (d *database) Prepare(ctx context.Context, name, sql string) (sd *StatementDescription, err error) {
 	if d.useDatabasePool {
 		return nil, errors.New("prepare statement can't be used on connection pool mode")
