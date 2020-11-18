@@ -2,12 +2,14 @@ package database
 
 import (
 	"context"
-	"errors"
+	errs "errors"
 	"fmt"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/pkg/errors"
 	"log"
+	"strings"
 )
 
 type database struct {
@@ -28,6 +30,7 @@ type Rows pgx.Rows
 type Row pgx.Row
 
 type IManager interface {
+	Rebind(ctx context.Context, sql string) string
 	Prepare(ctx context.Context, name, sql string) (sd *StatementDescription, err error)
 	Begin(ctx context.Context) (Tx, error)
 	BeginTx(ctx context.Context, txOptions TxOptions) (Tx, error)
@@ -51,12 +54,35 @@ func NewDB(dsn string, maxConnectionLifetime, maxIdleConnection, maxOpenConnecti
 	}
 }
 
+func (d *database) Rebind(ctx context.Context, sql string) string {
+	const placeholder = "?"
+	if !strings.Contains(sql, placeholder) {
+		return sql
+	}
+	// binding index
+	bIdx := 0
+	for {
+		sIdx := strings.Index(sql, placeholder)
+		if sIdx < 0 {
+			break
+		}
+		bIdx++
+		sql = strings.Replace(sql, placeholder, fmt.Sprintf("$%d", bIdx), 1)
+	}
+	return sql
+}
+
 func (d *database) Prepare(ctx context.Context, name, sql string) (sd *StatementDescription, err error) {
+	conn := d.conn
 	if d.useDatabasePool {
-		return nil, errors.New("prepare statement can't be used on connection pool mode")
+		cp, err := d.pool.Acquire(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "prepare statement can't be used on connection pool mode")
+		}
+		conn = cp.Conn()
 	}
 	var rs *pgconn.StatementDescription
-	rs, err = d.conn.Prepare(ctx, name, sql)
+	rs, err = conn.Prepare(ctx, name, sql)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +165,7 @@ func (d *database) QueryRowAndBind(ctx context.Context, sql string, args []inter
 	}
 	if err != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if errs.As(err, &pgErr) {
 			return fmt.Errorf("error: %s, %s", pgErr.Code, pgErr.Message)
 		}
 	}

@@ -7,22 +7,47 @@ import (
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/jackc/pgtype"
 	"github.com/pkg/errors"
+	"regexp"
 	"strings"
 	"time"
 )
 
+type Hash string
+
+var (
+	validHashPattern = regexp.MustCompile("[a-zA-Z0-9]+")
+)
+
+func (h Hash) Valid() bool {
+	return validHashPattern.MatchString(h.Value()) && h.Length() > 0 && h.Length() <= 512
+}
+
+func (h Hash) Length() int {
+	return len(h)
+}
+
+func (h Hash) Value() string {
+	return string(h)
+}
+
+type PIN string
+
+func (p PIN) Valid() bool {
+	return len(p) == 6
+}
+
 type Link struct {
-	Id          int64
-	Hash        string
-	PIN         string
-	GroupId     int64
-	Disabled    bool
-	Published   bool
-	UsageLimit  int64
-	CreatedAt   *time.Time
-	UpdatedAt   *time.Time
-	DisabledAt  *time.Time
-	PublishedAt *time.Time
+	Id          int64      `json:"id"`
+	Hash        Hash       `json:"hash"`
+	PIN         PIN     `json:"pin"`
+	GroupId     int64      `json:"group_id"`
+	Disabled    bool       `json:"disabled"`
+	Published   bool       `json:"published"`
+	UsageLimit  int64      `json:"usage_limit"`
+	CreatedAt   *time.Time `json:"-"`
+	UpdatedAt   *time.Time `json:"-"`
+	DisabledAt  *time.Time `json:"-"`
+	PublishedAt *time.Time `json:"-"`
 }
 
 type LinkVisit struct {
@@ -38,7 +63,7 @@ type linksManager struct {
 }
 
 type ILinks interface {
-	FindLinks(ctx context.Context, page, limit int) ([]Link, error)
+	FindLinks(ctx context.Context, page, limit int) ([]Link, int, error)
 	FindByHash(ctx context.Context, hash string) (Link, error)
 	SaveLinks(ctx context.Context, links []Link) error
 	UpdateLink(ctx context.Context, link Link) error
@@ -55,11 +80,10 @@ func NewLinksDomain(dbm database.IManager) ILinks {
 	return &linksManager{dbm: dbm}
 }
 
-func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []Link, err error) {
+func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []Link, total int, err error) {
 	q := fmt.Sprintf(`SELECT count(id) FROM %s`, tableLinks)
 	var (
-		total int
-		rows  database.Rows
+		rows database.Rows
 	)
 	links = make([]Link, 0)
 	err = l.dbm.QueryRowAndBind(ctx, q, nil, &total)
@@ -74,7 +98,7 @@ func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []
 	rows, err = l.dbm.Query(ctx, q, nil)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return links, nil
+			return links, total, nil
 		}
 		return
 	}
@@ -129,14 +153,10 @@ func (l *linksManager) SaveLinks(ctx context.Context, links []Link) error {
 		values = append(values, link.Hash, link.PIN, link.GroupId, link.Disabled, link.UsageLimit, link.Published,
 			"NOW()", disabledAt, publishedAt)
 	}
-	q = fmt.Sprintf(`%s %s`, q, strings.Join(placeholders, ","))
-	_, err := l.dbm.Prepare(ctx, "save_links", q)
-	if err != nil {
-		return err
-	}
-	cmd, err2 := l.dbm.Exec(ctx, "save_links", values)
+	q = l.dbm.Rebind(ctx, fmt.Sprintf(`%s %s`, q, strings.Join(placeholders, ",")))
+	cmd, err2 := l.dbm.Exec(ctx, q, values...)
 	if err2 != nil {
-		return err2
+		return errors.Wrap(err2, "failed saving links. some errors in constraint or data.")
 	}
 	if cmd.RowsAffected() > 0 {
 		return nil
@@ -161,10 +181,7 @@ func (l *linksManager) UpdateLink(ctx context.Context, link Link) error {
 			disabled_at = ?
 			published_at = ?
 		WHERE id = ?`, tableLinks)
-	_, err := l.dbm.Prepare(ctx, "update_links", q)
-	if err != nil {
-		return err
-	}
+	q = l.dbm.Rebind(ctx, q)
 	var disabledAt, publishedAt interface{} = nil, nil
 	if link.Disabled {
 		disabledAt = "NOW()"
@@ -189,10 +206,10 @@ func (l *linksManager) DisableLinksByIds(ctx context.Context, ids ...int64) (err
 	q := fmt.Sprintf(`
 		UPDATE %s 
 		SET 
-			disabled = ?,
+			disabled = true,
 			disabled_at = NOW()
 		WHERE id = ANY($1)`, tableLinks)
-	aids := &pgtype.Int8Array{}
+	aids := &pgtype.Int4Array{}
 	if err = aids.Set(ids); err != nil {
 		return
 	}

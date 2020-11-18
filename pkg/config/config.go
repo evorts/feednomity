@@ -12,6 +12,7 @@ type App struct {
 	Port              int           `yaml:"port"`
 	HashSalt          string        `yaml:"hash_salt"`
 	AESSalt           string        `yaml:"aes_salt"`
+	HashExpire        int           `yaml:"hash_expire"`
 	SessionExpiration time.Duration `yaml:"session_expire"`
 	CookieDomain      string        `yaml:"cookie_domain"`
 	CookieSecure      int           `yaml:"cookie_secure"`

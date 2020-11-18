@@ -41,7 +41,7 @@ func main() {
 		cfg.GetConfig().DB.MaxConnectionLifetime,
 		cfg.GetConfig().DB.MaxIdleConnection,
 		cfg.GetConfig().DB.MaxOpenConnection,
-		true,
+		false,
 	)
 	ds.MustConnect(context.Background())
 	defer func() {

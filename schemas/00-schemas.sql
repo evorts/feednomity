@@ -44,9 +44,10 @@ create table recipients
 (
     id          serial primary key,
     name        varchar(100),
+    attributes  jsonb default '{}',
     emails      varchar(100)[],
     phones      varchar(20)[],
-    disabled    bool default false,
+    disabled    bool  default false,
     created_at  timestamp,
     updated_at  timestamp,
     disabled_at timestamp
@@ -106,7 +107,7 @@ create table questions
 create table links
 (
     id           serial primary key,
-    hash         varchar(128),
+    hash         varchar(512),
     pin          varchar(10),
     group_id     integer
         constraint links_group_id references groups (id),

@@ -1,6 +1,6 @@
 POST http://localhost:3700/api/login
 Content-Type: application/json
-Referer: https://anonymity.onelabs.co
+Referer: https://anonymity.evorts.com
 
 {
   "username": "sysadmin",
@@ -11,6 +11,29 @@ Referer: https://anonymity.onelabs.co
 
 GET http://localhost:3700/api/links
 Content-Type: application/json
-Referer: https://anonymity.onelabs.co
+Referer: https://anonymity.evorts.com
 
 ###
+POST http://localhost:3700/api/links/create
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "csrf": "",
+  "disable_auto_generate_hash": false,
+  "links": [
+    {
+      "group_id": 1
+    }
+  ]
+}
+
+###
+DELETE http://localhost:3700/api/links/remove
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "csrf": "",
+  "link_id": 2
+}
