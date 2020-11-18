@@ -29,6 +29,22 @@ Referer: https://anonymity.evorts.com
 }
 
 ###
+PUT http://localhost:3700/api/links/update
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "csrf": "",
+  "regenerate_hash": true,
+  "link": {
+    "id": 2,
+    "group_id": 1,
+    "pin": "133535"
+  }
+}
+
+
+###
 DELETE http://localhost:3700/api/links/remove
 Content-Type: application/json
 Referer: https://anonymity.evorts.com

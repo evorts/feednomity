@@ -296,6 +296,8 @@ func routesLink(cmd *commands) []reqio.Route {
 							"sm":     cmd.session,
 							"hash":   cmd.hash,
 							"db":     cmd.db,
+							"aes":    cmd.aes,
+							"cfg":    cmd.config,
 						},
 					),
 				),

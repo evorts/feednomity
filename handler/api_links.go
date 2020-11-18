@@ -238,7 +238,7 @@ func LinkUpdateAPI(w http.ResponseWriter, r *http.Request) {
 	sessionCsrf := sm.Get(r.Context(), "token")
 
 	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
-		//errs["session"] = "Not a valid request session!"
+		errs["session"] = "Not a valid request session!"
 	}
 	if payload.Link.Id < 1 {
 		errs["id"] = "not a valid identifier"
@@ -284,7 +284,7 @@ func LinkUpdateAPI(w http.ResponseWriter, r *http.Request) {
 			Error: &api.ResponseError{
 				Code:    "LNK:ERR:UPD",
 				Message: "Fail to update your request. Please check your data and try again.",
-				Reasons: map[string]string{"save_error": err.Error()},
+				Reasons: map[string]string{"update_error": err.Error()},
 				Details: make([]interface{}, 0),
 			},
 		})
@@ -329,7 +329,7 @@ func LinksRemoveAPI(w http.ResponseWriter, r *http.Request) {
 	sessionCsrf := sm.Get(r.Context(), "token")
 
 	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
-		//errs["session"] = "Not a valid request session!"
+		errs["session"] = "Not a valid request session!"
 	}
 	if payload.LinkId < 1 {
 		errs["id"] = "not a valid identifier"

@@ -16,6 +16,7 @@ type Hash string
 
 var (
 	validHashPattern = regexp.MustCompile("[a-zA-Z0-9]+")
+	validPINPattern = regexp.MustCompile("\\d{6}")
 )
 
 func (h Hash) Valid() bool {
@@ -32,8 +33,12 @@ func (h Hash) Value() string {
 
 type PIN string
 
+func (p PIN) Value() string {
+	return string(p)
+}
+
 func (p PIN) Valid() bool {
-	return len(p) == 6
+	return validPINPattern.MatchString(p.Value())
 }
 
 type Link struct {
@@ -178,7 +183,7 @@ func (l *linksManager) UpdateLink(ctx context.Context, link Link) error {
 			usage_limit = ?,
 			published = ?,
 			updated_at = NOW(),
-			disabled_at = ?
+			disabled_at = ?,
 			published_at = ?
 		WHERE id = ?`, tableLinks)
 	q = l.dbm.Rebind(ctx, q)
@@ -190,9 +195,9 @@ func (l *linksManager) UpdateLink(ctx context.Context, link Link) error {
 		publishedAt = "NOW()"
 	}
 	cmd, err2 := l.dbm.Exec(
-		ctx, "update_links",
+		ctx, q,
 		link.Hash, link.PIN, link.GroupId, link.Disabled, link.UsageLimit, link.Published,
-		disabledAt, publishedAt)
+		disabledAt, publishedAt, link.Id)
 	if err2 != nil {
 		return err2
 	}
