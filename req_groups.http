@@ -1,0 +1,30 @@
+GET http://localhost:3700/api/groups
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+###
+POST http://localhost:3700/api/groups/create
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "csrf": ""
+}
+
+###
+PUT http://localhost:3700/api/groups/update
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "csrf": ""
+}
+
+###
+DELETE http://localhost:3700/api/groups/remove
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "csrf": ""
+}

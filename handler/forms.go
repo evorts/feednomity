@@ -9,6 +9,47 @@ import (
 	"net/http"
 )
 
+func Form360(w http.ResponseWriter, r *http.Request) {
+	req := reqio.NewRequest(w, r).Prepare()
+	log := req.GetContext().Get("logger").(logger.IManager)
+	view := req.GetContext().Get("view").(template.IManager)
+	datasource := req.GetContext().Get("db").(database.IManager)
+
+	log.Log("forms360_handler", "request received")
+
+	var (
+		link      feedbacks.Link
+		err       error
+		query     = r.URL.Query()
+		linkHash  string
+	)
+	linkHash = query.Get("hash")
+	if len(linkHash) < 1 {
+		_ = view.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
+			"PageTitle": "Page Not Found",
+		})
+		return
+	}
+	linkDomain := feedbacks.NewLinksDomain(datasource)
+	link, err = linkDomain.FindByHash(req.GetContext().Value(), linkHash)
+	if err != nil {
+		/*_ = view.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
+			"PageTitle": "Page Not Found",
+		})*/
+		//return
+	}
+	_ = linkDomain.RecordLinkVisitor(
+		req.GetContext().Value(),
+		link, r.Header.Get("User-Agent"),
+		r.Referer(),
+	)
+	if err = view.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "client_form360.html", map[string]interface{}{
+		"PageTitle": "360 Review Form",
+	}); err != nil {
+		log.Log("form360_handler", err.Error())
+	}
+}
+
 func Forms(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
@@ -55,5 +96,4 @@ func Forms(w http.ResponseWriter, r *http.Request) {
 		log.Log("forms_handler", err.Error())
 	}
 }
-
 

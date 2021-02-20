@@ -1,0 +1,757 @@
+{{ template "layout_client" . }}
+{{ define "title" }} {{ .PageTitle }} {{ end }}
+{{ define "styles" }}
+    <link href="/assets/styles/form360.css" rel="stylesheet">
+{{ end }}
+{{ define "scripts" }}
+    <script type="module" src="/assets/scripts/form360.js"></script>
+{{ end }}
+{{ define "header"}}
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <div class="container">
+            <a class="navbar-brand navbar-brand flex-fill text-center text-lg-left pr-3 pr-sm-0" href="/">
+                <img src="/assets/images/onelabs-logo@2x.png" alt="Onelabs">
+            </a>
+        </div>
+    </nav>
+{{ end }}
+{{ define "content" }}
+    <div class="tabs is-boxed is-centered">
+        <ul>
+            <li class="is-active"><a>360 Review Form</a></li>
+            <li><a>Guideline and Sample</a></li>
+        </ul>
+    </div>
+    <div class="tab-contents">
+        <section class="tab-content form-section">
+            <form method="post">
+                <div class="container box is-max-desktop">
+                    <div class="columns">
+                        <div class="column">
+                            <div class="columns is-vcentered">
+                                <div class="column is-narrow" style="width: 11rem;"><strong>Employee Name:</strong>
+                                </div>
+                                <div class="column"><span class="is-size-5">Steven</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <div class="columns is-vcentered">
+                                <div class="column is-narrow" style="width: 11rem;">
+                                    <strong>Division/Department:</strong>
+                                </div>
+                                <div class="column"><span class="is-size-5">Architecture and Digital</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <div class="columns is-vcentered">
+                                <div class="column is-narrow" style="width: 11rem;"><strong>Role:</strong></div>
+                                <div class="column"><span class="is-size-5">Web Engineer</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <div class="columns is-vcentered">
+                                <div class="column is-narrow" style="width: 11rem;"><strong>Review Period:</strong>
+                                </div>
+                                <div class="column">
+                                    <div class="columns is-vcentered">
+                                        <div class="column is-narrow" style="width: 4rem;">From</div>
+                                        <div class="column is-narrow has-text-weight-bold" style="width: 11rem;"><span
+                                                    class="tag is-light is-medium">January 2021</span>
+                                        </div>
+                                        <div class="column is-narrow" style="width: 3rem;">To</div>
+                                        <div class="column is-narrow has-text-weight-bold" style="width: 11rem;"><span
+                                                    class="tag is-light is-medium">June 2021</span>
+                                        </div>
+                                        <div class="column"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="container box is-max-desktop">
+                    <div class="columns">
+                        <div class="column is-size-7 has-text-weight-bold" style="padding: 0 0.75rem;"><u>Rating
+                                Guide:</u></div>
+                    </div>
+                    <div class="columns is-size-7 has-text-weight-bold">
+                        <div class="column"><strong>1 = </strong> <span class="tag is-danger">Pretty Bad</span></div>
+                        <div class="column"><strong>2 = </strong> <span class="tag is-warning">Need Improvement</span>
+                        </div>
+                        <div class="column"><strong>3 = </strong> <span class="tag is-info">Meet Expectation</span>
+                        </div>
+                        <div class="column"><strong>4 = </strong> <span class="tag is-success">Outstanding</span></div>
+                        <div class="column"><strong>5 = </strong> <span class="tag is-primary">Excellent</span></div>
+                    </div>
+                </div>
+                <div class="container box is-max-desktop mt-5">
+                    <div class="table-container">
+                        <table class="table is-bordered is-hoverable is-fullwidth">
+                            <thead>
+                            <tr>
+                                <th rowspan="2" class="is-vcentered">No</th>
+                                <th rowspan="2" class="is-vcentered">Assessment Factor</th>
+                                <th rowspan="2" class="is-vcentered">Description</th>
+                                <th rowspan="2" class="is-vcentered">Weight (%)</th>
+                                <th colspan="5">Rating</th>
+                                <th rowspan="2" class="is-vcentered">Score</th>
+                                <th rowspan="2" class="is-vcentered">Remark</th>
+                            </tr>
+                            <tr>
+                                <th>1</th>
+                                <th>2</th>
+                                <th>3</th>
+                                <th>4</th>
+                                <th>5</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>PRODUCTIVITY</td>
+                                <td>
+                                    <p><u>Task completion</u><br/>Complete tasks on schedule or as promised, based on
+                                        priorities.</p>
+                                    <p>&nbsp;</p>
+                                    <p><u>Deliver more than what was expected</u></p>
+                                    <p>&nbsp;</p>
+                                    <p><u>Actively seek ways to improve product/project</u></p>
+                                </td>
+                                <td class="weight">30%</td>
+                                <td class="rating"><label><input type="radio" name="productivity" value="1"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="productivity" value="2"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="productivity" value="3"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="productivity" value="4"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="productivity" value="5"></label>
+                                </td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark productivity"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>QUALITY</td>
+                                <td>
+                                    <p><u>Deliver great quality of code</u><br/>including but not limited to reusable
+                                        code, unit test, test case and documentation.</p>
+                                    <p>&nbsp;</p>
+                                    <p><u>Producing less to no bug</u><br/>deliver less to no bugs -- as a result of a
+                                        excellent and maintainable code, testing or automation test</p>
+                                </td>
+                                <td class="weight">30%</td>
+                                <td class="rating"><label><input type="radio" name="quality" value="1"></label></td>
+                                <td class="rating"><label><input type="radio" name="quality" value="2"></label></td>
+                                <td class="rating"><label><input type="radio" name="quality" value="3"></label></td>
+                                <td class="rating"><label><input type="radio" name="quality" value="4"></label></td>
+                                <td class="rating"><label><input type="radio" name="quality" value="5"></label></td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark quality"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td rowspan="17">3</td>
+                                <td colspan="10">DEPENDABILITY</td>
+                            </tr>
+                            <tr>
+                                <td colspan="10">3A) LEADERSHIP</td>
+                            </tr>
+                            <tr>
+                                <td>Objective Driven / Sense of Ownership</td>
+                                <td><p>Sense of product/project ownership and put team/organisation goal above other
+                                        interest.</p></td>
+                                <td class="weight">5%</td>
+                                <td class="rating"><label><input type="radio" name="ownership" value="1"></label></td>
+                                <td class="rating"><label><input type="radio" name="ownership" value="2"></label></td>
+                                <td class="rating"><label><input type="radio" name="ownership" value="3"></label></td>
+                                <td class="rating"><label><input type="radio" name="ownership" value="4"></label></td>
+                                <td class="rating"><label><input type="radio" name="ownership" value="5"></label></td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark ownership"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Adaptability</td>
+                                <td><p>Anticipate, adapt, and adjust to changes.</p></td>
+                                <td class="weight">3%</td>
+                                <td class="rating"><label><input type="radio" name="adaptability" value="1"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="adaptability" value="2"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="adaptability" value="3"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="adaptability" value="4"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="adaptability" value="5"></label>
+                                </td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark adaptability"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Prioritization</td>
+                                <td><p>Have a good sense of work prioritization.</p></td>
+                                <td class="weight">3%</td>
+                                <td class="rating"><label><input type="radio" name="prioritization" value="1"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="prioritization" value="2"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="prioritization" value="3"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="prioritization" value="4"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="prioritization" value="5"></label>
+                                </td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark prioritization"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Attention to Details + Analyze + Problem Solving</td>
+                                <td><p>Have attention to details, and analyze the situation / challenges based on
+                                        acquired info / details.</p></td>
+                                <td class="weight">4%</td>
+                                <td class="rating"><label><input type="radio" name="solving" value="1"></label></td>
+                                <td class="rating"><label><input type="radio" name="solving" value="2"></label></td>
+                                <td class="rating"><label><input type="radio" name="solving" value="3"></label></td>
+                                <td class="rating"><label><input type="radio" name="solving" value="4"></label></td>
+                                <td class="rating"><label><input type="radio" name="solving" value="5"></label></td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark solving"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Independent</td>
+                                <td><p>Able to work by themself without help or influence of others, and high work
+                                        ethics even without supervision.</p></td>
+                                <td class="weight">3%</td>
+                                <td class="rating"><label><input type="radio" name="independent" value="1"></label></td>
+                                <td class="rating"><label><input type="radio" name="independent" value="2"></label></td>
+                                <td class="rating"><label><input type="radio" name="independent" value="3"></label></td>
+                                <td class="rating"><label><input type="radio" name="independent" value="4"></label></td>
+                                <td class="rating"><label><input type="radio" name="independent" value="5"></label></td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark independent"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="is-light"></td>
+                                <td>18%</td>
+                                <td colspan="5">Sub Total Score</td>
+                                <td>0.42</td>
+                                <td class="is-light"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="10">3B) COLLABORATION</td>
+                            </tr>
+                            <tr>
+                                <td>Communication and Coordination within and across Team</td>
+                                <td><p>Active in discussion whether within and across team.</p></td>
+                                <td class="weight">5%</td>
+                                <td class="rating"><label><input type="radio" name="communication" value="1"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="communication" value="2"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="communication" value="3"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="communication" value="4"></label>
+                                </td>
+                                <td class="rating"><label><input type="radio" name="communication" value="5"></label>
+                                </td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark communication"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Inspiring Member</td>
+                                <td><p>Enthusiastically motivates the team with positivity and create productive
+                                        environment.</p></td>
+                                <td class="weight">4%</td>
+                                <td class="rating"><label><input type="radio" name="inspiring" value="1"></label></td>
+                                <td class="rating"><label><input type="radio" name="inspiring" value="2"></label></td>
+                                <td class="rating"><label><input type="radio" name="inspiring" value="3"></label></td>
+                                <td class="rating"><label><input type="radio" name="inspiring" value="4"></label></td>
+                                <td class="rating"><label><input type="radio" name="inspiring" value="5"></label></td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark inspiring"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="is-light"></td>
+                                <td>9%</td>
+                                <td colspan="5">Sub Total Score</td>
+                                <td>0.27</td>
+                                <td class="is-light"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="10">3C) RESPONSIBILITY AND COMMITMENT</td>
+                            </tr>
+                            <tr>
+                                <td>Integrity + Discipline</td>
+                                <td><p>Own up to your mistake, be responsible, and be respectful to others.</p></td>
+                                <td class="weight">6%</td>
+                                <td class="rating"><label><input type="radio" name="integrity" value="1"></label></td>
+                                <td class="rating"><label><input type="radio" name="integrity" value="2"></label></td>
+                                <td class="rating"><label><input type="radio" name="integrity" value="3"></label></td>
+                                <td class="rating"><label><input type="radio" name="integrity" value="4"></label></td>
+                                <td class="rating"><label><input type="radio" name="integrity" value="5"></label></td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark integrity"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Giving + Receiving Feedback</td>
+                                <td><p>Able to give honest, constructive criticism and receive feedback as a motivation
+                                        for self-growth.</p></td>
+                                <td class="weight">3%</td>
+                                <td class="rating"><label><input type="radio" name="feedback" value="1"></label></td>
+                                <td class="rating"><label><input type="radio" name="feedback" value="2"></label></td>
+                                <td class="rating"><label><input type="radio" name="feedback" value="3"></label></td>
+                                <td class="rating"><label><input type="radio" name="feedback" value="4"></label></td>
+                                <td class="rating"><label><input type="radio" name="feedback" value="5"></label></td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark feedback"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Willingness to go Extra Mile</td>
+                                <td><p>Committed to their work and willingly take extra work when urgency arises.</p>
+                                </td>
+                                <td class="weight">4%</td>
+                                <td class="rating"><label><input type="radio" name="extra-mile" value="1"></label></td>
+                                <td class="rating"><label><input type="radio" name="extra-mile" value="2"></label></td>
+                                <td class="rating"><label><input type="radio" name="extra-mile" value="3"></label></td>
+                                <td class="rating"><label><input type="radio" name="extra-mile" value="4"></label></td>
+                                <td class="rating"><label><input type="radio" name="extra-mile" value="5"></label></td>
+                                <td class="score"></td>
+                                <td class="remark"><label style="width: 9rem;"><textarea
+                                                class="textarea is-shadowless remark extra-mile"
+                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="is-light"></td>
+                                <td>13%</td>
+                                <td colspan="5">Sub Total Score</td>
+                                <td>0.39</td>
+                                <td class="is-light"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3">TOTAL SCORE</td>
+                                <td>100%</td>
+                                <td colspan="5"></td>
+                                <td>2.58</td>
+                                <td>Meet Expectation</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="container box is-max-desktop mt-5">
+                    <div class="columns">
+                        <div class="column"><p class="title is-5">Strength points:</p></div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <p class="control has-icons-left">
+                                <input class="input strength-points is-fullwidth" type="text"
+                                       placeholder="Write strength points here...">
+                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                            </p>
+                            <p class="control has-icons-left mt-3">
+                                <input class="input strength-points is-fullwidth" type="text"
+                                       placeholder="Write strength points here...">
+                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                            </p>
+                            <p class="control has-icons-left mt-3">
+                                <input class="input strength-points is-fullwidth" type="text"
+                                       placeholder="Write strength points here...">
+                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                            </p>
+                            <p class="control has-icons-left mt-3">
+                                <input class="input strength-points is-fullwidth" type="text"
+                                       placeholder="Write strength points here...">
+                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                            </p>
+                            <p class="control has-icons-left mt-3">
+                                <input class="input strength-points is-fullwidth" type="text"
+                                       placeholder="Write strength points here...">
+                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="container box is-max-desktop mt-5">
+                    <div class="columns">
+                        <div class="column"><p class="title is-5">Improvement points:</p></div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <p class="control has-icons-left">
+                                <input class="input strength-points is-fullwidth" type="text"
+                                       placeholder="Write improvement points here...">
+                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                            </p>
+                            <p class="control has-icons-left mt-3">
+                                <input class="input strength-points is-fullwidth" type="text"
+                                       placeholder="Write improvement points here...">
+                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                            </p>
+                            <p class="control has-icons-left mt-3">
+                                <input class="input strength-points is-fullwidth" type="text"
+                                       placeholder="Write improvement points here...">
+                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                            </p>
+                            <p class="control has-icons-left mt-3">
+                                <input class="input strength-points is-fullwidth" type="text"
+                                       placeholder="Write improvement points here...">
+                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                            </p>
+                            <p class="control has-icons-left mt-3">
+                                <input class="input strength-points is-fullwidth" type="text"
+                                       placeholder="Write improvement points here...">
+                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="container box is-max-desktop mt-5">
+                    <div class="columns">
+                        <div class="columns">
+                            <div class="column">
+                                <input type="hidden" name="csrf" value="{{ .Csrf }}">
+                                <div class="field is-grouped">
+                                    <div class="control">
+                                        <button class="button is-link" type="submit">Submit Review</button>
+                                    </div>
+                                    <div class="control">
+                                        <button class="button is-link is-light">Save as Draft</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </section>
+        <section class="tab-content guideline-section">
+            <div class="container box is-max-desktop">
+                <table class="table is-bordered is-hoverable is-fullwidth">
+                    <thead>
+                    <tr>
+                        <th>NO</th>
+                        <th>Assessment Factor</th>
+                        <th>Rating Examples</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Productivity</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Deliver all of his/her own task on time</li>
+                                <li>Deliver more than what was expected (facilitate team)</li>
+                                <li>Actively seek ways to improve product/project</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Couldn't finish his/her commitment on time compared to his / her coworker on average. E.g. deliver 70% of his / her task while the other can finish all their task based on commitment</li>
+                                <li>Causes delays on other people's task for multiple times (blocker)</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>2 (Need Improvement)</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Quality</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Deliver crash free app at least 99.9%.</li>
+                                <li>Always write unit test on every use case and execute it to ensure everything works well.</li>
+                                <li>Ensuring design pattern are followed closely, as such library pattern, MVVM, etc.</li>
+                                <li>Always write clear comments inside the code.</li>
+                                <li>Always write documentation or update it as necessary.</li>
+                                <li>Always Striving for the best result.</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Production issue are more than 3, and one of it is critical, but not having the urgency or responsibility to fix it right away.</li>
+                                <li>The quality of code are just so-so, the person only ensure it looks like working, but actually less maintainable and sensitive to produce bugs</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>2 (Need Improvement)</strong></p>
+                            <p class="mt-3"><u>Person C trait:</u></p>
+                            <ul>
+                                <li>Production issue are less than 3 (as agreed on standard), and no critical issue.</li>
+                                <li>The quality of code are standard, just following the existing pattern, without motivation on how to improve or make it better.</li>
+                            </ul>
+                            <p>Giving him/her a rating of: <strong>3 (Meet Expectation)</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td rowspan="6">3A</td>
+                        <td colspan="2">LEADERSHIP</td>
+                    </tr>
+                    <tr>
+                        <td>Objective Driven / Sense of Ownership</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Actively seeking information, details, and updates about project and look for any chance of project improvement</li>
+                                <li>Initiatively help when something urgent happen even though its not his/her responsibility. e.g. offer help when there is a bug in production unrelated to his/her work</li>
+                                <li>Put away negative personal feeling for the sake of objective and goals. e.g. be patient, help de-escalate conflict</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Indifferent with project's status/updates</li>
+                                <li>Won't be bothered with something out of his/her responsibility</li>
+                                <li>Escalate a situation when a problem happen. e.g. flaming/blaming someone for their fault without helping.</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>2 (Need Improvement)</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Adaptability</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Anticipate changes that may cause a major issue. E.g. avoid rigid code</li>
+                                <li>Aware of changes to their surrounding. E.g. know about government's plan to change a regulation that may affect their project</li>
+                                <li>Make adjustment / improvements as an answer to the changes. E.g. When change happens, make adjustment to their task</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>3 (Meet Expectation)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Anticipate changes that may cause a major issue. E.g. avoid rigid code</li>
+                                <li>Aware of changes to their surrounding. E.g. know about government's plan to change a regulation that may affect their project</li>
+                                <li>Make adjustment / improvements as an answer to the changes fastly. E.g. When change happens, make adjustment to their task</li>
+                                <li>Strategically adjust his / her plan due to change on their environment / surroundings.</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Prioritization</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Prioritize tasks that may lead to major project issue / delay or causes delay to other people's task if not done as soon as possible</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>3 (Meet Expectation)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Prioritize tasks that may lead to major project delay or causes delay to other people's task if not done as soon as possible</li>
+                                <li>Set tight deadline of his / her routine tasks to anticipate / to have time for adHoc </li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Attention to Details + Analyze + Problem Solving</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Enrich his / her knowledge with information from others / by doing research</li>
+                                <li>Prevent bug / issue by checking their own work before submitting</li>
+                                <li>Dedicated in finding details to a problem and analyze what may cause it</li>
+                                <li>Provide a solution based on the details and analysis</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Clumsy</li>
+                                <li>Rely on other people to find the cause of a problem</li>
+                                <li>Provides analysis and solution using baseless assumptions</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>2 (Need Improvement)</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Independent</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Finish his / her work on their own</li>
+                                <li>Work seriously even without supervision</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>3 (Meet Expectation)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Finish his / her work on their own</li>
+                                <li>Lead themself to do tasks that have to be done, without anybody's order</li>
+                                <li>Work very hard and produce excellent result without anybody have to notice</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3">3B</td>
+                        <td>COLLABORATION</td>
+                    </tr>
+                    <tr>
+                        <td>Communication and Coordination within and across Team</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Bring up updates / information relevant to his / her team</li>
+                                <li>Proactively bring up matters that need to be discussed in the team</li>
+                                <li>Actively participate in team discussion</li>
+                                <li>Initiate team alignment for better collaboration</li>
+                                <li>De-escalate conflict or prevent conflict to happen</li>
+                                <li>Bring up updates / information relevant to other team</li>
+                                <li>Bring up matters that need to be discussed to other team</li>
+                                <li>Actively participate in discussion</li>
+                                <li>Initiate across-team alignment for better collaboration</li>
+                                <li>Build / bring good reputation to the team</li>
+                                <li>De-escalate conflict or prevent conflict to happen across team</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Silent in team discussion</li>
+                                <li>Keep his / her problem to themself, avoid team collaboration or alignment</li>
+                                <li>Keep information to his / herself even though it may help other team members</li>
+                                <li>Creates bad rumors / drama inside team</li>
+                                <li>Passive contribution in discussion</li>
+                                <li>Keep his / her problem to themself, avoid across-team collaboration or alignment</li>
+                                <li>Keep information to his / herself even though it may help others</li>
+                                <li>Creates bad rumors / drama across team</li>
+                                <li>Create bad reputation to the team</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>2 (Need Improvement)</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Inspiring Member</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Bring up everyone's mood by his / her presence</li>
+                                <li>Motivates people around him / her</li>
+                                <li>Positive thinking, positive attitude</li>
+                                <li>Inspire people to work hard</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Negative attitude. E.g. rude and disrespectful toward others</li>
+                                <li>Demotivates people around them, make them reluctant to work</li>
+                                <li>Promotes lazy work style</li>
+                                <li>Spreads hoax / negative gossip to people around them</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>2 (Need Improvement)</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td rowspan="4">3C</td>
+                        <td>RESPONSIBILITY AND COMMITMENT</td>
+                    </tr>
+                    <tr>
+                        <td>Integrity + Discipline</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Admit to his / her own mistake so others can help find solution / solve it</li>
+                                <li>Responsible to his / her own mistake</li>
+                                <li>Learn from mistakes and seek way / improvement to make sure the same mistake never repeat</li>
+                                <li>Punctual, never been late to a meeting without solid reason</li>
+                                <li>Responsible to his / her work and themself. E.g. follow deployment, administration, and documentation procedure</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Hide his / her mistake and blame others when the issue surface</li>
+                                <li>Doesn't learn from past mistake / keep making the same mistake</li>
+                                <li>Late most of the time. E.g. doesn't meet deadline, comes late to meetings</li>
+                                <li>Think his / her responsibility is just to finish their task without taking responsibility in the long run</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>2 (Need Improvement)</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Giving + Receiving Feedback</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Give honest, constructive criticism to others with intention to help them grow</li>
+                                <li>Give suggestion to others on how and why to improve</li>
+                                <li>Happily accept feedback, be open, and not being defensive about themself</li>
+                                <li>Self-reflect on what others say</li>
+                                <li>Spend effort to actually improve themself</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Give negative criticism for the sake to just critic the person</li>
+                                <li>Doesn't give honest feedback to others even though they may need it. E.g. doesn't confront his / her colleague's bad behavior</li>
+                                <li>Defensive, close-minded, and take feedback personally without intention of self-betterment</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>2 (Need Improvement)</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Willingness to go Extra Mile</td>
+                        <td>
+                            <p><u>Person A trait:</u></p>
+                            <ul>
+                                <li>Aim to do tasks better than the standard</li>
+                                <li>Willing to put in extra hours when needed. E.g. Stand by in deployment even though it's outside of working hours</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>4 (Outstanding)</strong></p>
+                            <p class="mt-3"><u>Person B trait:</u></p>
+                            <ul>
+                                <li>Finish tasks below standard</li>
+                                <li>Will not stand by or want to be bothered outside his / her work hours</li>
+                            </ul>
+                            <p class="mt-2">Giving him/her a rating of: <strong>2 (Need Improvement)</strong></p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <div>
+        <button class="button btn-float is-light btn-up-down">
+            <span class="icon is-large">
+                <i class="fas fa-caret-down fa-2x"></i>
+            </span>
+        </button>
+    </div>
+{{ end }}

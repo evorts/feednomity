@@ -70,6 +70,7 @@ type linksManager struct {
 type ILinks interface {
 	FindLinks(ctx context.Context, page, limit int) ([]Link, int, error)
 	FindByHash(ctx context.Context, hash string) (Link, error)
+	FindByGroupId(ctx context.Context, groupId int64) ([]Link, int, error)
 	SaveLinks(ctx context.Context, links []Link) error
 	UpdateLink(ctx context.Context, link Link) error
 	DisableLinksByIds(ctx context.Context, ids ...int64) error
@@ -137,6 +138,53 @@ func (l *linksManager) FindByHash(ctx context.Context, hash string) (link Link, 
 		FROM %s
 		WHERE hash = $1`, tableLinks)
 	err = l.dbm.QueryRowAndBind(ctx, q, []interface{}{hash}, &link)
+	return
+}
+
+func (l *linksManager) FindByGroupId(ctx context.Context, groupId int64) (links []Link, total int, err error) {
+	q := fmt.Sprintf(`SELECT count(id) FROM %s`, tableLinks)
+	var (
+		rows database.Rows
+	)
+	links = make([]Link, 0)
+	err = l.dbm.QueryRowAndBind(ctx, q, nil, &total)
+	if err != nil || total < 1 {
+		err = errors.Wrap(err, "It looks like the data is not exist")
+		return
+	}
+	q = fmt.Sprintf(`
+		SELECT 
+			id, hash, pin, group_id, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
+		FROM %s 
+		WHERE group_id = $1
+		ORDER BY id DESC`, tableLinks)
+	rows, err = l.dbm.Query(ctx, q, groupId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return links, total, nil
+		}
+		return
+	}
+	for rows.Next() {
+		var link Link
+		err = rows.Scan(
+			&link.Id,
+			&link.Hash,
+			&link.PIN,
+			&link.GroupId,
+			&link.Disabled,
+			&link.UsageLimit,
+			&link.Published,
+			&link.CreatedAt,
+			&link.UpdatedAt,
+			&link.DisabledAt,
+			&link.PublishedAt,
+		)
+		if err != nil {
+			return
+		}
+		links = append(links, link)
+	}
 	return
 }
 

@@ -1,0 +1,30 @@
+GET http://localhost:3700/api/audiences
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+###
+POST http://localhost:3700/api/audiences/create
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "csrf": ""
+}
+
+###
+PUT http://localhost:3700/api/audiences/update
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "csrf": ""
+}
+
+###
+DELETE http://localhost:3700/api/audiences/remove
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "csrf": ""
+}

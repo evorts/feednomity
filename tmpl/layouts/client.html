@@ -1,0 +1,45 @@
+{{ define "layout_client" }}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <!-- Primary Meta Tags -->
+        <meta content="noindex,nofollow" name="robots">
+        <title>{{template "title" .}}</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no,user-scalable=no">
+        <link rel="shortcut icon" href="{{ .FavIcon }}">
+
+        <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,600,700&amp;display=swap" rel="stylesheet">
+
+        <!-- CSS only -->
+        <link href="/assets/styles/main.min.css" rel="stylesheet">
+        <!--Fontawesome CDN-->
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+        <link rel="stylesheet" href="/assets/styles/bulma/bulma.min.css" >
+        {{ block "styles" . }} {{ end }}
+        {{ block "scripts" . }} {{ end }}
+    </head>
+    <body>
+    <section id="tools" class="hide">
+        <div class="modal-dialog">
+
+        </div>
+    </section>
+    <header>
+        {{ template "header" }}
+    </header>
+    <section class="pt-6" id="content" style="margin-bottom: 100px">
+        {{template "content" .}}
+    </section>
+    <footer>
+        <div class="bg-dark">
+            <div class="col-12 text-center text-white p-3">
+{{/*                <div class="fs-12 copyright">© {{ .CopyrightYear }} {{ .LogoAlt }} • All rights reserved</div>*/}}
+            </div>
+        </div>
+    </footer>
+    {{ block "body_scripts" . }} {{ end }}
+    </body>
+    </html>
+{{ end }}

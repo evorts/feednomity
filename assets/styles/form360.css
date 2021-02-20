@@ -1,0 +1,22 @@
+header {
+    margin-top: -2rem;
+}
+
+.tab-contents .tabs:not(:last-child) {
+    margin-bottom: 0;
+}
+
+.tab-contents .tab-content {
+    padding: 1rem;
+    display: none;
+}
+
+.tab-contents .tab-content.is-active {
+    display: block;
+}
+
+.btn-float{
+    position:fixed;
+    bottom:40px;
+    right:40px;
+}

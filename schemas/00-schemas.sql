@@ -104,6 +104,46 @@ create table questions
     disabled_at timestamp
 );
 
+/* for page based on template */
+create table  pages
+(
+    id serial primary key,
+    name varchar(50),
+    template varchar(250),
+    /* format:
+        {
+            "name": "",
+            "validation": []
+        }
+     */
+    validations jsonb default '[]'
+);
+
+/* for dynamic forms scaffolding */
+create table forms
+(
+    id serial primary key,
+    template varchar(250), -- path of the template
+    /* format:
+       {
+            "type": "text|checklist|dropdown|choice",
+            "name": "",
+            "attributes": [],
+            "values": "",
+            "default": "",
+            "validation": ["notEmpty", "r'regex-pattern"],
+            "mandatory": true
+       }
+     */
+    forms jsonb default '[]', -- scaffolding dynamic form
+    group_id integer
+        constraint pages_group_id references groups(id),
+    disabled boolean default false,
+    created_at timestamp,
+    updated_at timestamp,
+    disabled_at timestamp
+);
+
 create table links
 (
     id           serial primary key,

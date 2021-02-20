@@ -367,3 +367,69 @@ func LinksRemoveAPI(w http.ResponseWriter, r *http.Request) {
 		Content: make(map[string]interface{}, 0),
 	})
 }
+
+func LinksBlastAPI(w http.ResponseWriter, r *http.Request) {
+	req := reqio.NewRequest(w, r).Prepare()
+	log := req.GetContext().Get("logger").(logger.IManager)
+	view := req.GetContext().Get("view").(template.IManager)
+
+	log.Log("links_blast_api_handler", "request received")
+
+	var payload struct {
+		Csrf    string `json:"csrf"`
+		GroupId int64  `json:"group_id"`
+	}
+
+	err := req.UnmarshallBody(&payload)
+	if err != nil {
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LNK:ERR:BND",
+				Message: "Bad Request! Something wrong with the payload of your request.",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	// let's do validation
+	errs := make(map[string]string, 0)
+	// csrf check
+	sm := req.GetContext().Get("sm").(session.IManager)
+	sessionCsrf := sm.Get(r.Context(), "token")
+	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
+		errs["session"] = "Not a valid request session!"
+	}
+	if payload.GroupId < 1 {
+		errs["session"] = "Not a valid group id"
+	}
+
+	datasource := req.GetContext().Get("db").(database.IManager)
+	linkDomain := feedbacks.NewLinksDomain(datasource)
+
+	links, total, err := linkDomain.FindByGroupId(req.GetContext().Value(), payload.GroupId)
+	if err != nil {
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LNK:ERR:FND",
+				Message: "Bad Request! Some problems occurred when searching the data.",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	// @todo: doing email blast here
+	_ = view.RenderJson(w, http.StatusOK, api.Response{
+		Status: http.StatusOK,
+		Content: map[string]interface{}{
+			"total": total,
+			"links": links,
+		},
+		Error: nil,
+	})
+}

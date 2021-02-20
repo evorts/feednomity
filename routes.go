@@ -30,10 +30,11 @@ func routes(o *http.ServeMux, cmd *commands) {
 		{
 			Pattern: "/",
 			Handler: middleware.WithInjection(
-				http.HandlerFunc(handler.Forms),
+				http.HandlerFunc(handler.Form360),
 				map[string]interface{}{
 					"logger": cmd.logger,
 					"view":   cmd.view,
+					"db":     cmd.db,
 				},
 			),
 			AdminOnly: false,
@@ -319,6 +320,29 @@ func routesLink(cmd *commands) []reqio.Route {
 							"sm":     cmd.session,
 							"hash":   cmd.hash,
 							"db":     cmd.db,
+						},
+					),
+				),
+			),
+			AdminOnly: true,
+		},
+		{
+			Pattern: "/api/links/blast",
+			Handler: middleware.WithCors(
+				cmd.config.GetConfig().App.Cors.AllowedMethods,
+				cmd.config.GetConfig().App.Cors.AllowedOrigins,
+				middleware.WithMethodFilter(
+					http.MethodPost,
+					middleware.WithInjection(
+						http.HandlerFunc(handler.LinksBlastAPI),
+						map[string]interface{}{
+							"logger": cmd.logger,
+							"view":   cmd.view,
+							"sm":     cmd.session,
+							"hash":   cmd.hash,
+							"db":     cmd.db,
+							"aes":    cmd.aes,
+							"cfg":    cmd.config,
 						},
 					),
 				),
