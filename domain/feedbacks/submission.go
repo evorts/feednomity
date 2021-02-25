@@ -3,7 +3,6 @@ package feedbacks
 import (
 	"context"
 	"github.com/evorts/feednomity/pkg/database"
-	"time"
 )
 
 type MarkAsType string
@@ -11,31 +10,6 @@ type MarkAsType string
 const (
 	MarkedAsFavorite MarkAsType = "favorite"
 )
-
-type Submission struct {
-	Id             int64
-	Hash           string
-	QuestionId     int64
-	QuestionNumber int
-	Question       string
-	GroupId        int64
-	GroupTitle     string
-	InvitationType InvitationType
-	Expect         QuestionType
-	Options        []string
-	AnswerChoice   int
-	AnswerEssay    string
-	MarkedAs       []MarkAsType
-	CreatedAt      *time.Time
-	UpdatedAt      *time.Time
-}
-
-type SubmissionAudience struct {
-	Id int64
-	SubmissionGroupId int64
-	AudienceTitle string
-	Audiences []string
-}
 
 type submissionManager struct {
 	dbm database.IManager

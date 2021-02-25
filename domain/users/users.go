@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/pkg/errors"
@@ -13,12 +14,11 @@ type manager struct {
 
 type IUsers interface {
 	FindByUsername(ctx context.Context, username string) (*User, error)
+	FindAll(ctx context.Context, page, limit int) (u []*User, total int, err error)
 }
 
 const (
 	tableUsers      = "users"
-	tableUserAccess = "user_access"
-	tableRoleAccess = "role_access"
 )
 
 func NewUserDomain(dbm database.IManager) IUsers {
@@ -28,11 +28,61 @@ func NewUserDomain(dbm database.IManager) IUsers {
 func (m *manager) FindByUsername(ctx context.Context, username string) (*User, error) {
 	var user User
 	err := m.dbm.QueryRowAndBind(ctx, fmt.Sprintf(`
-		SELECT * FROM %s WHERE username = $1
+		SELECT 
+			id, username, display_name, email, phone, password, role, group_id,
+			created_at, updated_at 
+		FROM %s WHERE username = $1
 	`, tableUsers), []interface{}{username}, &user)
 
 	if err != nil {
 		return nil, errors.WithMessage(err, "fail to query user")
 	}
 	return &user, nil
+}
+
+func (m *manager) FindAll(ctx context.Context, page, limit int) (u []*User, total int, err error) {
+	var (
+		rows database.Rows
+	)
+	q := fmt.Sprintf(`SELECT count(id) FROM %s`, tableUsers)
+	u = make([]*User, 0)
+	err = m.dbm.QueryRowAndBind(ctx, q, nil, &total)
+	if err != nil || total < 1 {
+		err = errors.Wrap(err, "It looks like the data is not exist")
+		return
+	}
+	rows, err = m.dbm.Query(
+		ctx, fmt.Sprintf(
+			`SELECT 
+						id, username, display_name, email, phone, password, role, group_id,
+						created_at, updated_at
+					FROM %s LIMIT %d OFFSET %d`,
+			tableUsers, limit, (page-1)*limit), nil,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return u, total, nil
+		}
+		return
+	}
+	for rows.Next() {
+		var ui User
+		err = rows.Scan(
+			&ui.Id,
+			&ui.Username,
+			&ui.DisplayName,
+			&ui.Email,
+			&ui.Phone,
+			&ui.Password,
+			&ui.Role,
+			&ui.GroupId,
+			&ui.CreatedDate,
+			&ui.UpdatedDate,
+		)
+		if err != nil {
+			return
+		}
+		u = append(u, &ui)
+	}
+	return
 }

@@ -139,7 +139,7 @@ func routes(o *http.ServeMux, cmd *commands) {
 			AdminOnly: true,
 		},
 	}
-	routing = append(routing, routesAudience(cmd)...)
+	routing = append(routing, routesObjects(cmd)...)
 	routing = append(routing, routesLink(cmd)...)
 	routing = append(routing, routesGroups(cmd)...)
 	routing = append(routing, routesQuestions(cmd)...)
@@ -147,17 +147,17 @@ func routes(o *http.ServeMux, cmd *commands) {
 	reqio.NewRoutes(routing).ExecRoutes(o)
 }
 
-func routesAudience(cmd *commands) []reqio.Route {
+func routesObjects(cmd *commands) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/api/audiences",
+			Pattern: "/api/objects/list",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodGet,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.AudiencesAPI),
+						http.HandlerFunc(handler.ObjectListAPI),
 						map[string]interface{}{
 							"logger": cmd.logger,
 							"view":   cmd.view,
@@ -171,14 +171,14 @@ func routesAudience(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/audiences/create",
+			Pattern: "/api/objects/create",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodPost,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.AudiencesCreateAPI),
+						http.HandlerFunc(handler.ObjectsCreateAPI),
 						map[string]interface{}{
 							"logger": cmd.logger,
 							"view":   cmd.view,
@@ -192,14 +192,14 @@ func routesAudience(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/audiences/update",
+			Pattern: "/api/objects/update",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodPut,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.AudienceUpdateAPI),
+						http.HandlerFunc(handler.ObjectUpdateAPI),
 						map[string]interface{}{
 							"logger": cmd.logger,
 							"view":   cmd.view,
@@ -213,14 +213,14 @@ func routesAudience(cmd *commands) []reqio.Route {
 			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/audiences/remove",
+			Pattern: "/api/objects/remove",
 			Handler: middleware.WithCors(
 				cmd.config.GetConfig().App.Cors.AllowedMethods,
 				cmd.config.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodDelete,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.AudiencesRemoveAPI),
+						http.HandlerFunc(handler.ObjectsRemoveAPI),
 						map[string]interface{}{
 							"logger": cmd.logger,
 							"view":   cmd.view,

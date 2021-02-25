@@ -5,6 +5,7 @@ import (
 	errs "errors"
 	"fmt"
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
@@ -28,6 +29,7 @@ type TxOptions pgx.TxOptions
 type CommandTag pgconn.CommandTag
 type Rows pgx.Rows
 type Row pgx.Row
+type TypeInt4Array pgtype.Int4Array
 
 type IManager interface {
 	Rebind(ctx context.Context, sql string) string

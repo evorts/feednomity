@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/evorts/feednomity/domain/users"
+	"github.com/evorts/feednomity/pkg/acl"
 	"github.com/evorts/feednomity/pkg/config"
 	"github.com/evorts/feednomity/pkg/crypt"
 	"github.com/evorts/feednomity/pkg/database"
@@ -16,10 +18,11 @@ import (
 
 type commands struct {
 	db      database.IManager
+	acl     acl.IManager
 	logger  logger.IManager
 	config  config.IManager
 	session session.IManager
-	aes   crypt.ICryptAES
+	aes     crypt.ICryptAES
 	hash    crypt.ICryptHash
 	view    template.IManager
 }
@@ -46,12 +49,17 @@ func main() {
 	ds.MustConnect(context.Background())
 	defer func() {
 		_ = ds.Close(context.Background())
-	}()              
+	}()
+	accessControl := acl.NewACLManager(users.NewUserDomain(ds), users.NewUserAccessDomain(ds))
+	if err2 := accessControl.Populate(); err2 != nil {
+		logging.Fatal("error initialize access control")
+		return
+	}
 	sm := session.NewSession(
 		cfg.GetConfig().App.SessionExpiration,
 		time.Duration(30),
 		session.Cookie{
-			Name:     "feednonimid",
+			Name:     "feednomid",
 			Domain:   cfg.GetConfig().App.CookieDomain,
 			HttpOnly: false,
 			Path:     "/",
@@ -68,7 +76,7 @@ func main() {
 	}).LoadTemplates()
 	o := http.NewServeMux()
 	routes(o, &commands{
-		ds, logging, cfg, sm,
+		ds, accessControl,logging, cfg, sm,
 		aesCryptic, crypt.NewHashEncryption(cfg.GetConfig().App.HashSalt), tm,
 	})
 	logging.Log("started", "Dashboard app started.")

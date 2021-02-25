@@ -40,51 +40,150 @@ $$
     END
 $$;
 
-create table recipients
+/** purpose: recipients are the list of persons/employees that possibly giving feedbacks **/
+create table objects
 (
-    id          serial primary key,
-    name        varchar(100),
-    attributes  jsonb default '{}',
-    emails      varchar(100)[],
-    phones      varchar(20)[],
-    disabled    bool  default false,
-    created_at  timestamp,
-    updated_at  timestamp,
-    disabled_at timestamp
+    id            serial primary key,
+    name          varchar(100),
+    attributes    jsonb default '{}',
+    email         varchar(100),
+    phone         varchar(20),
+    role          varchar(30),
+    assignment    varchar(50),
+    user_group_id int,
+    disabled      bool  default false,
+    archived      bool  default false,
+    created_at    timestamp,
+    updated_at    timestamp,
+    disabled_at   timestamp,
+    archived_at   timestamp
 );
 
-create unique index recipients_name_unique on recipients (name);
+create unique index idx_recipients_name_user_id_unique on objects (name, user_group_id);
 
-create table audience
+create table distributions
 (
-    id          serial primary key,
-    title       varchar(50),
-    emails      varchar(100)[],
-    disabled    bool default false,
-    created_at  timestamp,
-    updated_at  timestamp,
-    disabled_at timestamp
+    id                 serial primary key,
+    topic              varchar(100),
+    disabled           bool default false,
+    distributed        bool,
+    distribution_limit int, /** max limit distribution **/
+    distribution_count int, /** how many times its distributed **/
+    created_at         timestamp,
+    updated_at         timestamp,
+    disabled_at        timestamp,
+    distributed_at     timestamp
 );
 
-create unique index audience_title_unique on audience (title);
+create type distribution_object_status as enum ('none', 'sent', 'failed');
 
-create type invitation_type as enum ('multi-link','single-link');
-
-create table groups
+create table distribution_objects
 (
-    id              serial primary key,
-    title           varchar(50),
-    invitation_type invitation_type,
-    audiences       integer[], /** audience collection **/
-    disabled        boolean default false,
-    published       boolean,
-    created_at      timestamp,
-    updated_at      timestamp,
-    disabled_at     timestamp,
-    published_at    timestamp
+    id                serial primary key,
+    distribution_id   int
+        constraint distribution_recipients_distributions_id references distributions (id),
+    recipient_id      int
+        constraint distribution_recipients_recipient_id_recipients_id references objects (id),
+    respondent_ids    int[], /** fk to objects as well **/
+    publishing_status distribution_object_status default 'none', /** when its published -- sent to respondent **/
+    publishing_log    jsonb                      default '[]',
+    created_at        timestamp,
+    published_at      timestamp
 );
 
-create unique index groups_title_unique on groups (title);
+create table distribution_log
+(
+    id                     bigserial primary key,
+    distribution_id        int
+        constraint log_distributions_id references distributions (id),
+    distribution_object_id int   default null, /** intentionally not constraint with its table **/
+    action                 varchar(50),
+    values                 jsonb default '{}',
+    values_prev            jsonb default '{}',
+    notes                  varchar(100),
+    at                     timestamp
+);
+
+create table links
+(
+    id           serial primary key,
+    object_id    int, /** distribution object id **/
+    hash         varchar(512),
+    pin          varchar(10),
+    disabled     boolean default false,
+    published    bool,
+    usage_limit  integer default 0,
+    created_at   timestamp,
+    updated_at   timestamp,
+    disabled_at  timestamp,
+    published_at timestamp
+);
+
+create
+    unique index links_hash_unique on links (hash);
+
+create table link_visits
+(
+    id      serial primary key,
+    link_id integer,
+    at      timestamp,
+    agent   text,
+    ref     jsonb default '{}'
+);
+
+/**
+  draft => recipient already submit their feedback but still in draft
+  final => recipient already finalize their submission -- cannot be change
+ */
+create type feedback_status as enum ('draft', 'final');
+
+create table feedbacks
+(
+    id                     serial primary key,
+    distribution_id        int,
+    distribution_object_id int,
+    distribution_topic     varchar(100),
+    user_group_id          int,
+    user_group_name        varchar(50),
+    user_id                int,
+    user_name              varchar(25),
+    user_display_name      varchar(50),
+    disabled               bool,
+    created_at             timestamp,
+    updated_at             timestamp,
+    disabled_at            timestamp
+);
+
+create table feedback_detail
+(
+    id               bigserial primary key,
+    feedback_id      int
+        constraint feedback_detail_feedbacks_id references feedbacks (id),
+    link_id          int,
+    hash             varchar(128),
+    respondent_id    int,
+    respondent_name  varchar(100),
+    respondent_email varchar(100),
+    recipient_id     int,
+    recipient_name   varchar(100),
+    recipient_email  varchar(100),
+    content          jsonb default '{}',
+    status           feedback_status,
+    created_at       timestamp,
+    updated_at       timestamp
+);
+
+create table feedback_log
+(
+    id          bigserial primary key,
+    feedback_id int
+        constraint feedback_log_feedbacks_id references feedbacks (id),
+    action      varchar(50),
+    values      jsonb default '{}',
+    values_prev jsonb default '{}',
+    notes       text,
+    at          timestamp
+);
 
 create type question_type as enum ('essay','choice');
 
@@ -95,8 +194,6 @@ create table questions
     question    varchar(500),
     expect      question_type,
     options     varchar(150)[],
-    group_id    integer
-        constraint questions_groups_id references groups (id),
     mandatory   bool,
     disabled    boolean default false,
     created_at  timestamp,
@@ -105,11 +202,11 @@ create table questions
 );
 
 /* for page based on template */
-create table  pages
+create table pages
 (
-    id serial primary key,
-    name varchar(50),
-    template varchar(250),
+    id          serial primary key,
+    name        varchar(50),
+    template    varchar(250),
     /* format:
         {
             "name": "",
@@ -122,8 +219,8 @@ create table  pages
 /* for dynamic forms scaffolding */
 create table forms
 (
-    id serial primary key,
-    template varchar(250), -- path of the template
+    id          serial primary key,
+    template    varchar(250),         -- path of the template
     /* format:
        {
             "type": "text|checklist|dropdown|choice",
@@ -135,40 +232,11 @@ create table forms
             "mandatory": true
        }
      */
-    forms jsonb default '[]', -- scaffolding dynamic form
-    group_id integer
-        constraint pages_group_id references groups(id),
-    disabled boolean default false,
-    created_at timestamp,
-    updated_at timestamp,
+    forms       jsonb   default '[]', -- scaffolding dynamic form
+    disabled    boolean default false,
+    created_at  timestamp,
+    updated_at  timestamp,
     disabled_at timestamp
-);
-
-create table links
-(
-    id           serial primary key,
-    hash         varchar(512),
-    pin          varchar(10),
-    group_id     integer
-        constraint links_group_id references groups (id),
-    disabled     boolean default false,
-    published    bool,
-    usage_limit  integer default 0,
-    created_at   timestamp,
-    updated_at   timestamp,
-    disabled_at  timestamp,
-    published_at timestamp
-);
-
-create unique index links_hash_unique on links (hash);
-
-create table link_visits
-(
-    id      serial primary key,
-    link_id integer,
-    at      timestamp,
-    agent   text,
-    ref     jsonb default '{}'
 );
 
 create type mark_as_type as enum ('favorite');
@@ -182,7 +250,6 @@ create table submission
     question        varchar(500),
     group_id        integer,
     group_title     varchar(100),
-    invitation_type invitation_type,
     expect          question_type,
     options         jsonb default '[]',
     answer_choice   smallint,
@@ -192,7 +259,8 @@ create table submission
     updated_at      timestamp
 );
 
-create index on submission (hash);
+create
+    index on submission (hash);
 
 create table submission_audience
 (
@@ -204,7 +272,18 @@ create table submission_audience
 
 
 /** for admin dashboard **/
-create type user_role as enum ('sysadmin','admin','member','invitation','custom');
+/** could be utilise as company **/
+create table users_group
+(
+    id          serial primary key,
+    name        varchar(40) unique,
+    disabled    bool,
+    created_at  timestamp,
+    updated_at  timestamp,
+    disabled_at timestamp
+);
+
+create type user_role as enum ('sysadmin','site-admin','admin','supervisor','member','guest','custom');
 
 create table users
 (
@@ -215,31 +294,44 @@ create table users
     phone        varchar(15),
     password     varchar(128),
     role         user_role,
-    created_date timestamp,
-    updated_date timestamp
+    group_id     int
+        constraint users_group_id references users_group (id),
+    created_at   timestamp,
+    updated_at   timestamp
 );
 
-create type scope as enum ('custom', 'all');
-create type access_level as enum ('ro','wo','rw');
-create type request_method as enum ('get', 'post', 'put', 'delete', 'head', 'options');
+/** as audit log trail **/
+create table user_activities
+(
+    id          bigserial primary key,
+    user_id     int
+        constraint activities_users_id references users (id),
+    action      varchar(50),
+    values      jsonb default '{}',
+    values_prev jsonb default '{}',
+    notes       varchar(100),
+    at          timestamp
+);
+
+create type access_level as enum ('get', 'post', 'put', 'delete', 'head', 'options');
 
 create table role_access
 (
     id             serial primary key,
     role           user_role,
-    path           varchar(255),
-    method_allowed request_method[],
-    disabled       boolean default true,
-    access_level   access_level
+    path           varchar(100), /** should consistent pattern such as <module>.<method> **/
+    access_allowed access_level[],
+    disabled       boolean default true
 );
 
 create table user_access
 (
-    id             serial primary key,
-    user_id        integer,
-    scope          scope   default 'custom',
-    path           varchar(255),
-    method_allowed request_method[],
-    access_level   access_level,
-    disabled       boolean default false
+    id                serial primary key,
+    user_id           integer,
+    path              varchar(100), /** should consistent pattern such as <module>.<method> **/
+    access_allowed    access_level[],
+    access_disallowed access_level[],
+    disabled          boolean default false
 );
+
+create unique index idx_user_access_id_path ON user_access (user_id, path);
