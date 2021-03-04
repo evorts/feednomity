@@ -3,7 +3,7 @@
 {{ define "styles" }}
     <link href="/assets/styles/form360.css" rel="stylesheet">
 {{ end }}
-{{ define "scripts" }}
+{{ define "body_scripts" }}
     <script type="module" src="/assets/scripts/form360.js"></script>
 {{ end }}
 {{ define "header"}}
@@ -25,7 +25,7 @@
     <div class="tab-contents">
         <section class="tab-content form-section">
             <form method="post">
-                <div class="container box is-max-desktop">
+                <div class="container box is-widescreen">
                     <div class="columns">
                         <div class="column">
                             <div class="columns is-vcentered">
@@ -75,7 +75,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="container box is-max-desktop">
+                <div class="container box is-widescreen">
                     <div class="columns">
                         <div class="column is-size-7 has-text-weight-bold" style="padding: 0 0.75rem;"><u>Rating
                                 Guide:</u></div>
@@ -90,7 +90,7 @@
                         <div class="column"><strong>5 = </strong> <span class="tag is-primary">Excellent</span></div>
                     </div>
                 </div>
-                <div class="container box is-max-desktop mt-5">
+                <div class="container box is-widescreen mt-5">
                     <div class="table-container">
                         <table class="table is-bordered is-hoverable is-fullwidth">
                             <thead>
@@ -112,273 +112,74 @@
                             </tr>
                             </thead>
                             <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>PRODUCTIVITY</td>
-                                <td>
-                                    <p><u>Task completion</u><br/>Complete tasks on schedule or as promised, based on
-                                        priorities.</p>
-                                    <p>&nbsp;</p>
-                                    <p><u>Deliver more than what was expected</u></p>
-                                    <p>&nbsp;</p>
-                                    <p><u>Actively seek ways to improve product/project</u></p>
-                                </td>
-                                <td class="weight">30%</td>
-                                <td class="rating"><label><input type="radio" name="productivity" value="1"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="productivity" value="2"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="productivity" value="3"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="productivity" value="4"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="productivity" value="5"></label>
-                                </td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark productivity"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>QUALITY</td>
-                                <td>
-                                    <p><u>Deliver great quality of code</u><br/>including but not limited to reusable
-                                        code, unit test, test case and documentation.</p>
-                                    <p>&nbsp;</p>
-                                    <p><u>Producing less to no bug</u><br/>deliver less to no bugs -- as a result of a
-                                        excellent and maintainable code, testing or automation test</p>
-                                </td>
-                                <td class="weight">30%</td>
-                                <td class="rating"><label><input type="radio" name="quality" value="1"></label></td>
-                                <td class="rating"><label><input type="radio" name="quality" value="2"></label></td>
-                                <td class="rating"><label><input type="radio" name="quality" value="3"></label></td>
-                                <td class="rating"><label><input type="radio" name="quality" value="4"></label></td>
-                                <td class="rating"><label><input type="radio" name="quality" value="5"></label></td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark quality"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td rowspan="17">3</td>
-                                <td colspan="10">DEPENDABILITY</td>
-                            </tr>
-                            <tr>
-                                <td colspan="10">3A) LEADERSHIP</td>
-                            </tr>
-                            <tr>
-                                <td>Objective Driven / Sense of Ownership</td>
-                                <td><p>Sense of product/project ownership and put team/organisation goal above other
-                                        interest.</p></td>
-                                <td class="weight">5%</td>
-                                <td class="rating"><label><input type="radio" name="ownership" value="1"></label></td>
-                                <td class="rating"><label><input type="radio" name="ownership" value="2"></label></td>
-                                <td class="rating"><label><input type="radio" name="ownership" value="3"></label></td>
-                                <td class="rating"><label><input type="radio" name="ownership" value="4"></label></td>
-                                <td class="rating"><label><input type="radio" name="ownership" value="5"></label></td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark ownership"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Adaptability</td>
-                                <td><p>Anticipate, adapt, and adjust to changes.</p></td>
-                                <td class="weight">3%</td>
-                                <td class="rating"><label><input type="radio" name="adaptability" value="1"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="adaptability" value="2"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="adaptability" value="3"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="adaptability" value="4"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="adaptability" value="5"></label>
-                                </td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark adaptability"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Prioritization</td>
-                                <td><p>Have a good sense of work prioritization.</p></td>
-                                <td class="weight">3%</td>
-                                <td class="rating"><label><input type="radio" name="prioritization" value="1"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="prioritization" value="2"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="prioritization" value="3"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="prioritization" value="4"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="prioritization" value="5"></label>
-                                </td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark prioritization"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Attention to Details + Analyze + Problem Solving</td>
-                                <td><p>Have attention to details, and analyze the situation / challenges based on
-                                        acquired info / details.</p></td>
-                                <td class="weight">4%</td>
-                                <td class="rating"><label><input type="radio" name="solving" value="1"></label></td>
-                                <td class="rating"><label><input type="radio" name="solving" value="2"></label></td>
-                                <td class="rating"><label><input type="radio" name="solving" value="3"></label></td>
-                                <td class="rating"><label><input type="radio" name="solving" value="4"></label></td>
-                                <td class="rating"><label><input type="radio" name="solving" value="5"></label></td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark solving"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Independent</td>
-                                <td><p>Able to work by themself without help or influence of others, and high work
-                                        ethics even without supervision.</p></td>
-                                <td class="weight">3%</td>
-                                <td class="rating"><label><input type="radio" name="independent" value="1"></label></td>
-                                <td class="rating"><label><input type="radio" name="independent" value="2"></label></td>
-                                <td class="rating"><label><input type="radio" name="independent" value="3"></label></td>
-                                <td class="rating"><label><input type="radio" name="independent" value="4"></label></td>
-                                <td class="rating"><label><input type="radio" name="independent" value="5"></label></td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark independent"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" class="is-light"></td>
-                                <td>18%</td>
-                                <td colspan="5">Sub Total Score</td>
-                                <td>0.42</td>
-                                <td class="is-light"></td>
-                            </tr>
-                            <tr>
-                                <td colspan="10">3B) COLLABORATION</td>
-                            </tr>
-                            <tr>
-                                <td>Communication and Coordination within and across Team</td>
-                                <td><p>Active in discussion whether within and across team.</p></td>
-                                <td class="weight">5%</td>
-                                <td class="rating"><label><input type="radio" name="communication" value="1"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="communication" value="2"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="communication" value="3"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="communication" value="4"></label>
-                                </td>
-                                <td class="rating"><label><input type="radio" name="communication" value="5"></label>
-                                </td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark communication"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Inspiring Member</td>
-                                <td><p>Enthusiastically motivates the team with positivity and create productive
-                                        environment.</p></td>
-                                <td class="weight">4%</td>
-                                <td class="rating"><label><input type="radio" name="inspiring" value="1"></label></td>
-                                <td class="rating"><label><input type="radio" name="inspiring" value="2"></label></td>
-                                <td class="rating"><label><input type="radio" name="inspiring" value="3"></label></td>
-                                <td class="rating"><label><input type="radio" name="inspiring" value="4"></label></td>
-                                <td class="rating"><label><input type="radio" name="inspiring" value="5"></label></td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark inspiring"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" class="is-light"></td>
-                                <td>9%</td>
-                                <td colspan="5">Sub Total Score</td>
-                                <td>0.27</td>
-                                <td class="is-light"></td>
-                            </tr>
-                            <tr>
-                                <td colspan="10">3C) RESPONSIBILITY AND COMMITMENT</td>
-                            </tr>
-                            <tr>
-                                <td>Integrity + Discipline</td>
-                                <td><p>Own up to your mistake, be responsible, and be respectful to others.</p></td>
-                                <td class="weight">6%</td>
-                                <td class="rating"><label><input type="radio" name="integrity" value="1"></label></td>
-                                <td class="rating"><label><input type="radio" name="integrity" value="2"></label></td>
-                                <td class="rating"><label><input type="radio" name="integrity" value="3"></label></td>
-                                <td class="rating"><label><input type="radio" name="integrity" value="4"></label></td>
-                                <td class="rating"><label><input type="radio" name="integrity" value="5"></label></td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark integrity"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Giving + Receiving Feedback</td>
-                                <td><p>Able to give honest, constructive criticism and receive feedback as a motivation
-                                        for self-growth.</p></td>
-                                <td class="weight">3%</td>
-                                <td class="rating"><label><input type="radio" name="feedback" value="1"></label></td>
-                                <td class="rating"><label><input type="radio" name="feedback" value="2"></label></td>
-                                <td class="rating"><label><input type="radio" name="feedback" value="3"></label></td>
-                                <td class="rating"><label><input type="radio" name="feedback" value="4"></label></td>
-                                <td class="rating"><label><input type="radio" name="feedback" value="5"></label></td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark feedback"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Willingness to go Extra Mile</td>
-                                <td><p>Committed to their work and willingly take extra work when urgency arises.</p>
-                                </td>
-                                <td class="weight">4%</td>
-                                <td class="rating"><label><input type="radio" name="extra-mile" value="1"></label></td>
-                                <td class="rating"><label><input type="radio" name="extra-mile" value="2"></label></td>
-                                <td class="rating"><label><input type="radio" name="extra-mile" value="3"></label></td>
-                                <td class="rating"><label><input type="radio" name="extra-mile" value="4"></label></td>
-                                <td class="rating"><label><input type="radio" name="extra-mile" value="5"></label></td>
-                                <td class="score"></td>
-                                <td class="remark"><label style="width: 9rem;"><textarea
-                                                class="textarea is-shadowless remark extra-mile"
-                                                placeholder="Notes here..." style="border: none;"></textarea></label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" class="is-light"></td>
-                                <td>13%</td>
-                                <td colspan="5">Sub Total Score</td>
-                                <td>0.39</td>
-                                <td class="is-light"></td>
-                            </tr>
+                            {{ with $r := . }}
+                                {{ with $f := $r.Factors }}
+                                    {{range $idx, $item := .Items}}
+                                        {{ if $item.Items }}
+                                        <tr class="{{ $item.Key }}">
+                                            <td rowspan="17">{{ call $f.Seq $idx }}</td>
+                                            <td colspan="10">{{ $item.Title }}</td>
+                                        </tr>
+                                            {{ range $idxLv2, $itemLv2 := $item.Items }}
+                                            <tr class="{{ $itemLv2.Key }} ch-{{ $item.Key }}" data-parent="{{ $item.Key }}">
+                                                <td colspan="10">{{ $itemLv2.Title }}</td>
+                                            </tr>
+                                                {{ if $itemLv2.Items }}
+                                                    {{ range $idxLv3, $itemLv3 := $itemLv2.Items }}
+                                                    <tr class="ch-{{ $itemLv2.Key }}" data-parent="{{ $itemLv2.Key }}">
+                                                        <td>{{ $itemLv3.Title }}</td>
+                                                        <td>{{ $itemLv3.Description }}</td>
+                                                        <td class="weight">{{ $itemLv3.Weight }}%</td>
+                                                        {{ range $i, $rating := $r.Ratings }}
+                                                        <td class="rating"><label class="container"><input type="radio" class="rating-input" name="{{ $itemLv3.Key }}" value="{{ $rating }}"><span class="checkmark"></span></label></td>
+                                                        {{ end }}
+                                                        <td class="score"></td>
+                                                        <td class="remark"><label style="width: 9rem;"><textarea
+                                                                class="textarea is-shadowless remark {{ $itemLv3.Key }}"
+                                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                                        </td>
+                                                    </tr>
+                                                    {{ end }}
+                                                    <tr class="score-{{ $itemLv2.Key }}" data-parent="{{ $itemLv2.Key }}">
+                                                        <td colspan="2" class="is-light"></td>
+                                                        <td><strong>{{ $itemLv2.Weight }}%</strong></td>
+                                                        <td colspan="5">Sub Total Score</td>
+                                                        <td class="score-subtotal"></td>
+                                                        <td class="is-light"></td>
+                                                    </tr>
+                                                {{ end }}
+                                            {{ end }}
+                                        {{ else }}
+                                        <tr class="{{ $item.Key }}">
+                                            <td>{{ call $f.Seq $idx }}</td>
+                                            <td>{{ $item.Title }}</td>
+                                            <td>{{ $item.Description }}</td>
+                                            <td class="weight"><strong>{{ $item.Weight }}%</strong></td>
+                                            {{ range $i, $rating := $r.Ratings }}
+                                            <td class="rating"><label class="container"><input type="radio" class="rating-input" name="{{ $item.Key }}" value="{{ $rating }}"><span class="checkmark"></span></label></td>
+                                            {{ end }}
+                                            <td class="score"></td>
+                                            <td class="remark"><label style="width: 9rem;"><textarea
+                                                    class="textarea is-shadowless remark {{ $item.Key }}"
+                                                    placeholder="Notes here..." style="border: none;"></textarea></label>
+                                            </td>
+                                        </tr>
+                                        {{ end }}
+                                    {{end}}
+                                {{ end }}
+                            {{ end }}
                             <tr>
                                 <td colspan="3">TOTAL SCORE</td>
                                 <td>100%</td>
                                 <td colspan="5"></td>
-                                <td>2.58</td>
-                                <td>Meet Expectation</td>
+                                <td class="score-total"></td>
+                                <td class="score-rating"></td>
                             </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-                <div class="container box is-max-desktop mt-5">
+                <div class="container box is-widescreen mt-5">
                     <div class="columns">
                         <div class="column"><p class="title is-5">Strength points:</p></div>
                     </div>
@@ -412,7 +213,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="container box is-max-desktop mt-5">
+                <div class="container box is-widescreen mt-5">
                     <div class="columns">
                         <div class="column"><p class="title is-5">Improvement points:</p></div>
                     </div>
@@ -446,7 +247,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="container box is-max-desktop mt-5">
+                <div class="container box is-widescreen mt-5">
                     <div class="columns">
                         <div class="columns">
                             <div class="column">
@@ -466,7 +267,7 @@
             </form>
         </section>
         <section class="tab-content guideline-section">
-            <div class="container box is-max-desktop">
+            <div class="container box is-widescreen">
                 <table class="table is-bordered is-hoverable is-fullwidth">
                     <thead>
                     <tr>

@@ -49,18 +49,27 @@ func (t *manager) LoadTemplates() (IManager, error) {
 	return t, nil
 }
 
-func (t *manager) Render(w http.ResponseWriter, status int, template string, data map[string]interface{}) error {
-	tmpl, err := t.getTemplate(template)
+func (t *manager) render(w http.ResponseWriter, status int, tpl string, data map[string]interface{}, f interface{}) error {
+	tmpl, err := t.getTemplate(tpl)
 	if err != nil {
 		return err
+	}
+	if f != nil {
+		if ff, ok := f.(template.FuncMap); ok {
+			tmpl = tmpl.Funcs(ff)
+		}
 	}
 	_ = t.mergeData(data)
 	// Render the template 'name' with data
 	w.WriteHeader(status)
-	if err = tmpl.ExecuteTemplate(w, template, t.getData()); err != nil {
+	if err = tmpl.ExecuteTemplate(w, tpl, t.getData()); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (t *manager) Render(w http.ResponseWriter, status int, tpl string, data map[string]interface{}) error {
+	return t.render(w, status, tpl, data, nil)
 }
 
 func (t *manager) RenderRaw(w http.ResponseWriter, status int, content interface{}) error {
@@ -128,7 +137,7 @@ func (t *manager) merge(dst interface{}, src interface{}) (rs interface{}) {
 		}
 		dstMap := dst.(map[string]interface{})
 		srcMap := src.(map[string]interface{})
-		srcLoop:
+	srcLoop:
 		for k, v := range srcMap {
 			for kk, vv := range dstMap {
 				if kk == k {
@@ -144,4 +153,3 @@ func (t *manager) merge(dst interface{}, src interface{}) (rs interface{}) {
 	}
 	return
 }
-
