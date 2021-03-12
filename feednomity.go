@@ -48,7 +48,7 @@ func main() {
 	)
 	ds.MustConnect(context.Background())
 	defer func() {
-		_ = ds.Close(context.Background())
+		//_ = ds.Close(context.Background())
 	}()
 	accessControl := acl.NewACLManager(users.NewUserDomain(ds), users.NewUserAccessDomain(ds))
 	if err2 := accessControl.Populate(); err2 != nil {
@@ -56,7 +56,7 @@ func main() {
 		return
 	}
 	sm := session.NewSession(
-		cfg.GetConfig().App.SessionExpiration,
+		time.Duration(cfg.GetConfig().App.SessionExpiration),
 		time.Duration(30),
 		session.Cookie{
 			Name:     "feednomid",

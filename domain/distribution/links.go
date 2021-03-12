@@ -1,10 +1,11 @@
-package feedbacks
+package distribution
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
 	"github.com/evorts/feednomity/pkg/database"
+	"github.com/evorts/feednomity/pkg/utils"
 	"github.com/jackc/pgtype"
 	"github.com/pkg/errors"
 	"regexp"
@@ -15,7 +16,7 @@ type Hash string
 
 var (
 	validHashPattern = regexp.MustCompile("[a-zA-Z0-9]+")
-	validPINPattern = regexp.MustCompile("\\d{6}")
+	validPINPattern  = regexp.MustCompile("\\d{6}")
 )
 
 func (h Hash) Valid() bool {
@@ -47,11 +48,12 @@ type linksManager struct {
 type ILinks interface {
 	FindLinks(ctx context.Context, page, limit int) ([]Link, int, error)
 	FindByHash(ctx context.Context, hash string) (Link, error)
-	FindByGroupId(ctx context.Context, groupId int64) ([]Link, int, error)
+	FindByDistObjectIds(ctx context.Context, ids ...int64) ([]*Link, error)
 	SaveLinks(ctx context.Context, links []Link) error
 	UpdateLink(ctx context.Context, link Link) error
 	DisableLinksByIds(ctx context.Context, ids ...int64) error
-	RecordLinkVisitor(ctx context.Context, link Link, agent, ref string) error
+	LinkVisitsCountById(ctx context.Context, id int64) int
+	RecordLinkVisitor(ctx context.Context, link Link, agent string, ref map[string]interface{}) error
 }
 
 const (
@@ -76,7 +78,7 @@ func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []
 	}
 	q = fmt.Sprintf(`
 		SELECT 
-			id, hash, pin, group_id, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
+			id, hash, pin, distribution_object_id, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
 		FROM %s ORDER BY id DESC LIMIT %d OFFSET %d`, tableLinks, limit, (page-1)*limit)
 	rows, err = l.dbm.Query(ctx, q, nil)
 	if err != nil {
@@ -91,7 +93,7 @@ func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []
 			&link.Id,
 			&link.Hash,
 			&link.PIN,
-			&link.GroupId,
+			&link.DistributionObjectId,
 			&link.Disabled,
 			&link.UsageLimit,
 			&link.Published,
@@ -111,36 +113,31 @@ func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []
 func (l *linksManager) FindByHash(ctx context.Context, hash string) (link Link, err error) {
 	q := fmt.Sprintf(`
 		SELECT 
-			id, hash, pin, group_id, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
+			id, hash, pin, distribution_object_id, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
 		FROM %s
 		WHERE hash = $1`, tableLinks)
-	err = l.dbm.QueryRowAndBind(ctx, q, []interface{}{hash}, &link)
+	var pinDb, hashDb sql.NullString
+	err = l.dbm.QueryRowAndBind(ctx, q, []interface{}{hash},
+		&link.Id, &hashDb, &pinDb, &link.DistributionObjectId, &link.Disabled, &link.UsageLimit, &link.Published,
+		&link.CreatedAt, &link.UpdatedAt, &link.DisabledAt, &link.PublishedAt,
+	)
+	link.PIN = pinDb.String
+	link.Hash = hashDb.String
 	return
 }
 
-func (l *linksManager) FindByGroupId(ctx context.Context, groupId int64) (links []Link, total int, err error) {
-	q := fmt.Sprintf(`SELECT count(id) FROM %s`, tableLinks)
-	var (
-		rows database.Rows
-	)
-	links = make([]Link, 0)
-	err = l.dbm.QueryRowAndBind(ctx, q, nil, &total)
-	if err != nil || total < 1 {
-		err = errors.Wrap(err, "It looks like the data is not exist")
-		return
-	}
-	q = fmt.Sprintf(`
+func (l *linksManager) FindByDistObjectIds(ctx context.Context, ids ...int64) ([]*Link, error) {
+	links := make([]*Link, 0)
+	q := fmt.Sprintf(`
 		SELECT 
-			id, hash, pin, group_id, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
-		FROM %s 
-		WHERE group_id = $1
-		ORDER BY id DESC`, tableLinks)
-	rows, err = l.dbm.Query(ctx, q, groupId)
+			id, hash, pin, distribution_object_id, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
+		FROM %s WHERE id IN (%s)`, tableLinks, strings.TrimRight(strings.Repeat("?", len(ids)), ","))
+	rows, err := l.dbm.Query(ctx, q, utils.ArrayInt64(ids).ToArrayInterface()...)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return links, total, nil
+			return links, nil
 		}
-		return
+		return nil, err
 	}
 	for rows.Next() {
 		var link Link
@@ -148,7 +145,7 @@ func (l *linksManager) FindByGroupId(ctx context.Context, groupId int64) (links 
 			&link.Id,
 			&link.Hash,
 			&link.PIN,
-			&link.GroupId,
+			&link.DistributionObjectId,
 			&link.Disabled,
 			&link.UsageLimit,
 			&link.Published,
@@ -158,21 +155,21 @@ func (l *linksManager) FindByGroupId(ctx context.Context, groupId int64) (links 
 			&link.PublishedAt,
 		)
 		if err != nil {
-			return
+			return nil, err
 		}
-		links = append(links, link)
+		links = append(links, &link)
 	}
-	return
+	return links, nil
 }
 
 func (l *linksManager) SaveLinks(ctx context.Context, links []Link) error {
 	q := fmt.Sprintf(`
-		INSERT INTO %s (hash, pin, group_id, disabled, usage_limit, published, created_at, disabled_at, published_at) 
+		INSERT INTO %s (hash, pin, distribution_object_id, disabled, usage_limit, published, created_at, disabled_at, published_at) 
 		VALUES`, tableLinks)
 	placeholders := make([]string, 0)
 	values := make([]interface{}, 0)
 	for _, link := range links {
-		placeholders = append(placeholders, "(?,?,?,?,?,?,?,?,?)")
+		placeholders = append(placeholders, "(?,?,?,?,?,?,?,?,?,?)")
 		var disabledAt, publishedAt interface{} = nil, nil
 		if link.Disabled {
 			disabledAt = "NOW()"
@@ -180,7 +177,7 @@ func (l *linksManager) SaveLinks(ctx context.Context, links []Link) error {
 		if link.Published {
 			publishedAt = "NOW()"
 		}
-		values = append(values, link.Hash, link.PIN, link.GroupId, link.Disabled, link.UsageLimit, link.Published,
+		values = append(values, link.Hash, link.PIN, link.DistributionObjectId, link.Disabled, link.UsageLimit, link.Published,
 			"NOW()", disabledAt, publishedAt)
 	}
 	q = l.dbm.Rebind(ctx, fmt.Sprintf(`%s %s`, q, strings.Join(placeholders, ",")))
@@ -203,7 +200,6 @@ func (l *linksManager) UpdateLink(ctx context.Context, link Link) error {
 		SET 
 			hash = ?,
 			pin = ?,
-			group_id = ?,
 			disabled = ?,
 			usage_limit = ?,
 			published = ?,
@@ -221,7 +217,7 @@ func (l *linksManager) UpdateLink(ctx context.Context, link Link) error {
 	}
 	cmd, err2 := l.dbm.Exec(
 		ctx, q,
-		link.Hash, link.PIN, link.GroupId, link.Disabled, link.UsageLimit, link.Published,
+		link.Hash, link.PIN, link.Disabled, link.UsageLimit, link.Published,
 		disabledAt, publishedAt, link.Id)
 	if err2 != nil {
 		return err2
@@ -253,7 +249,7 @@ func (l *linksManager) DisableLinksByIds(ctx context.Context, ids ...int64) (err
 	return fmt.Errorf("no rows updated")
 }
 
-func (l *linksManager) RecordLinkVisitor(ctx context.Context, link Link, agent, ref string) error {
+func (l *linksManager) RecordLinkVisitor(ctx context.Context, link Link, agent string, ref map[string]interface{}) error {
 	q := fmt.Sprintf(`
 		INSERT INTO %s (link_id, at, agent, ref) 
 		VALUES($1, NOW(), $2, $3)`, tableLinkVisits)
@@ -265,4 +261,10 @@ func (l *linksManager) RecordLinkVisitor(ctx context.Context, link Link, agent, 
 		return nil
 	}
 	return fmt.Errorf("no rows recorded")
+}
+
+func (l *linksManager) LinkVisitsCountById(ctx context.Context, id int64) (total int) {
+	q := fmt.Sprintf(`SELECT count(id) FROM %s`, tableLinks)
+	_ = l.dbm.QueryRowAndBind(ctx, q, nil, &total)
+	return total
 }

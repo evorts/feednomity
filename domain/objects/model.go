@@ -13,7 +13,7 @@ type Object struct {
 	Phone       string                 `json:"phone"`
 	Role        string                 `json:"role"`
 	Assignment  string                 `json:"assignment"`
-	UserGroupId int                    `json:"user_group_id"` // the recipient record belong to which user group
+	UserGroupId int64                    `json:"user_group_id"` // the recipient record belong to which user group
 	Disabled    bool                   `json:"disabled"`
 	Archived    bool                   `json:"archived"`
 	CreatedAt   *time.Time             `json:"created_at"`

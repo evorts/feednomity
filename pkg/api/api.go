@@ -19,7 +19,7 @@ func NewResponse(status int, content map[string]interface{}, err *ResponseError)
 		content = make(map[string]interface{}, 0)
 	}
 	return Response{
-		Status:  0,
+		Status:  status,
 		Content: content,
 		Error:   err,
 	}

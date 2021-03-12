@@ -14,7 +14,7 @@ func routes(o *http.ServeMux, cmd *commands) {
 	// serving pages
 	routing := []reqio.Route{
 		{
-			Pattern: "/dashboard",
+			Pattern: "/adm",
 			Handler: middleware.WithMethodFilter(
 				http.MethodGet,
 				middleware.WithInjection(
@@ -26,18 +26,6 @@ func routes(o *http.ServeMux, cmd *commands) {
 				),
 			),
 			AdminOnly: true,
-		},
-		{
-			Pattern: "/",
-			Handler: middleware.WithInjection(
-				http.HandlerFunc(handler.Form360),
-				map[string]interface{}{
-					"logger": cmd.logger,
-					"view":   cmd.view,
-					"db":     cmd.db,
-				},
-			),
-			AdminOnly: false,
 		},
 		{
 			Pattern: "/login",
@@ -139,12 +127,56 @@ func routes(o *http.ServeMux, cmd *commands) {
 			AdminOnly: true,
 		},
 	}
+	routing = append(routing, routesAssessments(cmd)...)
 	routing = append(routing, routesObjects(cmd)...)
 	routing = append(routing, routesLink(cmd)...)
 	routing = append(routing, routesGroups(cmd)...)
 	routing = append(routing, routesQuestions(cmd)...)
 
 	reqio.NewRoutes(routing).ExecRoutes(o)
+}
+
+func routesAssessments(cmd *commands) []reqio.Route {
+	return []reqio.Route{
+		{
+			Pattern: "/page/360/review",
+			Handler: middleware.WithMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					http.HandlerFunc(handler.Form360),
+					map[string]interface{}{
+						"logger": cmd.logger,
+						"view":   cmd.view,
+						"db":     cmd.db,
+						"sm":     cmd.session,
+						"hash":   cmd.hash,
+					},
+				),
+			),
+			AdminOnly: false,
+		},
+		{
+			Pattern: "/api/360/submission",
+			Handler: middleware.WithCors(
+				cmd.config.GetConfig().App.Cors.AllowedMethods,
+				cmd.config.GetConfig().App.Cors.AllowedOrigins,
+				middleware.WithMethodFilter(
+					http.MethodPost,
+					middleware.WithInjection(
+						http.HandlerFunc(handler.Review360SubmissionAPI),
+						map[string]interface{}{
+							"logger": cmd.logger,
+							"view":   cmd.view,
+							"db":     cmd.db,
+							"sm":     cmd.session,
+							"hash":   cmd.hash,
+						},
+					),
+				),
+			),
+			AdminOnly: false,
+		},
+	}
 }
 
 func routesObjects(cmd *commands) []reqio.Route {

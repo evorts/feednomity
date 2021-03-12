@@ -3,17 +3,34 @@
 {{ define "styles" }}
     <link href="/assets/styles/form360.css" rel="stylesheet">
 {{ end }}
+{{ define "scripts" }}
+    {{ with $r := . }}
+    <script type="text/javascript">
+        const ratings = '{{ $r.RatingsLabel }}'.split(',');
+    </script>
+    {{ end }}
+{{ end }}
 {{ define "body_scripts" }}
-    <script type="module" src="/assets/scripts/form360.js"></script>
+    <script type="module" src="/assets/scripts/360.js"></script>
 {{ end }}
 {{ define "header"}}
-    <nav class="navbar navbar-expand-lg navbar-light bg-white">
-        <div class="container">
-            <a class="navbar-brand navbar-brand flex-fill text-center text-lg-left pr-3 pr-sm-0" href="/">
-                <img src="/assets/images/onelabs-logo@2x.png" alt="Onelabs">
+    <nav class="navbar is-white" role="navigation">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <img src="/assets/images/onelabs-logo@2x.png" alt="Onelabs" style="max-height: 2.5rem;">
             </a>
         </div>
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <span class="title is-6">Welcome,&nbsp;{{ .Assessments.Respondent.Name }}!</span>
+            </div>
+        </div>
     </nav>
+    <div class="container pt-2">
+        <div class="notification is-primary is-light has-text-centered" style="padding: 0.5rem;">
+            <span class="subtitle is-6">Hi <strong>{{ .Assessments.Respondent.Name }}</strong>, Please kindly give your <u>honest</u> and <u>objective</u> review for the person below!</span>
+        </div>
+    </div>
 {{ end }}
 {{ define "content" }}
     <div class="tabs is-boxed is-centered">
@@ -24,14 +41,14 @@
     </div>
     <div class="tab-contents">
         <section class="tab-content form-section">
-            <form method="post">
+            <form name="form360" id="form360" method="post" action="/api/360/submission">
                 <div class="container box is-widescreen">
                     <div class="columns">
                         <div class="column">
                             <div class="columns is-vcentered">
                                 <div class="column is-narrow" style="width: 11rem;"><strong>Employee Name:</strong>
                                 </div>
-                                <div class="column"><span class="is-size-5">Steven</span></div>
+                                <div class="column"><span class="is-size-5">{{ .Assessments.Recipient.Name }}</span></div>
                             </div>
                         </div>
                     </div>
@@ -41,7 +58,7 @@
                                 <div class="column is-narrow" style="width: 11rem;">
                                     <strong>Division/Department:</strong>
                                 </div>
-                                <div class="column"><span class="is-size-5">Architecture and Digital</span></div>
+                                <div class="column"><span class="is-size-5">{{ .Assessments.Recipient.Organization }}</span></div>
                             </div>
                         </div>
                     </div>
@@ -49,7 +66,7 @@
                         <div class="column">
                             <div class="columns is-vcentered">
                                 <div class="column is-narrow" style="width: 11rem;"><strong>Role:</strong></div>
-                                <div class="column"><span class="is-size-5">Web Engineer</span></div>
+                                <div class="column"><span class="is-size-5">{{ .Assessments.Recipient.Role }}</span></div>
                             </div>
                         </div>
                     </div>
@@ -62,11 +79,11 @@
                                     <div class="columns is-vcentered">
                                         <div class="column is-narrow" style="width: 4rem;">From</div>
                                         <div class="column is-narrow has-text-weight-bold" style="width: 11rem;"><span
-                                                    class="tag is-light is-medium">January 2021</span>
+                                                    class="tag is-light is-medium">{{ .Assessments.PeriodSince.Format "January 2006" }}</span>
                                         </div>
                                         <div class="column is-narrow" style="width: 3rem;">To</div>
                                         <div class="column is-narrow has-text-weight-bold" style="width: 11rem;"><span
-                                                    class="tag is-light is-medium">June 2021</span>
+                                                    class="tag is-light is-medium">{{ .Assessments.PeriodUntil.Format "January 2006" }}</span>
                                         </div>
                                         <div class="column"></div>
                                     </div>
@@ -80,14 +97,14 @@
                         <div class="column is-size-7 has-text-weight-bold" style="padding: 0 0.75rem;"><u>Rating
                                 Guide:</u></div>
                     </div>
-                    <div class="columns is-size-7 has-text-weight-bold">
-                        <div class="column"><strong>1 = </strong> <span class="tag is-danger">Pretty Bad</span></div>
-                        <div class="column"><strong>2 = </strong> <span class="tag is-warning">Need Improvement</span>
+                    <div class="columns is-size-7 has-text-weight-bold rating-guide">
+                        <div class="column"><strong>1 = </strong> <span class="tag is-danger"></span></div>
+                        <div class="column"><strong>2 = </strong> <span class="tag is-warning"></span>
                         </div>
-                        <div class="column"><strong>3 = </strong> <span class="tag is-info">Meet Expectation</span>
+                        <div class="column"><strong>3 = </strong> <span class="tag is-info"></span>
                         </div>
-                        <div class="column"><strong>4 = </strong> <span class="tag is-success">Outstanding</span></div>
-                        <div class="column"><strong>5 = </strong> <span class="tag is-primary">Excellent</span></div>
+                        <div class="column"><strong>4 = </strong> <span class="tag is-success"></span></div>
+                        <div class="column"><strong>5 = </strong> <span class="tag is-primary"></span></div>
                     </div>
                 </div>
                 <div class="container box is-widescreen mt-5">
@@ -113,11 +130,11 @@
                             </thead>
                             <tbody>
                             {{ with $r := . }}
-                                {{ with $f := $r.Factors }}
-                                    {{range $idx, $item := .Items}}
+                                {{ with $f := $r.Assessments.Factors }}
+                                    {{range $idx, $item := $f.Items}}
                                         {{ if $item.Items }}
                                         <tr class="{{ $item.Key }}">
-                                            <td rowspan="17">{{ call $f.Seq $idx }}</td>
+                                            <td rowspan="17">{{ call $r.Seq $idx }}</td>
                                             <td colspan="10">{{ $item.Title }}</td>
                                         </tr>
                                             {{ range $idxLv2, $itemLv2 := $item.Items }}
@@ -130,12 +147,18 @@
                                                         <td>{{ $itemLv3.Title }}</td>
                                                         <td>{{ $itemLv3.Description }}</td>
                                                         <td class="weight">{{ $itemLv3.Weight }}%</td>
-                                                        {{ range $i, $rating := $r.Ratings }}
-                                                        <td class="rating"><label class="container"><input type="radio" class="rating-input" name="{{ $itemLv3.Key }}" value="{{ $rating }}"><span class="checkmark"></span></label></td>
+                                                        {{ range $i, $rating := $r.Assessments.Ratings }}
+                                                        <td class="rating">
+                                                            <label class="container">
+                                                                <input name="{{ $item.Key }}.{{ $itemLv2.Key }}.{{ $itemLv3.Key }}.rating" type="radio" class="form-input rating-input" value="{{ $rating }}">
+                                                                <span class="checkmark"></span>
+                                                            </label>
+                                                        </td>
                                                         {{ end }}
                                                         <td class="score"></td>
                                                         <td class="remark"><label style="width: 9rem;"><textarea
-                                                                class="textarea is-shadowless remark {{ $itemLv3.Key }}"
+                                                                name="{{ $item.Key }}.{{ $itemLv2.Key }}.{{ $itemLv3.Key }}.note"
+                                                                class="form-input textarea is-shadowless remark {{ $itemLv3.Key }}"
                                                                 placeholder="Notes here..." style="border: none;"></textarea></label>
                                                         </td>
                                                     </tr>
@@ -151,16 +174,22 @@
                                             {{ end }}
                                         {{ else }}
                                         <tr class="{{ $item.Key }}">
-                                            <td>{{ call $f.Seq $idx }}</td>
+                                            <td>{{ call $r.Seq $idx }}</td>
                                             <td>{{ $item.Title }}</td>
                                             <td>{{ $item.Description }}</td>
                                             <td class="weight"><strong>{{ $item.Weight }}%</strong></td>
-                                            {{ range $i, $rating := $r.Ratings }}
-                                            <td class="rating"><label class="container"><input type="radio" class="rating-input" name="{{ $item.Key }}" value="{{ $rating }}"><span class="checkmark"></span></label></td>
+                                            {{ range $i, $rating := $r.Assessments.Ratings }}
+                                            <td class="rating">
+                                                <label class="container">
+                                                    <input name="{{ $item.Key }}.rating" type="radio" class="form-input rating-input" value="{{ $rating }}">
+                                                    <span class="checkmark"></span>
+                                                </label>
+                                            </td>
                                             {{ end }}
                                             <td class="score"></td>
                                             <td class="remark"><label style="width: 9rem;"><textarea
-                                                    class="textarea is-shadowless remark {{ $item.Key }}"
+                                                    name="{{ $item.Key }}.note"
+                                                    class="form-input textarea is-shadowless remark {{ $item.Key }}"
                                                     placeholder="Notes here..." style="border: none;"></textarea></label>
                                             </td>
                                         </tr>
@@ -170,7 +199,7 @@
                             {{ end }}
                             <tr>
                                 <td colspan="3">TOTAL SCORE</td>
-                                <td>100%</td>
+                                <td>{{ .Assessments.Factors.Weight }}%</td>
                                 <td colspan="5"></td>
                                 <td class="score-total"></td>
                                 <td class="score-rating"></td>
@@ -186,27 +215,27 @@
                     <div class="columns">
                         <div class="column">
                             <p class="control has-icons-left">
-                                <input class="input strength-points is-fullwidth" type="text"
+                                <input name="strengths[0]" class="form-input input strength-points is-fullwidth" type="text"
                                        placeholder="Write strength points here...">
                                 <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
                             </p>
                             <p class="control has-icons-left mt-3">
-                                <input class="input strength-points is-fullwidth" type="text"
+                                <input name="strengths[1]" class="form-input input strength-points is-fullwidth" type="text"
                                        placeholder="Write strength points here...">
                                 <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
                             </p>
                             <p class="control has-icons-left mt-3">
-                                <input class="input strength-points is-fullwidth" type="text"
+                                <input name="strengths[2]" class="form-input input strength-points is-fullwidth" type="text"
                                        placeholder="Write strength points here...">
                                 <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
                             </p>
                             <p class="control has-icons-left mt-3">
-                                <input class="input strength-points is-fullwidth" type="text"
+                                <input name="strengths[3]" class="form-input input strength-points is-fullwidth" type="text"
                                        placeholder="Write strength points here...">
                                 <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
                             </p>
                             <p class="control has-icons-left mt-3">
-                                <input class="input strength-points is-fullwidth" type="text"
+                                <input name="strengths[4]" class="form-input input strength-points is-fullwidth" type="text"
                                        placeholder="Write strength points here...">
                                 <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
                             </p>
@@ -220,27 +249,27 @@
                     <div class="columns">
                         <div class="column">
                             <p class="control has-icons-left">
-                                <input class="input strength-points is-fullwidth" type="text"
+                                <input name="improves[0]" class="form-input input improve-points is-fullwidth" type="text"
                                        placeholder="Write improvement points here...">
                                 <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
                             </p>
                             <p class="control has-icons-left mt-3">
-                                <input class="input strength-points is-fullwidth" type="text"
+                                <input name="improves[1]" class="form-input input improve-points is-fullwidth" type="text"
                                        placeholder="Write improvement points here...">
                                 <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
                             </p>
                             <p class="control has-icons-left mt-3">
-                                <input class="input strength-points is-fullwidth" type="text"
+                                <input name="improves[2]" class="form-input input improve-points is-fullwidth" type="text"
                                        placeholder="Write improvement points here...">
                                 <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
                             </p>
                             <p class="control has-icons-left mt-3">
-                                <input class="input strength-points is-fullwidth" type="text"
+                                <input name="improves[3]" class="form-input input improve-points is-fullwidth" type="text"
                                        placeholder="Write improvement points here...">
                                 <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
                             </p>
                             <p class="control has-icons-left mt-3">
-                                <input class="input strength-points is-fullwidth" type="text"
+                                <input name="improves[4]" class="form-input input improve-points is-fullwidth" type="text"
                                        placeholder="Write improvement points here...">
                                 <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
                             </p>
@@ -251,13 +280,13 @@
                     <div class="columns">
                         <div class="columns">
                             <div class="column">
-                                <input type="hidden" name="csrf" value="{{ .Csrf }}">
+                                <input type="hidden" name="csrf" class="form-input" value="{{ .Csrf }}">
                                 <div class="field is-grouped">
                                     <div class="control">
-                                        <button class="button is-link" type="submit">Submit Review</button>
+                                        <button id="submit-review" name="submit-review" type="submit" class="button is-link">Submit Review</button>
                                     </div>
                                     <div class="control">
-                                        <button class="button is-link is-light">Save as Draft</button>
+                                        <button id="save-draft" name="save-draft" type="submit" class="button is-link is-light">Save as Draft</button>
                                     </div>
                                 </div>
                             </div>

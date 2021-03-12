@@ -1,0 +1,97 @@
+review360:
+  ratings:
+    values: [1,2,3,4,5]
+    labels: ["Poor", "Need Improvement", "Meet Expectation", "Outstanding", "Excellent"]
+  factors:
+    title: "360 Review Form"
+    weight: 100
+    items:
+      - key: "productivity"
+        title: "PRODUCTIVITY"
+        description: >-
+          <p><u>Task completion</u><br>Complete tasks on schedule or as promised, based on priorities.</p>
+          <p>&nbsp;</p>
+          <p><u>Deliver more than what was expected</u></p>
+          <p>&nbsp;</p>
+          <p><u>Actively seek ways to improve product/project</u></p>
+        weight: 30
+      - key: "quality"
+        title: "QUALITY"
+        description: >-
+          <p><u>Deliver great quality of code</u><br>including but not limited to reusable
+          code, unit test, test case and documentation.</p>
+          <p>&nbsp;</p>
+          <p><u>Producing less to no bug</u><br>deliver less to no bugs -- as a result of a
+          excellent and maintainable code, testing or automation test</p>
+        weight: 30
+      - key: "dependability"
+        title: "DEPENDABILITY"
+        weight: 40
+        items:
+          - key: "leadership"
+            title: "3A) LEADERSHIP"
+            weight: 18
+            items:
+              - key: "ownership"
+                title: "Objective Driven / Sense of Ownership"
+                description: >-
+                  <p>Sense of product/project ownership and put team/organisation goal above other
+                  interest.</p>
+                weight: 5
+              - key: "adaptability"
+                title: "Adaptability"
+                description: >-
+                  <p>Anticipate, adapt, and adjust to changes.</p>
+                weight: 3
+              - key: "prioritization"
+                title: "Prioritization"
+                description: >-
+                  <p>Have a good sense of work prioritization.</p>
+                weight: 3
+              - key: "detail-solving"
+                title: "Attention to Details + Analyze + Problem Solving"
+                description: >-
+                  <p>Have attention to details, and analyze the situation / challenges based on
+                  acquired info / details.</p>
+                weight: 4
+              - key: "independent"
+                title: "Independent"
+                description: >-
+                  <p>Able to work by themself without help or influence of others, and high work
+                  ethics even without supervision.</p>
+                weight: 3
+          - key: "collaboration"
+            title: "3B) COLLABORATION"
+            weight: 9
+            items:
+              - key: "communication"
+                title: "Communication and Coordination within and across Team"
+                description: >-
+                  <p>Active in discussion whether within and across team.</p>
+                weight: 5
+              - key: "inspiring"
+                title: "Inspiring Member"
+                description: >-
+                  <p>Enthusiastically motivates the team with positivity and create productive
+                  environment.</p>
+                weight: 4
+          - key: "responsibility"
+            title: "3C) RESPONSIBILITY AND COMMITMENT"
+            weight: 13
+            items:
+              - key: "integrity"
+                title: "Integrity + Discipline"
+                description: >-
+                  <p>Own up to your mistake, be responsible, and be respectful to others.</p>
+                weight: 6
+              - key: "openness"
+                title: "Giving + Receiving Feedback"
+                description: >-
+                  <p>Able to give honest, constructive criticism and receive feedback as a motivation
+                  for self-growth.</p>
+                weight: 3
+              - key: "extra-mile"
+                title: "Willingness to go Extra Mile"
+                description: >-
+                  <p>Committed to their work and willingly take extra work when urgency arises.</p>
+                weight: 4

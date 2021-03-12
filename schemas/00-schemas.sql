@@ -40,6 +40,9 @@ $$
     END
 $$;
 
+/* enabling crypt on psql */
+create extension if not exists pgcrypto;
+
 /** purpose: recipients are the list of persons/employees that possibly giving feedbacks **/
 create table objects
 (
@@ -50,7 +53,8 @@ create table objects
     phone         varchar(20),
     role          varchar(30),
     assignment    varchar(50),
-    user_group_id int,
+    user_group_id int
+        constraint objects_user_group_id references users_group(id),
     disabled      bool  default false,
     archived      bool  default false,
     created_at    timestamp,
@@ -66,12 +70,14 @@ create table distributions
     id                 serial primary key,
     topic              varchar(100),
     disabled           bool default false,
-    distributed        bool,
+    archived           bool default false,
+    distributed        bool default false,
     distribution_limit int, /** max limit distribution **/
     distribution_count int, /** how many times its distributed **/
     created_at         timestamp,
     updated_at         timestamp,
     disabled_at        timestamp,
+    archived_at        timestamp,
     distributed_at     timestamp
 );
 
@@ -84,39 +90,38 @@ create table distribution_objects
         constraint distribution_recipients_distributions_id references distributions (id),
     recipient_id      int
         constraint distribution_recipients_recipient_id_recipients_id references objects (id),
-    respondent_ids    int[], /** fk to objects as well **/
+    respondent_id     int
+        constraint distribution_respondents_respondent_id references objects (id),
     publishing_status distribution_object_status default 'none', /** when its published -- sent to respondent **/
     publishing_log    jsonb                      default '[]',
     created_at        timestamp,
+    updated_at        timestamp,
     published_at      timestamp
 );
 
 create table distribution_log
 (
-    id                     bigserial primary key,
-    distribution_id        int
-        constraint log_distributions_id references distributions (id),
-    distribution_object_id int   default null, /** intentionally not constraint with its table **/
-    action                 varchar(50),
-    values                 jsonb default '{}',
-    values_prev            jsonb default '{}',
-    notes                  varchar(100),
-    at                     timestamp
+    id          bigserial primary key,
+    action      varchar(50),
+    values      jsonb default '{}',
+    values_prev jsonb default '{}',
+    notes       varchar(100),
+    at          timestamp
 );
 
 create table links
 (
-    id           serial primary key,
-    object_id    int, /** distribution object id **/
-    hash         varchar(512),
-    pin          varchar(10),
-    disabled     boolean default false,
-    published    bool,
-    usage_limit  integer default 0,
-    created_at   timestamp,
-    updated_at   timestamp,
-    disabled_at  timestamp,
-    published_at timestamp
+    id                     serial primary key,
+    hash                   varchar(128),
+    pin                    varchar(10),
+    distribution_object_id int,
+    disabled               boolean default false,
+    published              bool    default false,
+    usage_limit            integer default 0,
+    created_at             timestamp,
+    updated_at             timestamp,
+    disabled_at            timestamp,
+    published_at           timestamp
 );
 
 create
@@ -148,7 +153,7 @@ create table feedbacks
     user_id                int,
     user_name              varchar(25),
     user_display_name      varchar(50),
-    disabled               bool,
+    disabled               bool default false,
     created_at             timestamp,
     updated_at             timestamp,
     disabled_at            timestamp
@@ -194,7 +199,7 @@ create table questions
     question    varchar(500),
     expect      question_type,
     options     varchar(150)[],
-    mandatory   bool,
+    mandatory   bool    default true,
     disabled    boolean default false,
     created_at  timestamp,
     updated_at  timestamp,
@@ -277,7 +282,7 @@ create table users_group
 (
     id          serial primary key,
     name        varchar(40) unique,
-    disabled    bool,
+    disabled    bool default false,
     created_at  timestamp,
     updated_at  timestamp,
     disabled_at timestamp
@@ -320,8 +325,9 @@ create table role_access
     id             serial primary key,
     role           user_role,
     path           varchar(100), /** should consistent pattern such as <module>.<method> **/
+    regex          bool    default false,
     access_allowed access_level[],
-    disabled       boolean default true
+    disabled       boolean default false
 );
 
 create table user_access

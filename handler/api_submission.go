@@ -14,6 +14,44 @@ import (
 	"strings"
 )
 
+func Review360SubmissionAPI(w http.ResponseWriter, r *http.Request) {
+	req := reqio.NewRequest(w, r).Prepare()
+	log := req.GetContext().Get("logger").(logger.IManager)
+	sm := req.GetContext().Get("sm").(session.IManager)
+	lh := sm.Get(r.Context(), "link_hash")
+	view := req.GetContext().Get("view").(template.IManager)
+	//datasource := req.GetContext().Get("db").(database.IManager)
+	var payload *SubmissionData
+	_ = req.UnmarshallBody(&payload)
+	fmt.Println(lh)
+	log.Log("forms360_submit_handler", "request received")
+
+	errs := make(map[string]string, 0)
+	// csrf check
+	sessionCsrf := sm.Get(r.Context(), "token")
+	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
+		errs["session"] = "Not a valid request session!"
+	}
+
+	if len(errs) > 0 {
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LOG:ERR:VAL",
+				Message: "Bad Request! Validation error.",
+				Reasons: errs,
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	_ = view.RenderJson(w, http.StatusOK, api.Response{
+		Status:  http.StatusOK,
+		Content: make(map[string]interface{}, 0),
+	})
+}
+
 func FeedbackSubmissionAPI(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
@@ -75,8 +113,8 @@ func FeedbackSubmissionAPI(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	var link feedbacks.Link
-	linkDomain := feedbacks.NewLinksDomain(datasource)
+	/*var link distribution.Link
+	linkDomain := distribution.NewLinksDomain(datasource)
 	link, err = linkDomain.FindByHash(req.GetContext().Value(), payload.FeedbackHash)
 	if err != nil {
 		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
@@ -90,10 +128,10 @@ func FeedbackSubmissionAPI(w http.ResponseWriter, r *http.Request) {
 			},
 		})
 		return
-	}
+	}*/
 	var questions []feedbacks.Question
 	substanceDomain := feedbacks.NewSubstanceDomain(datasource)
-	questions, err = substanceDomain.FindQuestionsByGroupId(req.GetContext().Value(), link.GroupId)
+	questions, err = substanceDomain.FindQuestionsByGroupId(req.GetContext().Value(), 1)
 	if err != nil {
 		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
@@ -143,7 +181,7 @@ func FeedbackSubmissionAPI(w http.ResponseWriter, r *http.Request) {
 		groups []feedbacks.Group
 		group  feedbacks.Group
 	)
-	groups, err = substanceDomain.FindGroupsByIds(req.GetContext().Value(), link.GroupId)
+	groups, err = substanceDomain.FindGroupsByIds(req.GetContext().Value(), 1)
 	if err != nil || len(groups) < 1 {
 		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,

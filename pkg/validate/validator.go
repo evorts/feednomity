@@ -30,7 +30,7 @@ func ValidPassword(value string) bool {
 
 func IsEmpty(value string) bool {
 	if len(strings.Trim(value, " ")) < 1 {
-		return false
+		return true
 	}
-	return true
+	return false
 }

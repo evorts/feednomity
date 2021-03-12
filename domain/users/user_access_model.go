@@ -1,6 +1,32 @@
 package users
 
+import "database/sql/driver"
+
 type AccessLevel string
+
+func (a *AccessLevel) String() string {
+	if a == nil {
+		return ""
+	}
+	return string(*a)
+}
+func (a *AccessLevel) Value() (driver.Value, error) {
+	if a == nil {
+		return nil, nil
+	}
+	return a.String(), nil
+}
+
+func (a *AccessLevel) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	v, ok := src.(string)
+	if ok {
+		*a = AccessLevel(v)
+	}
+	return nil
+}
 
 const (
 	AccessLevelRead     AccessLevel = "get"

@@ -8,8 +8,6 @@ import (
 	"net/http"
 )
 
-
-
 func Login(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)

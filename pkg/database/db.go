@@ -30,6 +30,9 @@ type CommandTag pgconn.CommandTag
 type Rows pgx.Rows
 type Row pgx.Row
 type TypeInt4Array pgtype.Int4Array
+type TypeEnumArray pgtype.EnumArray
+type TypeEnum pgtype.EnumType
+type TypeStringArray pgtype.TextArray
 
 type IManager interface {
 	Rebind(ctx context.Context, sql string) string

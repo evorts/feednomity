@@ -15,7 +15,7 @@ type request struct {
 	r    *http.Request
 	ctx  IContext
 	token   string
-	crypt   crypt.ICryptHash
+	hash   crypt.ICryptHash
 	session session.IManager
 }
 
@@ -45,8 +45,8 @@ func NewRequest(w http.ResponseWriter, r *http.Request) IRequest {
 	if sm := ctx.Get("sm"); sm != nil {
 		req.session = sm.(session.IManager)
 	}
-	if c := ctx.Get("crypt"); c != nil {
-		req.crypt = c.(crypt.ICryptHash)
+	if c := ctx.Get("hash"); c != nil {
+		req.hash = c.(crypt.ICryptHash)
 	}
 	return req
 }
@@ -117,10 +117,10 @@ func (req *request) GetFormValue(field string) []string {
 }
 
 func (req *request) Prepare() IRequest {
-	if req.crypt == nil {
+	if req.hash == nil {
 		return req
 	}
-	req.token = req.crypt.HashWithSalt(time.Now().String())
+	req.token = req.hash.HashWithSalt(time.Now().String())
 	return req
 }
 

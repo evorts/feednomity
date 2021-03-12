@@ -3,7 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/evorts/feednomity/domain/feedbacks"
+	"github.com/evorts/feednomity/domain/distribution"
 	"github.com/evorts/feednomity/pkg/api"
 	"github.com/evorts/feednomity/pkg/config"
 	"github.com/evorts/feednomity/pkg/crypt"
@@ -79,7 +79,7 @@ func LinksAPI(w http.ResponseWriter, r *http.Request) {
 	_ = req.UnmarshallBody(&payload)
 
 	datasource := req.GetContext().Get("db").(database.IManager)
-	linkDomain := feedbacks.NewLinksDomain(datasource)
+	linkDomain := distribution.NewLinksDomain(datasource)
 
 	links, total, err := linkDomain.FindLinks(req.GetContext().Value(), payload.Page.Value(), payload.Limit.Value())
 	if err != nil {
@@ -116,7 +116,7 @@ func LinksCreateAPI(w http.ResponseWriter, r *http.Request) {
 
 	var payload struct {
 		Csrf  string           `json:"csrf"`
-		Links []feedbacks.Link `json:"links"`
+		Links []distribution.Link `json:"links"`
 
 		DisableAutoGenerateHash bool `json:"disable_auto_generate_hash"`
 	}
@@ -145,25 +145,25 @@ func LinksCreateAPI(w http.ResponseWriter, r *http.Request) {
 	hh := NewHashHelper(aes)
 	expireAt := time.Now().Add(time.Duration(cfg.GetConfig().App.HashExpire) * time.Hour)
 	for li, link := range payload.Links {
-		hash := link.Hash.Value()
+		hash := link.Hash
 		if !payload.DisableAutoGenerateHash {
 			hash = ksuid.New().String()
 		}
 		if len(hash) > 0 {
-			payload.Links[li].Hash = feedbacks.Hash(hh.Generate(expireAt, hash, map[string]interface{}{
+			payload.Links[li].Hash = hh.Generate(expireAt, hash, map[string]interface{}{
 				"usage_limit": link.UsageLimit,
-				"group_id":    link.GroupId,
+				"distribution_object_id":    link.DistributionObjectId,
 				"pin":         link.PIN,
-			}))
-			link.Hash = feedbacks.Hash(hash)
+			})
+			link.Hash = hash
 		}
-		if !link.Hash.Valid() {
+		if !distribution.Hash(link.Hash).Valid() {
 			errs[fmt.Sprintf("%d_hash", li)] = "invalid hash"
 		}
-		if link.GroupId < 1 {
+		if link.DistributionObjectId < 1 {
 			errs[fmt.Sprintf("%d_group_id", li)] = "invalid group"
 		}
-		if !link.PIN.Valid() {
+		if !distribution.PIN(link.PIN).Valid() {
 			errs[fmt.Sprintf("%d_pin", li)] = "pin must be 6 character length"
 		}
 	}
@@ -181,7 +181,7 @@ func LinksCreateAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	datasource := req.GetContext().Get("db").(database.IManager)
-	linkDomain := feedbacks.NewLinksDomain(datasource)
+	linkDomain := distribution.NewLinksDomain(datasource)
 	if err = linkDomain.SaveLinks(req.GetContext().Value(), payload.Links); err != nil {
 		_ = view.RenderJson(w, http.StatusExpectationFailed, api.Response{
 			Status:  http.StatusExpectationFailed,
@@ -215,7 +215,7 @@ func LinkUpdateAPI(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		Csrf           string         `json:"csrf"`
 		RegenerateHash bool           `json:"regenerate_hash"`
-		Link           feedbacks.Link `json:"link"`
+		Link           distribution.Link `json:"link"`
 	}
 	err := req.UnmarshallBody(&payload)
 	if err != nil {
@@ -243,13 +243,13 @@ func LinkUpdateAPI(w http.ResponseWriter, r *http.Request) {
 	if payload.Link.Id < 1 {
 		errs["id"] = "not a valid identifier"
 	}
-	if !payload.RegenerateHash && !payload.Link.Hash.Valid() {
+	if !payload.RegenerateHash && !distribution.Hash(payload.Link.Hash).Valid() {
 		errs["hash"] = "not a valid hash code"
 	}
-	if payload.Link.GroupId < 1 {
-		errs["group_id"] = "not a valid group"
+	if payload.Link.DistributionObjectId < 1 {
+		errs["distribution_object_id"] = "not a valid group"
 	}
-	if !payload.Link.PIN.Valid() {
+	if !distribution.PIN(payload.Link.PIN).Valid() {
 		errs["pin"] = "pin must be 6 character length"
 	}
 
@@ -269,14 +269,14 @@ func LinkUpdateAPI(w http.ResponseWriter, r *http.Request) {
 	hh := NewHashHelper(aes)
 	expireAt := time.Now().Add(time.Duration(cfg.GetConfig().App.HashExpire) * time.Hour)
 	if payload.RegenerateHash {
-		payload.Link.Hash = feedbacks.Hash(hh.Generate(expireAt, ksuid.New().String(), map[string]interface{}{
+		payload.Link.Hash = hh.Generate(expireAt, ksuid.New().String(), map[string]interface{}{
 			"usage_limit": payload.Link.UsageLimit,
-			"group_id":    payload.Link.GroupId,
+			"distribution_object_id":    payload.Link.DistributionObjectId,
 			"pin":         payload.Link.PIN,
-		}))
+		})
 	}
 	datasource := req.GetContext().Get("db").(database.IManager)
-	linkDomain := feedbacks.NewLinksDomain(datasource)
+	linkDomain := distribution.NewLinksDomain(datasource)
 	if err = linkDomain.UpdateLink(req.GetContext().Value(), payload.Link); err != nil {
 		_ = view.RenderJson(w, http.StatusExpectationFailed, api.Response{
 			Status:  http.StatusExpectationFailed,
@@ -348,7 +348,7 @@ func LinksRemoveAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	datasource := req.GetContext().Get("db").(database.IManager)
-	linkDomain := feedbacks.NewLinksDomain(datasource)
+	linkDomain := distribution.NewLinksDomain(datasource)
 	if err = linkDomain.DisableLinksByIds(req.GetContext().Value(), payload.LinkId); err != nil {
 		_ = view.RenderJson(w, http.StatusExpectationFailed, api.Response{
 			Status:  http.StatusExpectationFailed,
@@ -377,7 +377,7 @@ func LinksBlastAPI(w http.ResponseWriter, r *http.Request) {
 
 	var payload struct {
 		Csrf    string `json:"csrf"`
-		GroupId int64  `json:"group_id"`
+		DistributionObjectId int64  `json:"distribution_object_id"`
 	}
 
 	err := req.UnmarshallBody(&payload)
@@ -402,14 +402,14 @@ func LinksBlastAPI(w http.ResponseWriter, r *http.Request) {
 	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
 		errs["session"] = "Not a valid request session!"
 	}
-	if payload.GroupId < 1 {
+	if payload.DistributionObjectId < 1 {
 		errs["session"] = "Not a valid group id"
 	}
 
 	datasource := req.GetContext().Get("db").(database.IManager)
-	linkDomain := feedbacks.NewLinksDomain(datasource)
+	linkDomain := distribution.NewLinksDomain(datasource)
 
-	links, total, err := linkDomain.FindByGroupId(req.GetContext().Value(), payload.GroupId)
+	links, err := linkDomain.FindByDistObjectIds(req.GetContext().Value(), payload.DistributionObjectId)
 	if err != nil {
 		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
@@ -427,7 +427,6 @@ func LinksBlastAPI(w http.ResponseWriter, r *http.Request) {
 	_ = view.RenderJson(w, http.StatusOK, api.Response{
 		Status: http.StatusOK,
 		Content: map[string]interface{}{
-			"total": total,
 			"links": links,
 		},
 		Error: nil,

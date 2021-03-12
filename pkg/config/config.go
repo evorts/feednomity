@@ -2,10 +2,9 @@ package config
 
 import (
 	"errors"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
-	"time"
 )
 
 type App struct {
@@ -13,7 +12,7 @@ type App struct {
 	HashSalt          string        `yaml:"hash_salt"`
 	AESSalt           string        `yaml:"aes_salt"`
 	HashExpire        int           `yaml:"hash_expire"`
-	SessionExpiration time.Duration `yaml:"session_expire"`
+	SessionExpiration int64 `yaml:"session_expire"`
 	CookieDomain      string        `yaml:"cookie_domain"`
 	CookieSecure      int           `yaml:"cookie_secure"`
 	Cors              struct {
@@ -116,7 +115,6 @@ func (c *config) read() (*Config, error) {
 	err = yaml.Unmarshal(cfg, &config)
 	if err != nil {
 		return nil, err
-
 	}
 	return &config, nil
 }

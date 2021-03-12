@@ -78,11 +78,11 @@ func (m *manager) recursiveFindUsers(ctx context.Context, page, limit int) ([]*u
 }
 
 func (m *manager) recursiveFindRoleAccess(ctx context.Context, page, limit int) ([]*users.UserRoleAccess, error) {
-	ur, urt, urerr := m.ua.FindAllRoleAccess(ctx, 1, 10)
-	if urerr != nil {
-		return nil, urerr
+	ur, uRoleTotal, uRoleErr := m.ua.FindAllRoleAccess(ctx, page, limit)
+	if uRoleErr != nil {
+		return nil, uRoleErr
 	}
-	if (page-1)*limit > urt {
+	if (page-1)*limit > uRoleTotal {
 		return ur, nil
 	}
 	uu, err := m.recursiveFindRoleAccess(ctx, page+1, limit)
@@ -93,7 +93,7 @@ func (m *manager) recursiveFindRoleAccess(ctx context.Context, page, limit int) 
 }
 
 func (m *manager) recursiveFindUserAccess(ctx context.Context, page, limit int) ([]*users.UserAccess, error) {
-	ua, uat, uaerr := m.ua.FindAllUserAccess(ctx, 1, 10)
+	ua, uat, uaerr := m.ua.FindAllUserAccess(ctx, page, limit)
 	if uaerr != nil {
 		return nil, uaerr
 	}
