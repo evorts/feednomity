@@ -1,4 +1,15 @@
 const fc = (function () {
+    // value should be in serializeArray
+    const toJson = function (value) {
+        if (Array.isArray(value)) {
+            return value;
+        }
+        if (typeof value !== 'object') {
+            return {};
+        }
+        return JSON.stringify(value);
+    }
+
     const scrollToBottom = () => {
         const elem = document.scrollingElement || document.body;
         elem.scrollTop = elem.scrollHeight;
@@ -67,7 +78,12 @@ const fc = (function () {
             fc.isFunc(progress) && progress(e);
         });
         ajax[key].addEventListener('load', function (e) {
-            fc.isFunc(success) && success(e);
+            try {
+                const res = JSON.parse(ajax[key].response);
+                fc.isFunc(success) && success(res);
+            } catch (e) {
+                console.log(e);
+            }
         });
         ajax[key].addEventListener('error', function (e) {
             fc.isFunc(fail) && fail(e);
@@ -140,12 +156,14 @@ const fc = (function () {
     if (elementExist(dialogClose)) {
         dialogClose.addEventListener('click', function (e) {
             e.stopPropagation();
+            triggerEvent('onClickCancel');
             dialog(false);
         });
     }
     if (elementExist(dialogButtonCancel)) {
         dialogButtonCancel.addEventListener('click', function (e) {
             e.stopPropagation();
+            triggerEvent('onClickCancel');
             dialog(false);
         });
     }
@@ -153,16 +171,8 @@ const fc = (function () {
         dialogButtonOk.addEventListener('click', function (e) {
             e.stopPropagation();
             triggerEvent('onClickOk');
-            removeClass(dme, 'is-active');
+            dialog(false);
         });
-    }
-
-    // value should be in serializeArray
-    const toJson = function (value) {
-        if (typeof value !== 'object') {
-            return {};
-        }
-        return JSON.stringify(value);
     }
 
     return {

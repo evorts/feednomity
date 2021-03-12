@@ -206,9 +206,14 @@
                 form360Element.getAttribute('method'),
                 form360Element.getAttribute('action'),
                 JSON.stringify(data),
-                function (response) {
-                    if (response.status === 200) {
-
+                function (res) {
+                    console.log(res);
+                    if (res.status === 200) {
+                        fc.dialog(
+                            true, 'Success!',
+                            'Your review has been submitted successfully!',
+                            [['cancel', 'OK']]
+                        );
                     }
                     enableButton(true);
                 }, function (fail) {
