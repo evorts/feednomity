@@ -200,23 +200,21 @@
         }
         const submitData = (type, data) => {
             enableButton(false);
-            data['submission-type'] = type;
+            data['submission_type'] = type;
             fc.call(
                 'r360',
                 form360Element.getAttribute('method'),
                 form360Element.getAttribute('action'),
                 JSON.stringify(data),
                 function (res) {
-                    console.log(res);
                     if (res.status === 200) {
-                        fc.dialog(
-                            true, 'Success!',
-                            'Your review has been submitted successfully!',
-                            [['cancel', 'OK']]
-                        );
+                        fc.toast('Your review has been submitted successfully!', 'is-success');
+                    } else {
+                        fc.toast(res.error.message, 'is-danger');
                     }
                     enableButton(true);
                 }, function (fail) {
+                    fc.toast('Your review submission did not complete successfully!', 'is-warning');
                     enableButton(true);
                 }, function (aborted) {
                     enableButton(true);
@@ -231,7 +229,7 @@
             });
             fc.dialog(
                 true, 'Submit Review',
-                'Are you sure you want to submit your final review now?',
+                "Are you sure you want to submit your FINAL REVIEW now? Once you've submit, you no longer able to modify it.",
                 [['ok', 'Yes'], ['cancel', 'No']]
             );
             return false;
@@ -244,7 +242,7 @@
             });
             fc.dialog(
                 true, 'Saving as Draft', 
-                'Are you sure you want to submit your final review now?', 
+                'Are you sure you want to submit your DRAFT REVIEW now?',
                 [['ok', 'Yes'], ['cancel', 'No']]
             );
             return false;

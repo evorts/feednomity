@@ -15,28 +15,11 @@
         <link rel="stylesheet" href="/assets/styles/fa5.min.css">
         <link rel="stylesheet" href="/assets/styles/bulma/bulma.min.css">
         <!-- CSS only -->
-        {{/* <link href="/assets/styles/main.min.css" rel="stylesheet"> */}}
+        <link href="/assets/lib/main/style.css" rel="stylesheet">
         {{ block "styles" . }} {{ end }}
         {{ block "scripts" . }} {{ end }}
     </head>
     <body>
-    <div class="modal">
-        <div class="modal-background"></div>
-        <div class="modal-card" style="min-height: 12rem;">
-            <header class="modal-card-head">
-                <p class="modal-card-title">Modal title</p>
-                <button class="delete" aria-label="close"></button>
-            </header>
-            <section class="modal-card-body">
-                <div class="content" style="min-height: 3rem;"></div>
-            </section>
-            <footer class="modal-card-foot">
-                <button class="button button-ok is-success">Save changes</button>
-                <button class="button button-cancel">Cancel</button>
-            </footer>
-        </div>
-        <button class="modal-close is-large" aria-label="close"></button>
-    </div>
     <header>
         {{ template "header" . }}
     </header>
@@ -50,7 +33,7 @@
             </div>
         </div>
     </footer>
-    <script src="/assets/scripts/main-client.js"></script>
+    <script src="/assets/lib/main/script.js"></script>
     {{ block "body_scripts" . }} {{ end }}
     </body>
     </html>

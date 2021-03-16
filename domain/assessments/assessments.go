@@ -19,7 +19,7 @@ type manager struct {
 }
 
 const (
-	yamlFilename = "./forms/360.yaml" // temporary solution to accelerate delivery
+	yamlFilename = "./forms/reviews.yaml" // temporary solution to accelerate delivery
 )
 
 func NewAssessmentDomain(dbm database.IManager) IManager {

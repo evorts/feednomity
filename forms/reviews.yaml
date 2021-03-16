@@ -1,7 +1,7 @@
 review360:
   ratings:
     values: [1,2,3,4,5]
-    labels: ["Poor", "Need Improvement", "Meet Expectation", "Outstanding", "Excellent"]
+    labels: ["Poor", "Need Improvement", "Meet Expectation", "Above Expectation", "Perfect"]
   factors:
     title: "360 Review Form"
     weight: 100
@@ -48,7 +48,7 @@ review360:
                 description: >-
                   <p>Have a good sense of work prioritization.</p>
                 weight: 3
-              - key: "detail-solving"
+              - key: "detail_solving"
                 title: "Attention to Details + Analyze + Problem Solving"
                 description: >-
                   <p>Have attention to details, and analyze the situation / challenges based on
@@ -90,7 +90,7 @@ review360:
                   <p>Able to give honest, constructive criticism and receive feedback as a motivation
                   for self-growth.</p>
                 weight: 3
-              - key: "extra-mile"
+              - key: "extra_mile"
                 title: "Willingness to go Extra Mile"
                 description: >-
                   <p>Committed to their work and willingly take extra work when urgency arises.</p>

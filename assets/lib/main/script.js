@@ -1,15 +1,4 @@
 const fc = (function () {
-    // value should be in serializeArray
-    const toJson = function (value) {
-        if (Array.isArray(value)) {
-            return value;
-        }
-        if (typeof value !== 'object') {
-            return {};
-        }
-        return JSON.stringify(value);
-    }
-
     const scrollToBottom = () => {
         const elem = document.scrollingElement || document.body;
         elem.scrollTop = elem.scrollHeight;
@@ -56,6 +45,12 @@ const fc = (function () {
         if (!elementExist(e)) {
             return;
         }
+        if (Array.isArray(c)) {
+            c.forEach(function (ce) {
+                e.classList.add(ce);
+            })
+            return
+        }
         e.classList.add(c);
     }
 
@@ -63,9 +58,16 @@ const fc = (function () {
         if (!elementExist(e)) {
             return;
         }
+        if (Array.isArray(c)) {
+            c.forEach(function (ce) {
+                e.classList.remove(ce);
+            })
+            return
+        }
         e.classList.remove(c);
     }
 
+    /** ajax **/
     const ajax = {};
     const call = (key, method, endpoint, data, success, fail, aborted, progress) => {
         //abort previous request when exist
@@ -96,7 +98,52 @@ const fc = (function () {
         ajax[key].send(data);
     }
 
-    const dme = document.querySelector('.modal');
+    /** toast **/
+    const toastTypes = ['is-warning', 'is-danger', 'is-success', 'is-info'];
+    let t = document.getElementById('snackbar');
+    if (!elementExist(t)) {
+        t = document.createElement('div');
+        t.id = "snackbar";
+        addClass(t, 'notification');
+        document.body.appendChild(t);
+    }
+    const toast = (text, type) => {
+        const c = ['show'];
+        t.innerText = text;
+        removeClass(t, toastTypes);
+        if (toastTypes.includes(type)) {
+            c.push(type);
+        }
+        addClass(t, c);
+        setTimeout(function () {
+            removeClass(t, 'show');
+        }, 1500);
+    }
+
+    /** dialog **/
+    const dialogTemplate = `
+        <div class="modal-background"></div>
+        <div class="modal-card" style="min-height: 12rem;">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Modal title</p>
+                <button class="delete" aria-label="close"></button>
+            </header>
+            <section class="modal-card-body">
+                <div class="content" style="min-height: 3rem;"></div>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button button-ok is-success">Save changes</button>
+                <button class="button button-cancel">Cancel</button>
+            </footer>
+        </div>`
+    let dme = document.getElementById('dialog-modal');
+    if (!elementExist(dme)) {
+        dme = document.createElement('div');
+        dme.id = 'dialog-modal';
+        addClass(dme, 'modal');
+        dme.innerHTML = dialogTemplate;
+        document.body.appendChild(dme);
+    }
     const dialogTitle = dme.querySelector('.modal-card-title');
     const dialogContent = dme.querySelector('.content');
     const dialogButtonOk = dme.querySelector('.button-ok');
@@ -185,9 +232,9 @@ const fc = (function () {
         deepMerge,
         call,
         dialog,
+        toast,
         addClass,
         removeClass,
-        toJson,
         overrideEvents
     };
 })();

@@ -1,7 +1,7 @@
 {{ template "layout_client" . }}
 {{ define "title" }} {{ .PageTitle }} {{ end }}
 {{ define "styles" }}
-    <link href="/assets/styles/form360.css" rel="stylesheet">
+    <link href="/assets/lib/360/style.css" rel="stylesheet">
 {{ end }}
 {{ define "scripts" }}
     {{ with $r := . }}
@@ -11,7 +11,7 @@
     {{ end }}
 {{ end }}
 {{ define "body_scripts" }}
-    <script type="module" src="/assets/scripts/360.js"></script>
+    <script type="module" src="/assets/lib/360/script.js"></script>
 {{ end }}
 {{ define "header"}}
     <nav class="navbar is-white" role="navigation">
@@ -117,15 +117,15 @@
                                 <th rowspan="2" class="is-vcentered">Description</th>
                                 <th rowspan="2" class="is-vcentered">Weight (%)</th>
                                 <th colspan="5">Rating</th>
-                                <th rowspan="2" class="is-vcentered">Score</th>
+                                <th rowspan="2" class="hscore is-vcentered">Score</th>
                                 <th rowspan="2" class="is-vcentered">Remark</th>
                             </tr>
                             <tr>
-                                <th>1</th>
-                                <th>2</th>
-                                <th>3</th>
-                                <th>4</th>
-                                <th>5</th>
+                                <th class="hrating">1</th>
+                                <th class="hrating">2</th>
+                                <th class="hrating">3</th>
+                                <th class="hrating">4</th>
+                                <th class="hrating">5</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -578,7 +578,7 @@
         </section>
     </div>
     <div>
-        <button class="button btn-float is-light btn-up-down">
+        <button class="button btn-float btn-up-down">
             <span class="icon is-large">
                 <i class="fas fa-caret-down fa-2x"></i>
             </span>

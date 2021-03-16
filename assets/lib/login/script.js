@@ -1,4 +1,4 @@
-(function ($, $f) {
+(function ($) {
     $(document).ready(function () {
         const warn = function(response) {
             $('*[class^="err-"]').text('').removeClass('hide').addClass('hide');
@@ -34,4 +34,4 @@
             });
         });
     })
-})(jQuery, feednomity)
+})(jQuery)

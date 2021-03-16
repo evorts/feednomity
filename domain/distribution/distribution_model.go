@@ -10,6 +10,9 @@ type Distribution struct {
 	Distributed       bool       `json:"distributed"`
 	DistributionLimit int        `json:"distribution_limit"`
 	DistributionCount int        `json:"distribution_count"`
+	RangeStart        *time.Time `json:"range_start"`
+	RangeEnd          *time.Time `json:"range_end"`
+	CreatedBy         int64        `json:"created_by"`
 	CreatedAt         *time.Time `json:"created_at"`
 	UpdatedAt         *time.Time `json:"updated_at"`
 	DisabledAt        *time.Time `json:"disabled_at"`
@@ -18,16 +21,16 @@ type Distribution struct {
 }
 
 type Object struct {
-	Id               int64                  `json:"id"`
-	DistributionId   int64                  `json:"distribution_id"`
-	RecipientId      int64                  `json:"recipient_id"`
-	RespondentId     int64                  `json:"respondent_ids"`
-	LinkId           int64                  `json:"link_id"`
-	PublishingStatus string                 `json:"publishing_status"`
+	Id               int64                    `json:"id"`
+	DistributionId   int64                    `json:"distribution_id"`
+	RecipientId      int64                    `json:"recipient_id"`
+	RespondentId     int64                    `json:"respondent_ids"`
+	LinkId           int64                    `json:"link_id"`
+	PublishingStatus string                   `json:"publishing_status"`
 	PublishingLog    []map[string]interface{} `json:"publishing_log"`
-	CreatedAt        *time.Time             `json:"created_at"`
-	UpdatedAt        *time.Time             `json:"updated_at"`
-	PublishedAt      *time.Time             `json:"published_at"`
+	CreatedAt        *time.Time               `json:"created_at"`
+	UpdatedAt        *time.Time               `json:"updated_at"`
+	PublishedAt      *time.Time               `json:"published_at"`
 }
 
 type Log struct {

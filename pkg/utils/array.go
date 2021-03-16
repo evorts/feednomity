@@ -19,3 +19,16 @@ func (a ArrayInt64) ToArrayInterface() []interface{} {
 	}
 	return rs
 }
+
+type ArrayString []string
+
+func (a ArrayString) Reduce() []string {
+	rs := make([]string, 0)
+	for _, v := range a {
+		if len(v) < 1 {
+			continue
+		}
+		rs = append(rs, v)
+	}
+	return rs
+}

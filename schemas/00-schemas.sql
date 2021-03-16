@@ -43,6 +43,72 @@ $$;
 /* enabling crypt on psql */
 create extension if not exists pgcrypto;
 
+/** for admin dashboard **/
+/** could be utilise as company **/
+create table users_group
+(
+    id          serial primary key,
+    name        varchar(40) unique,
+    disabled    bool default false,
+    created_at  timestamp,
+    updated_at  timestamp,
+    disabled_at timestamp
+);
+
+create type user_role as enum ('sysadmin','site-admin','admin','supervisor','member','guest','custom');
+
+create table users
+(
+    id           serial primary key,
+    username     varchar(25) unique,
+    display_name varchar(50),
+    email        varchar(50),
+    phone        varchar(15),
+    password     varchar(128),
+    role         user_role,
+    group_id     int
+        constraint users_group_id references users_group (id),
+    created_at   timestamp,
+    updated_at   timestamp
+);
+
+/** as audit log trail **/
+create table user_activities
+(
+    id          bigserial primary key,
+    user_id     int
+        constraint activities_users_id references users (id),
+    action      varchar(50),
+    values      jsonb default '{}',
+    values_prev jsonb default '{}',
+    notes       varchar(100),
+    at          timestamp
+);
+
+create type access_level as enum ('get', 'post', 'put', 'delete', 'head', 'options');
+
+create table role_access
+(
+    id             serial primary key,
+    role           user_role,
+    path           varchar(100), /** should consistent pattern such as <module>.<method> **/
+    regex          bool    default false,
+    access_allowed access_level[],
+    disabled       boolean default false
+);
+
+create table user_access
+(
+    id                serial primary key,
+    user_id           integer,
+    path              varchar(100), /** should consistent pattern such as <module>.<method> **/
+    access_allowed    access_level[],
+    access_disallowed access_level[],
+    disabled          boolean default false
+);
+
+create unique index idx_user_access_id_path ON user_access (user_id, path);
+
 /** purpose: recipients are the list of persons/employees that possibly giving feedbacks **/
 create table objects
 (
@@ -54,7 +120,7 @@ create table objects
     role          varchar(30),
     assignment    varchar(50),
     user_group_id int
-        constraint objects_user_group_id references users_group(id),
+        constraint objects_user_group_id references users_group (id),
     disabled      bool  default false,
     archived      bool  default false,
     created_at    timestamp,
@@ -74,6 +140,10 @@ create table distributions
     distributed        bool default false,
     distribution_limit int, /** max limit distribution **/
     distribution_count int, /** how many times its distributed **/
+    range_start        timestamp, /** review start **/
+    range_end          timestamp, /** review end **/
+    created_by         int
+        constraint distributions_created_by_users_id references users(id),
     created_at         timestamp,
     updated_at         timestamp,
     disabled_at        timestamp,
@@ -274,70 +344,3 @@ create table submission_audience
     audiences           varchar(100)[],
     audience_title      varchar(50)
 );
-
-
-/** for admin dashboard **/
-/** could be utilise as company **/
-create table users_group
-(
-    id          serial primary key,
-    name        varchar(40) unique,
-    disabled    bool default false,
-    created_at  timestamp,
-    updated_at  timestamp,
-    disabled_at timestamp
-);
-
-create type user_role as enum ('sysadmin','site-admin','admin','supervisor','member','guest','custom');
-
-create table users
-(
-    id           serial primary key,
-    username     varchar(25) unique,
-    display_name varchar(50),
-    email        varchar(50),
-    phone        varchar(15),
-    password     varchar(128),
-    role         user_role,
-    group_id     int
-        constraint users_group_id references users_group (id),
-    created_at   timestamp,
-    updated_at   timestamp
-);
-
-/** as audit log trail **/
-create table user_activities
-(
-    id          bigserial primary key,
-    user_id     int
-        constraint activities_users_id references users (id),
-    action      varchar(50),
-    values      jsonb default '{}',
-    values_prev jsonb default '{}',
-    notes       varchar(100),
-    at          timestamp
-);
-
-create type access_level as enum ('get', 'post', 'put', 'delete', 'head', 'options');
-
-create table role_access
-(
-    id             serial primary key,
-    role           user_role,
-    path           varchar(100), /** should consistent pattern such as <module>.<method> **/
-    regex          bool    default false,
-    access_allowed access_level[],
-    disabled       boolean default false
-);
-
-create table user_access
-(
-    id                serial primary key,
-    user_id           integer,
-    path              varchar(100), /** should consistent pattern such as <module>.<method> **/
-    access_allowed    access_level[],
-    access_disallowed access_level[],
-    disabled          boolean default false
-);
-
-create unique index idx_user_access_id_path ON user_access (user_id, path);

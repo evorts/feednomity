@@ -15,6 +15,7 @@ type manager struct {
 }
 
 type IUsers interface {
+	FindByIds(ctx context.Context, ids ...int64) ([]*User, error)
 	FindByUsername(ctx context.Context, username string) (*User, error)
 	FindGroupByIds(ctx context.Context, ids ...int64) ([]*Group, error)
 	FindAll(ctx context.Context, page, limit int) (u []*User, total int, err error)
@@ -27,6 +28,51 @@ const (
 
 func NewUserDomain(dbm database.IManager) IUsers {
 	return &manager{dbm: dbm}
+}
+
+func (m *manager) FindByIds(ctx context.Context, ids ...int64) ([]*User, error) {
+	var (
+		err  error
+		rows database.Rows
+		u    = make([]*User, 0)
+	)
+	q := m.dbm.Rebind(ctx, fmt.Sprintf(
+		`SELECT 
+						id, username, display_name, email, phone, password, role, group_id,
+						created_at, updated_at
+					FROM %s WHERE id IN (%s)`,
+		tableUsers, strings.TrimRight(strings.Repeat("?,", len(ids)), ",")),
+	)
+	rows, err = m.dbm.Query(
+		ctx, q, utils.ArrayInt64(ids).ToArrayInterface()...,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return u, nil
+		}
+		return nil, err
+	}
+	for rows.Next() {
+		var ui User
+		err = rows.Scan(
+			&ui.Id,
+			&ui.Username,
+			&ui.DisplayName,
+			&ui.Email,
+			&ui.Phone,
+			&ui.Password,
+			&ui.Role,
+			&ui.GroupId,
+			&ui.CreatedDate,
+			&ui.UpdatedDate,
+		)
+		if err != nil {
+			return nil, err
+		}
+		u = append(u, &ui)
+	}
+	return u, nil
 }
 
 func (m *manager) FindByUsername(ctx context.Context, username string) (*User, error) {

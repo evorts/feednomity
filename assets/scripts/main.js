@@ -1,21 +1,3 @@
-const feednomity = (function ($) {
-    // value should be in serializeArray
-    const toJson = function (value) {
-        if (typeof value !== 'object') {
-            return {};
-        }
-        console.log(value);
-        console.log(typeof value);
-        return JSON.stringify(value);
-    }
-
-    return {
-        toJson: toJson,
-        toast: function (msg) {
-            alert(msg)
-        }
-    }
-})(jQuery);
 // jQuery Plugin section
 (function ($) {
     $.fn.serializeObject = function () {
