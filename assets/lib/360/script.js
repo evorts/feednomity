@@ -60,72 +60,92 @@
         return element.hasAttribute('data-parent');
     }
 
-    const attachScoreCalculator = () => {
-        const checkmarks = document.getElementsByClassName('rating-input');
-        const calculateScoreSubtotal = ($rowElement) => {
-            if (!hasDataParent($rowElement)) {
-                return
-            }
-            const $tbody = $rowElement.closest('tbody');
-            const dParent = $rowElement.getAttribute('data-parent');
-            let scoreSubtotalElement = $tbody.querySelector('.score-' + dParent);
-            if (!fc.elementExist(scoreSubtotalElement)) {
-                return;
-            }
-            scoreSubtotalElement = scoreSubtotalElement.querySelector('.score-subtotal');
-            if (!fc.elementExist(scoreSubtotalElement)) {
-                return;
-            }
-            const scoreElements = $tbody.querySelectorAll('.ch-' + dParent);
-            let scoreSubtotal = 0;
-            for (let i = 0; i < scoreElements.length; i++) {
-                let score = scoreElements[i].querySelector('.score').innerText;
-                if (score.length) {
-                    scoreSubtotal += parseFloat(score);
-                }
-            }
-            scoreSubtotalElement.innerText = scoreSubtotal.toFixed(2);
-        };
-        const calculateRating = (score) => {
-            switch (true) {
-                case score < 1.5:
-                    return ratings[0];
-                case score >= 1.5 && score < 2.5:
-                    return ratings[1];
-                case score >= 2.5 && score < 3.5:
-                    return ratings[2];
-                case score >= 3.5 && score < 4.5:
-                    return ratings[3];
-                case score >= 4.5:
-                    return ratings[4];
-                default:
-                    return "";
+    /** score calculator **/
+    const calculateScoreSubtotal = ($rowElement) => {
+        if (!hasDataParent($rowElement)) {
+            return
+        }
+        const $tbody = $rowElement.closest('tbody');
+        const dParent = $rowElement.getAttribute('data-parent');
+        let scoreSubtotalElement = $tbody.querySelector('.score-' + dParent);
+        if (!fc.elementExist(scoreSubtotalElement)) {
+            return;
+        }
+        scoreSubtotalElement = scoreSubtotalElement.querySelector('.score-subtotal');
+        if (!fc.elementExist(scoreSubtotalElement)) {
+            return;
+        }
+        const scoreElements = $tbody.querySelectorAll('.ch-' + dParent);
+        let scoreSubtotal = 0;
+        for (let i = 0; i < scoreElements.length; i++) {
+            let score = scoreElements[i].querySelector('.score').innerText;
+            if (score.length) {
+                scoreSubtotal += parseFloat(score);
             }
         }
-        const calculateScoreTotal = ($rowElement) => {
-            const $tbody = $rowElement.closest('tbody');
-            const scoreElements = $tbody.querySelectorAll('.score');
-            let scoreTotal = 0;
-            for (let i = 0; i < scoreElements.length; i++) {
-                let score = scoreElements[i].innerText;
-                if (score.length) {
-                    scoreTotal += parseFloat(score);
-                }
-            }
-            $tbody.querySelector('.score-total').innerText = scoreTotal.toFixed(2);
-            $tbody.querySelector('.score-rating').innerText = calculateRating(scoreTotal);
-        };
+        scoreSubtotalElement.innerText = scoreSubtotal.toFixed(2);
+    };
 
+    const calculateRating = (score) => {
+        switch (true) {
+            case score < 1.5:
+                return ratings[0];
+            case score >= 1.5 && score < 2.5:
+                return ratings[1];
+            case score >= 2.5 && score < 3.5:
+                return ratings[2];
+            case score >= 3.5 && score < 4.5:
+                return ratings[3];
+            case score >= 4.5:
+                return ratings[4];
+            default:
+                return "";
+        }
+    }
+
+    const calculateScoreTotal = ($rowElement) => {
+        const $tbody = $rowElement.closest('tbody');
+        const scoreElements = $tbody.querySelectorAll('.score');
+        let scoreTotal = 0;
+        for (let i = 0; i < scoreElements.length; i++) {
+            let score = scoreElements[i].innerText;
+            if (score.length) {
+                scoreTotal += parseFloat(score);
+            }
+        }
+        $tbody.querySelector('.score-total').innerText = scoreTotal.toFixed(2);
+        $tbody.querySelector('.score-rating').innerText = calculateRating(scoreTotal);
+    };
+
+    const checkmarks = document.getElementsByClassName('rating-input');
+
+    const calculate = ($c) => {
+        const calc = ($chk) => {
+            const $tr = $chk.closest('tr');
+            const weightElement = $tr.querySelector('.weight');
+            const scoreElement = $tr.querySelector('.score');
+            const value = $chk.value;
+            const weight = weightElement.innerText.replace(/[^0-9]/, '');
+            scoreElement.innerText = ((weight / 100) * value).toFixed(2);
+            calculateScoreSubtotal($tr);
+            calculateScoreTotal($tr);
+        }
+        if (fc.elementExist($c)) {
+            calc($c);
+            return
+        }
+        for (let i = 0; i < checkmarks.length; i++) {
+            if (!checkmarks[i].checked) {
+                continue
+            }
+            calc(checkmarks[i]);
+        }
+    }
+
+    const attachScoreCalculator = () => {
         for (let i = 0; i < checkmarks.length; i++) {
             checkmarks[i].addEventListener('change', function () {
-                const $tr = this.closest('tr');
-                const weightElement = $tr.querySelector('.weight');
-                const scoreElement = $tr.querySelector('.score');
-                const value = this.value;
-                const weight = weightElement.innerText.replace(/[^0-9]/, '');
-                scoreElement.innerText = ((weight / 100) * value).toFixed(2);
-                calculateScoreSubtotal($tr);
-                calculateScoreTotal($tr);
+                calculate(this);
             }, false);
         }
     }
@@ -139,6 +159,7 @@
         for (let i = 0; i < ratingGuideElements.length; i++) {
             ratingGuideElements[i].innerText = ratings[i];
         }
+        calculate();
     }
 
     const attachOnFormSubmit = () => {

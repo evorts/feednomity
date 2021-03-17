@@ -64,7 +64,7 @@ func main() {
 			HttpOnly: false,
 			Path:     "/",
 			Persist:  false,
-			SameSite: 0,
+			SameSite: http.SameSiteLaxMode,
 			Secure:   false,
 		},
 	)

@@ -5,24 +5,14 @@ import (
 	"time"
 )
 
-type Rating int
-
-const (
-	RatingLowest  Rating = 1
-	RatingLow     Rating = 2
-	RatingMedium  Rating = 3
-	RatingHigh    Rating = 4
-	RatingHighest Rating = 5
-)
-
 type Factor struct {
 	Key         string        `json:"key"`
 	Title       string        `json:"title"`
 	Description template.HTML `json:"description"`
 	Weight      float32       `json:"weight"`
-	Rating      Rating        `json:"rating"`
-	Notes       string        `json:"notes"`
-	Items       []Factor      `json:"items"`
+	Rating      int           `json:"rating"`
+	Note        string        `json:"note"`
+	Items       []*Factor     `json:"items"`
 }
 
 type Client struct {
@@ -55,5 +45,7 @@ type Template struct {
 		Values []int    `yaml:"values" json:"values"`
 		Labels []string `yaml:"labels" json:"labels"`
 	} `yaml:"ratings" json:"ratings"`
-	Factors Factor `yaml:"factors" json:"factors"`
+	StrengthsFieldCount    int     `yaml:"strengths_field_count" json:"strengths_field_count"`
+	ImprovementsFieldCount int     `yaml:"improvements_field_count" json:"improvements_field_count"`
+	Factors                *Factor `yaml:"factors" json:"factors"`
 }

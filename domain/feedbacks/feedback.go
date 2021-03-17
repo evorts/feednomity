@@ -150,7 +150,6 @@ func (m *manager) SaveTx(ctx context.Context, f Feedback, fd Detail) error {
 			SET 
 				feedback_id = ?, link_id = ?, hash = ?, respondent_id = ?, respondent_name = ?, respondent_email = ?,
 				recipient_id = ?, recipient_name = ?, recipient_email = ?, content = ?, status = ?,  updated_at = NOW()
-			)
 			WHERE id = %d
 		`, tableFeedbackDetail, fd.Id))
 	}

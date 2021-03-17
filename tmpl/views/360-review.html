@@ -150,7 +150,10 @@
                                                         {{ range $i, $rating := $r.Assessments.Ratings }}
                                                         <td class="rating">
                                                             <label class="container">
-                                                                <input name="{{ $item.Key }}.{{ $itemLv2.Key }}.{{ $itemLv3.Key }}.rating" type="radio" class="form-input rating-input" value="{{ $rating }}">
+                                                                <input name="{{ $item.Key }}.{{ $itemLv2.Key }}.{{ $itemLv3.Key }}.rating"
+                                                                       type="radio"
+                                                                       class="form-input rating-input"
+                                                                       value="{{ $rating }}" {{if (eq $rating $itemLv3.Rating)}}checked{{end}}>
                                                                 <span class="checkmark"></span>
                                                             </label>
                                                         </td>
@@ -159,7 +162,7 @@
                                                         <td class="remark"><label style="width: 9rem;"><textarea
                                                                 name="{{ $item.Key }}.{{ $itemLv2.Key }}.{{ $itemLv3.Key }}.note"
                                                                 class="form-input textarea is-shadowless remark {{ $itemLv3.Key }}"
-                                                                placeholder="Notes here..." style="border: none;"></textarea></label>
+                                                                placeholder="Notes here..." style="border: none;">{{ $itemLv3.Note }}</textarea></label>
                                                         </td>
                                                     </tr>
                                                     {{ end }}
@@ -181,7 +184,10 @@
                                             {{ range $i, $rating := $r.Assessments.Ratings }}
                                             <td class="rating">
                                                 <label class="container">
-                                                    <input name="{{ $item.Key }}.rating" type="radio" class="form-input rating-input" value="{{ $rating }}">
+                                                    <input name="{{ $item.Key }}.rating"
+                                                           type="radio"
+                                                           class="form-input rating-input"
+                                                           value="{{ $rating }}" {{if (eq $rating $item.Rating)}}checked{{end}}>
                                                     <span class="checkmark"></span>
                                                 </label>
                                             </td>
@@ -190,7 +196,7 @@
                                             <td class="remark"><label style="width: 9rem;"><textarea
                                                     name="{{ $item.Key }}.note"
                                                     class="form-input textarea is-shadowless remark {{ $item.Key }}"
-                                                    placeholder="Notes here..." style="border: none;"></textarea></label>
+                                                    placeholder="Notes here..." style="border: none;">{{ $item.Note }}</textarea></label>
                                             </td>
                                         </tr>
                                         {{ end }}
@@ -214,31 +220,13 @@
                     </div>
                     <div class="columns">
                         <div class="column">
-                            <p class="control has-icons-left">
-                                <input name="strengths[0]" class="form-input input strength-points is-fullwidth" type="text"
-                                       placeholder="Write strength points here...">
-                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
-                            </p>
-                            <p class="control has-icons-left mt-3">
-                                <input name="strengths[1]" class="form-input input strength-points is-fullwidth" type="text"
-                                       placeholder="Write strength points here...">
-                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
-                            </p>
-                            <p class="control has-icons-left mt-3">
-                                <input name="strengths[2]" class="form-input input strength-points is-fullwidth" type="text"
-                                       placeholder="Write strength points here...">
-                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
-                            </p>
-                            <p class="control has-icons-left mt-3">
-                                <input name="strengths[3]" class="form-input input strength-points is-fullwidth" type="text"
-                                       placeholder="Write strength points here...">
-                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
-                            </p>
-                            <p class="control has-icons-left mt-3">
-                                <input name="strengths[4]" class="form-input input strength-points is-fullwidth" type="text"
-                                       placeholder="Write strength points here...">
-                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
-                            </p>
+                            {{ range $i, $strength := .Assessments.Strengths }}
+                                <p class="control has-icons-left mt-3">
+                                    <input name="strengths[{{ $i }}]" class="form-input input strength-points is-fullwidth" type="text"
+                                           placeholder="Write strength points here..." value="{{ $strength }}">
+                                    <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                                </p>
+                            {{ end }}
                         </div>
                     </div>
                 </div>
@@ -248,31 +236,13 @@
                     </div>
                     <div class="columns">
                         <div class="column">
-                            <p class="control has-icons-left">
-                                <input name="improves[0]" class="form-input input improve-points is-fullwidth" type="text"
-                                       placeholder="Write improvement points here...">
-                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
-                            </p>
-                            <p class="control has-icons-left mt-3">
-                                <input name="improves[1]" class="form-input input improve-points is-fullwidth" type="text"
-                                       placeholder="Write improvement points here...">
-                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
-                            </p>
-                            <p class="control has-icons-left mt-3">
-                                <input name="improves[2]" class="form-input input improve-points is-fullwidth" type="text"
-                                       placeholder="Write improvement points here...">
-                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
-                            </p>
-                            <p class="control has-icons-left mt-3">
-                                <input name="improves[3]" class="form-input input improve-points is-fullwidth" type="text"
-                                       placeholder="Write improvement points here...">
-                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
-                            </p>
-                            <p class="control has-icons-left mt-3">
-                                <input name="improves[4]" class="form-input input improve-points is-fullwidth" type="text"
-                                       placeholder="Write improvement points here...">
-                                <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
-                            </p>
+                            {{ range $i, $improve := .Assessments.NeedImprovements }}
+                                <p class="control has-icons-left mt-3">
+                                    <input name="improves[{{ $i }}]" class="form-input input improve-points is-fullwidth" type="text"
+                                           placeholder="Write improvement points here..." value="{{ $improve }}">
+                                    <span class="icon is-left"><i class="fas fa-caret-right" aria-hidden="true"></i></span>
+                                </p>
+                            {{ end }}
                         </div>
                     </div>
                 </div>

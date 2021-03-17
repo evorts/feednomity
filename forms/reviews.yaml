@@ -2,6 +2,8 @@ review360:
   ratings:
     values: [1,2,3,4,5]
     labels: ["Poor", "Need Improvement", "Meet Expectation", "Above Expectation", "Perfect"]
+  strengths_field_count: 5
+  improvements_field_count: 5
   factors:
     title: "360 Review Form"
     weight: 100

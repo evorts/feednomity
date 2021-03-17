@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"encoding/json"
 	"github.com/evorts/feednomity/domain/assessments"
 	"github.com/evorts/feednomity/domain/distribution"
 	"github.com/evorts/feednomity/domain/feedbacks"
@@ -12,6 +14,77 @@ import (
 	"net/http"
 	"strings"
 )
+
+func populateFields(ctx context.Context, lh string, f feedbacks.IFeedback, factors *assessments.Factor) (strengths []string, improvements []string) {
+	fd, err := f.FindDetailByHash(ctx, lh)
+	if err != nil {
+		return
+	}
+	var (
+		content FeedbackPayload
+		cb      []byte
+	)
+	cb, err = json.Marshal(fd.Content)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(cb, &content)
+	if err != nil {
+		return
+	}
+	var fieldsValue = make(map[string]interface{}, 0)
+	content.filterFieldsAndTransform(nil, fieldsValue)
+	if len(fieldsValue) < 1 {
+		return
+	}
+	//todo need refactor -- this is just stupid approach from me
+	for k, v := range fieldsValue {
+		for _, f1 := range factors.Items {
+			if f1.Key == k {
+				if vv, ok := v.(ItemValue); ok {
+					f1.Rating = vv.Rating
+					f1.Note = vv.Note
+				}
+				continue
+			}
+			if len(f1.Items) < 1 {
+				continue
+			}
+			for _, f2 := range f1.Items {
+				if f2.Key == k {
+					if vv, ok := v.(ItemValue); ok {
+						f2.Rating = vv.Rating
+						f2.Note = vv.Note
+					}
+					continue
+				}
+				if len(f2.Items) < 1 {
+					continue
+				}
+				for _, f3 := range f2.Items {
+					if f3.Key == k {
+						if vv, ok := v.(ItemValue); ok {
+							f3.Rating = vv.Rating
+							f3.Note = vv.Note
+						}
+						continue
+					}
+				}
+			}
+		}
+	}
+	if v, ok := fieldsValue["strengths"]; ok {
+		if vv, ok2 := v.([]string); ok2 {
+			strengths = vv
+		}
+	}
+	if v, ok := fieldsValue["improves"]; ok {
+		if vv, ok2 := v.([]string); ok2 {
+			improvements = vv
+		}
+	}
+	return strengths, improvements
+}
 
 func Form360(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
@@ -63,6 +136,15 @@ func Form360(w http.ResponseWriter, r *http.Request) {
 	)
 	assessmentsDomain := assessments.NewAssessmentDomain(datasource)
 	factors, _ := assessmentsDomain.FindTemplateDataByKey(req.GetContext().Value(), "review360")
+
+	strengths, improvements := populateFields(req.GetContext().Value(), lh, feedbacks.NewFeedbackDomain(datasource), factors.Factors)
+	if strengths == nil {
+		strengths = make([]string, factors.StrengthsFieldCount)
+	}
+	if improvements == nil {
+		improvements = make([]string, factors.ImprovementsFieldCount)
+	}
+
 	if err = view.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "360-review.html", map[string]interface{}{
 		"PageTitle":    factors.Factors.Title,
 		"RatingsLabel": strings.Join(factors.Ratings.Labels, ","),
@@ -81,13 +163,13 @@ func Form360(w http.ResponseWriter, r *http.Request) {
 				Role:       respondent.Role,
 				Assignment: respondent.Assignment,
 			},
-			PeriodSince:      dist.RangeStart,
-			PeriodUntil:      dist.RangeEnd,
-			Strengths:        nil,
-			NeedImprovements: nil,
-			Ratings:          factors.Ratings.Values,
-			RatingsLabel:     factors.Ratings.Labels,
-			Factors:          &factors.Factors,
+			PeriodSince:                dist.RangeStart,
+			PeriodUntil:                dist.RangeEnd,
+			Strengths:                  strengths,
+			NeedImprovements:           improvements,
+			Ratings:                    factors.Ratings.Values,
+			RatingsLabel:               factors.Ratings.Labels,
+			Factors:                    factors.Factors,
 		},
 	}); err != nil {
 		log.Log("form360_handler", err.Error())
