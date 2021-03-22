@@ -143,7 +143,7 @@ create table distributions
     range_start        timestamp, /** review start **/
     range_end          timestamp, /** review end **/
     created_by         int
-        constraint distributions_created_by_users_id references users(id),
+        constraint distributions_created_by_users_id references users (id),
     created_at         timestamp,
     updated_at         timestamp,
     disabled_at        timestamp,
@@ -164,9 +164,23 @@ create table distribution_objects
         constraint distribution_respondents_respondent_id references objects (id),
     publishing_status distribution_object_status default 'none', /** when its published -- sent to respondent **/
     publishing_log    jsonb                      default '[]',
+    retry_count       int,
     created_at        timestamp,
     updated_at        timestamp,
     published_at      timestamp
+);
+
+create
+    unique index idx_distribution_objects_publishing_status on distribution_objects (publishing_status);
+
+create table distribution_mail_queue
+(
+    id                     bigserial primary key,
+    distribution_object_id int,
+    from_email             varchar(100),
+    to_email               varchar(100),
+    subject                varchar(200),
+    content                text
 );
 
 create table distribution_log

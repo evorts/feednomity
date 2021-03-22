@@ -5,7 +5,24 @@ import (
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
+	"os/user"
+	"path"
 )
+
+
+type MailProvider struct {
+	ApiKey string `yaml:"api_key"`
+	ApiUrl string `yaml:"api_url"`
+}
+
+type MapMailProvider map[string]MailProvider
+
+func (m MapMailProvider) Get(key string) MailProvider {
+	if v, ok := m[key]; ok {
+		return v
+	}
+	return MailProvider{}
+}
 
 type App struct {
 	Port              int           `yaml:"port"`
@@ -41,6 +58,10 @@ type Config struct {
 		MaxIdleConnection     int64  `yaml:"max_idle_connection"`
 		MaxOpenConnection     int64  `yaml:"max_open_connection"`
 	} `yaml:"db"`
+	Mailer struct {
+		DailyLimit int `yaml:"daily_limit"`
+		Providers MapMailProvider `yaml:"providers"`
+	} `yaml:"mailer"`
 }
 
 type config struct {
@@ -96,12 +117,37 @@ func (c *config) fileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+func (c *config) getPath(filename string) []string {
+	p := make([]string, 0)
+	wd, err := os.Getwd()
+	if err == nil {
+		p = append(p, path.Join(wd, filename))
+	}
+	usr, err := user.Current()
+	if err == nil {
+		p = append(p, path.Join(usr.HomeDir, filename))
+	}
+	return p
+}
+
 func (c *config) read() (*Config, error) {
 	fName := ""
 	for _, f := range c.filename {
 		if c.fileExists(f) {
 			fName = f
+		}
+		if len(fName) > 0 {
 			break
+		}
+		paths := c.getPath(f)
+		if len(paths) < 1 {
+			continue
+		}
+		for _, ff := range paths {
+			if !c.fileExists(ff) {
+				continue
+			}
+			fName = ff
 		}
 	}
 	if len(fName) < 1 {
