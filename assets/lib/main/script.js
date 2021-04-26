@@ -1,4 +1,12 @@
 const fc = (function () {
+    const onDocumentReady = (fn) => {
+        if (document.readyState === "complete" || document.readyState === "interactive") {
+            setTimeout(fn, 1);
+        } else {
+            document.addEventListener("DOMContentLoaded", fn);
+        }
+    }
+
     const scrollToBottom = () => {
         const elem = document.scrollingElement || document.body;
         elem.scrollTop = elem.scrollHeight;
@@ -96,6 +104,53 @@ const fc = (function () {
         ajax[key].open(method, endpoint);
         ajax[key].setRequestHeader('Content-Type', 'application/json');
         ajax[key].send(data);
+    }
+
+    /** form **/
+    const getFormData = (form, inputSelector) => {
+        let data = {};
+        const selector = inputSelector || '.form-input';
+        const formElements = form.elements;
+        const inputElements = form.querySelectorAll(selector);
+        for (let i = 0; i < inputElements.length; i++) {
+            const name = inputElements[i].name;
+            let value = formElements[name].value;
+            const type = inputElements[i].type;
+            if (type === 'radio') {
+                if (value === "") {
+                    value = 0;
+                } else {
+                    value = parseInt(value);
+                }
+            }
+            if (name.endsWith(']')) {
+                const n = name.split('[')[0];
+                if (fc.keyExist(n, data)) {
+                    let v = data[n];
+                    if (!Array.isArray(v)) {
+                        continue;
+                    }
+                    v.push(value);
+                    data[n] = v;
+                } else {
+                    data[n] = [value];
+                }
+                continue;
+            }
+            if (keyExist(name, data)) {
+                continue;
+            }
+            if (name.indexOf('.') < 1) {
+                data[name] = value;
+                continue;
+            }
+            //parse and rebuild into nested object when naming convention contains dot
+            const item = name.split('.').reduceRight(
+                (all, item) => ({[item]: all}), value
+            );
+            data = deepMerge(data, item);
+        }
+        return data;
     }
 
     /** toast **/
@@ -223,6 +278,8 @@ const fc = (function () {
     }
 
     return {
+        onDocumentReady,
+        getFormData,
         scrollToTop,
         scrollToBottom,
         elementExist,

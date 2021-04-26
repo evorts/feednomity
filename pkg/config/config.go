@@ -9,7 +9,6 @@ import (
 	"path"
 )
 
-
 type MailProvider struct {
 	ApiKey string `yaml:"api_key"`
 	ApiUrl string `yaml:"api_url"`
@@ -62,6 +61,11 @@ type Config struct {
 		DailyLimit int `yaml:"daily_limit"`
 		Providers MapMailProvider `yaml:"providers"`
 	} `yaml:"mailer"`
+	CronJobs struct {
+		Blaster struct {
+			Schedule string `yaml:"schedule"`
+		} `yaml:"blaster"`
+	} `yaml:"cron_jobs"`
 }
 
 type config struct {

@@ -3,8 +3,60 @@ Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
 {
-  "username": "sysadmin",
-  "password": "testing"
+  "username": "root",
+  "password": "ttest11"
 }
 
-###
+### create
+
+POST http://localhost:3700/api/users/create
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "csrf": "",
+  "users": [
+    {
+      "username": "steven",
+      "display_name": "Steven",
+      "attributes": {
+        "nik": "1243453"
+      },
+      "email": "steven@playground.com",
+      "phone": "",
+      "password": "testing123",
+      "pin": "",
+      "access_role": "admin-group",
+      "job_role": "engineer",
+      "assignment": "bin",
+      "group_id": 2,
+      "disabled": false
+    }
+  ]
+}
+
+### update
+PUT http://localhost:3700/api/users/update
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "csrf": "",
+  "user": {
+    "id": 3,
+    "username": "steven2",
+    "display_name": "Steven2",
+    "attributes": {
+      "nik": "1243453"
+    },
+    "email": "steven@playground2.com",
+    "phone": "",
+    "password": "testing123",
+    "pin": "",
+    "access_role": "admin-group",
+    "job_role": "engineer",
+    "assignment": "bin",
+    "group_id": 2,
+    "disabled": false
+  }
+}

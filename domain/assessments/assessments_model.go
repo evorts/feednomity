@@ -6,46 +6,46 @@ import (
 )
 
 type Factor struct {
-	Key         string        `json:"key"`
-	Title       string        `json:"title"`
-	Description template.HTML `json:"description"`
-	Weight      float32       `json:"weight"`
-	Rating      int           `json:"rating"`
-	Note        string        `json:"note"`
-	Items       []*Factor     `json:"items"`
+	Key         string        `db:"key"`
+	Title       string        `db:"title"`
+	Description template.HTML `db:"description"`
+	Weight      float32       `db:"weight"`
+	Rating      int           `db:"rating"`
+	Note        string        `db:"note"`
+	Items       []*Factor     `db:"items"`
 }
 
 type Client struct {
-	Id           int                    `json:"id"`
-	Name         string                 `json:"name"`
-	Email        string                 `json:"email"`
-	Phone        string                 `json:"phone"`
-	Role         string                 `json:"role"`
-	Assignment   string                 `json:"assignment"`
-	Organization string                 `json:"organization"`
-	Group        string                 `json:"group"`
-	GroupId      string                 `json:"group_id"`
-	Attributes   map[string]interface{} `json:"attributes"`
+	Id           int                    `db:"id"`
+	Name         string                 `db:"name"`
+	Email        string                 `db:"email"`
+	Phone        string                 `db:"phone"`
+	Role         string                 `db:"role"`
+	Assignment   string                 `db:"assignment"`
+	Organization string                 `db:"organization"`
+	Group        string                 `db:"group"`
+	GroupId      string                 `db:"group_id"`
+	Attributes   map[string]interface{} `db:"attributes"`
 }
 
 type Item struct {
-	Recipient        Client     `json:"recipient"`
-	Respondent       Client     `json:"respondent"`
-	PeriodSince      *time.Time `json:"period_since"`
-	PeriodUntil      *time.Time `json:"period_until"`
-	Ratings          []int      `json:"ratings"`
-	RatingsLabel     []string   `json:"ratings_label"`
-	Factors          *Factor    `json:"assessment_factors"`
-	Strengths        []string   `json:"strengths"`
-	NeedImprovements []string   `json:"need_improvements"`
+	Recipient        Client     `db:"recipient"`
+	Respondent       Client     `db:"respondent"`
+	PeriodSince      *time.Time `db:"period_since"`
+	PeriodUntil      *time.Time `db:"period_until"`
+	Ratings          []int      `db:"ratings"`
+	RatingsLabel     []string   `db:"ratings_label"`
+	Factors          *Factor    `db:"assessment_factors"`
+	Strengths        []string   `db:"strengths"`
+	NeedImprovements []string   `db:"need_improvements"`
 }
 
 type Template struct {
 	Ratings struct {
-		Values []int    `yaml:"values" json:"values"`
-		Labels []string `yaml:"labels" json:"labels"`
-	} `yaml:"ratings" json:"ratings"`
-	StrengthsFieldCount    int     `yaml:"strengths_field_count" json:"strengths_field_count"`
-	ImprovementsFieldCount int     `yaml:"improvements_field_count" json:"improvements_field_count"`
-	Factors                *Factor `yaml:"factors" json:"factors"`
+		Values []int    `yaml:"values" db:"values"`
+		Labels []string `yaml:"labels" db:"labels"`
+	} `yaml:"ratings" db:"ratings"`
+	StrengthsFieldCount    int     `yaml:"strengths_field_count" db:"strengths_field_count"`
+	ImprovementsFieldCount int     `yaml:"improvements_field_count" db:"improvements_field_count"`
+	Factors                *Factor `yaml:"factors" db:"factors"`
 }

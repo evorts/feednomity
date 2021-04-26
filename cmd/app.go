@@ -10,25 +10,12 @@ import (
 	"github.com/evorts/feednomity/pkg/crypt"
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
-	"github.com/evorts/feednomity/pkg/mailer"
 	"github.com/evorts/feednomity/pkg/session"
 	"github.com/evorts/feednomity/pkg/template"
 	"net/http"
 	"strconv"
 	"time"
 )
-
-type library struct {
-	db      database.IManager
-	mm      mailer.IMailer
-	acl     acl.IManager
-	logger  logger.IManager
-	config  config.IManager
-	session session.IManager
-	aes     crypt.ICryptAES
-	hash    crypt.ICryptHash
-	view    template.IManager
-}
 
 var App = &cli.Command{
 	Description: "Main application",
@@ -57,7 +44,8 @@ var App = &cli.Command{
 		}()
 		accessControl := acl.NewACLManager(users.NewUserDomain(ds), users.NewUserAccessDomain(ds))
 		if err2 := accessControl.Populate(); err2 != nil {
-			logging.Fatal("error initialize access control")
+			logging.Log("fatal_error", "error initialize access control")
+			logging.Fatal(err2.Error())
 			return
 		}
 		sm := session.NewSession(
@@ -79,13 +67,9 @@ var App = &cli.Command{
 			"LogoUrl":       cfg.GetConfig().App.Logo.Url,
 			"LogoAlt":       cfg.GetConfig().App.Logo.Alt,
 		}).LoadTemplates()
-		mm := mailer.NewSendInBlue(
-			cfg.GetConfig().Mailer.Providers.Get("send_in_blue").ApiUrl,
-			cfg.GetConfig().Mailer.Providers.Get("send_in_blue").ApiKey,
-		)
 		o := http.NewServeMux()
 		routes(o, &library{
-			ds, mm, accessControl, logging, cfg, sm,
+			ds, nil, accessControl, logging, cfg, sm,
 			aesCryptic, crypt.NewHashEncryption(cfg.GetConfig().App.HashSalt), tm,
 		})
 		logging.Log("started", "Dashboard app started.")

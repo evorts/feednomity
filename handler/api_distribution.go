@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-func LinksBlastAPI(w http.ResponseWriter, r *http.Request) {
+func ApiLinksBlast(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	view := req.GetContext().Get("view").(template.IManager)

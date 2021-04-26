@@ -19,6 +19,7 @@ type manager struct {
 type IManager interface {
 	LoadTemplates() (IManager, error)
 	Render(w http.ResponseWriter, status int, template string, data map[string]interface{}) error
+	RenderFlex(w http.ResponseWriter, status int, template string, data interface{}) error
 	RenderRaw(w http.ResponseWriter, status int, content interface{}) error
 	RenderJson(w http.ResponseWriter, status int, value interface{}) error
 	AddData(key string, value interface{}) IManager
@@ -49,7 +50,7 @@ func (t *manager) LoadTemplates() (IManager, error) {
 	return t, nil
 }
 
-func (t *manager) render(w http.ResponseWriter, status int, tpl string, data map[string]interface{}, f interface{}) error {
+func (t *manager) renderDataMap(w http.ResponseWriter, status int, tpl string, data map[string]interface{}, f interface{}) error {
 	tmpl, err := t.getTemplate(tpl)
 	if err != nil {
 		return err
@@ -68,8 +69,30 @@ func (t *manager) render(w http.ResponseWriter, status int, tpl string, data map
 	return nil
 }
 
+func (t *manager) renderData(w http.ResponseWriter, status int, tpl string, data interface{}, f interface{}) error {
+	tmpl, err := t.getTemplate(tpl)
+	if err != nil {
+		return err
+	}
+	if f != nil {
+		if ff, ok := f.(template.FuncMap); ok {
+			tmpl = tmpl.Funcs(ff)
+		}
+	}
+	// Render the template 'name' with data
+	w.WriteHeader(status)
+	if err = tmpl.ExecuteTemplate(w, tpl, data); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (t *manager) Render(w http.ResponseWriter, status int, tpl string, data map[string]interface{}) error {
-	return t.render(w, status, tpl, data, nil)
+	return t.renderDataMap(w, status, tpl, data, nil)
+}
+
+func (t *manager) RenderFlex(w http.ResponseWriter, status int, template string, data interface{}) error {
+	return t.renderData(w, status, template, data, nil)
 }
 
 func (t *manager) RenderRaw(w http.ResponseWriter, status int, content interface{}) error {

@@ -49,7 +49,7 @@ type ILinks interface {
 	FindLinks(ctx context.Context, page, limit int) ([]Link, int, error)
 	FindByHash(ctx context.Context, hash string) (Link, error)
 	FindByDistObjectIds(ctx context.Context, ids ...int64) ([]*Link, error)
-	SaveLinks(ctx context.Context, links []Link) error
+	InsertMultiple(ctx context.Context, links []Link) error
 	UpdateLink(ctx context.Context, link Link) error
 	DisableLinksByIds(ctx context.Context, ids ...int64) error
 	LinkVisitsCountById(ctx context.Context, id int64) int
@@ -162,7 +162,7 @@ func (l *linksManager) FindByDistObjectIds(ctx context.Context, ids ...int64) ([
 	return links, nil
 }
 
-func (l *linksManager) SaveLinks(ctx context.Context, links []Link) error {
+func (l *linksManager) InsertMultiple(ctx context.Context, links []Link) error {
 	q := fmt.Sprintf(`
 		INSERT INTO %s (hash, pin, distribution_object_id, disabled, usage_limit, published, created_at, disabled_at, published_at) 
 		VALUES`, tableLinks)

@@ -41,36 +41,61 @@ $$
 $$;
 
 /* enabling crypt on psql */
-create extension if not exists pgcrypto;
+create
+    extension if not exists pgcrypto;
 
 /** for admin dashboard **/
 /** could be utilise as company **/
-create table users_group
+create table users_organization
 (
     id          serial primary key,
     name        varchar(40) unique,
-    disabled    bool default false,
+    address     varchar(150) default '',
+    phone       varchar(15)  default '',
+    disabled    bool         default false,
     created_at  timestamp,
     updated_at  timestamp,
     disabled_at timestamp
 );
 
-create type user_role as enum ('sysadmin','site-admin','admin','supervisor','member','guest','custom');
+create table users_group
+(
+    id          serial primary key,
+    name        varchar(40) unique,
+    disabled    bool default false,
+    org_id      int
+        constraint users_group_org_id references users_organization (id),
+    created_at  timestamp,
+    updated_at  timestamp,
+    disabled_at timestamp
+);
+
+create type user_role as enum ('sysadmin','admin-org','admin-group','member','guest','custom');
 
 create table users
 (
     id           serial primary key,
-    username     varchar(25) unique,
+    username     varchar(25),
     display_name varchar(50),
-    email        varchar(50),
+    attributes   jsonb        default '{}',
+    email        varchar(50) not null,
     phone        varchar(15),
-    password     varchar(128),
-    role         user_role,
+    password     varchar(128) default null,
+    pin          varchar(6)   default null,
+    access_role  user_role,
+    job_role     varchar(20),
+    assignment   varchar(50),
     group_id     int
         constraint users_group_id references users_group (id),
+    disabled     bool         default false,
     created_at   timestamp,
-    updated_at   timestamp
+    updated_at   timestamp,
+    disabled_at  timestamp
 );
+
+create unique index users_username on users (username);
+create unique index users_email_index on users (email);
+create index users_attributes_index on users using gin (attributes);
 
 /** as audit log trail **/
 create table user_activities
@@ -86,15 +111,31 @@ create table user_activities
 );
 
 create type access_level as enum ('get', 'post', 'put', 'delete', 'head', 'options');
+create type access_scope as enum ('self', 'group', 'org', 'global');
 
+/** default role access **/
 create table role_access
 (
-    id             serial primary key,
-    role           user_role,
-    path           varchar(100), /** should consistent pattern such as <module>.<method> **/
-    regex          bool    default false,
-    access_allowed access_level[],
-    disabled       boolean default false
+    id                serial primary key,
+    role              user_role,
+    path              varchar(100), /** should consistent pattern such as <module>.<method> **/
+    regex             bool    default false,
+    access_allowed    access_level[],
+    access_disallowed access_level[],
+    access_scope      access_scope,
+    disabled          boolean default false,
+    created_at        timestamp,
+    updated_at        timestamp,
+    disabled_at       timestamp
+);
+
+create table role_users_limit
+(
+    id         serial primary key,
+    role       user_role unique,
+    max_user   int,
+    created_at timestamp,
+    updated_at timestamp
 );
 
 create table user_access
@@ -102,34 +143,18 @@ create table user_access
     id                serial primary key,
     user_id           integer,
     path              varchar(100), /** should consistent pattern such as <module>.<method> **/
+    regex             bool    default false,
     access_allowed    access_level[],
     access_disallowed access_level[],
-    disabled          boolean default false
+    access_scope      access_scope,
+    disabled          boolean default false,
+    created_at        timestamp,
+    updated_at        timestamp,
+    disabled_at       timestamp
 );
 
-create unique index idx_user_access_id_path ON user_access (user_id, path);
-
-/** purpose: recipients are the list of persons/employees that possibly giving feedbacks **/
-create table objects
-(
-    id            serial primary key,
-    name          varchar(100),
-    attributes    jsonb default '{}',
-    email         varchar(100),
-    phone         varchar(20),
-    role          varchar(30),
-    assignment    varchar(50),
-    user_group_id int
-        constraint objects_user_group_id references users_group (id),
-    disabled      bool  default false,
-    archived      bool  default false,
-    created_at    timestamp,
-    updated_at    timestamp,
-    disabled_at   timestamp,
-    archived_at   timestamp
-);
-
-create unique index idx_recipients_name_user_id_unique on objects (name, user_group_id);
+create
+    unique index idx_user_access_id_path ON user_access (user_id, path);
 
 create table distributions
 (
@@ -144,6 +169,8 @@ create table distributions
     range_end          timestamp, /** review end **/
     created_by         int
         constraint distributions_created_by_users_id references users (id),
+    for_group_id       int
+        constraint distributions_users_group_id references users_group (id),
     created_at         timestamp,
     updated_at         timestamp,
     disabled_at        timestamp,
@@ -159,9 +186,9 @@ create table distribution_objects
     distribution_id   int
         constraint distribution_recipients_distributions_id references distributions (id),
     recipient_id      int
-        constraint distribution_recipients_recipient_id_recipients_id references objects (id),
+        constraint distribution_recipients_recipient_id_recipients_id references users (id),
     respondent_id     int
-        constraint distribution_respondents_respondent_id references objects (id),
+        constraint distribution_respondents_respondent_id references users (id),
     publishing_status distribution_object_status default 'none', /** when its published -- sent to respondent **/
     publishing_log    jsonb                      default '[]',
     retry_count       int,

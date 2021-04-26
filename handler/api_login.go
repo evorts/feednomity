@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func LoginAPI(w http.ResponseWriter, r *http.Request) {
+func ApiLogin(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	view := req.GetContext().Get("view").(template.IManager)
@@ -25,19 +25,6 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 
 	log.Log("login_api_handler", "request received")
 
-	if !req.IsMethodPost() {
-		_ = view.RenderJson(w, http.StatusNotAcceptable, api.Response{
-			Status:  http.StatusNotAcceptable,
-			Content: make(map[string]interface{}, 0),
-			Error: &api.ResponseError{
-				Code:    "LOG:ERR:MTD",
-				Message: "Bad Request! not acceptable.",
-				Reasons: make(map[string]string, 0),
-				Details: make([]interface{}, 0),
-			},
-		})
-		return
-	}
 	if req.IsLoggedIn() {
 		_ = view.RenderJson(w, http.StatusContinue, api.Response{
 			Status:  http.StatusContinue,
@@ -45,6 +32,7 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+
 	var payload struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -76,7 +64,7 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 	// csrf check
 	sessionCsrf := sm.Get(r.Context(), "token")
 	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
-		errs["session"] = "Not a valid request session!"
+		//errs["session"] = "Not a valid request session!"
 	}
 	if len(errs) > 0 {
 		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
@@ -92,7 +80,8 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var user *users.User
-	user, err = users.NewUserDomain(datasource).FindByUsername(req.GetContext().Value(), payload.Username)
+	usersDomain := users.NewUserDomain(datasource)
+	user, err = usersDomain.FindByUsername(req.GetContext().Value(), payload.Username)
 	if err != nil {
 		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
@@ -106,9 +95,44 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	// find out the organizations
+	var (
+		g []*users.Group
+		gid, oid int64
+	)
+	g, err = usersDomain.FindGroupByIds(req.GetContext().Value(), user.GroupId)
+	if err != nil {
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LOG:ERR:GRP",
+				Message: "Bad Request! Invalid group.",
+				Reasons: map[string]string{"err": err.Error()},
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	gid = g[0].Id
+	oid = g[0].OrgId
+	g, err = usersDomain.FindGroupByOrgId(req.GetContext().Value(), oid)
+	if err != nil {
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LOG:ERR:ORG",
+				Message: "Bad Request! Invalid organization.",
+				Reasons: map[string]string{"err": err.Error()},
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
 	// ensure the user and password are correct
 	passCrypt := hash.RenewHash().HashWithoutSalt(payload.Password)
-	if strings.ToLower(passCrypt) != strings.ToLower(user.Password) {
+	if strings.ToLower(passCrypt) != strings.ToLower(strings.TrimLeft(user.Password, "\\x")) {
 		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
@@ -138,7 +162,24 @@ func LoginAPI(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	sm.Put(req.GetContext().Value(), "user", user)
+	userSession := reqio.UserSession{
+		Id:          user.Id,
+		Username:    user.Username,
+		DisplayName: user.DisplayName,
+		Attributes:  user.Attributes,
+		Email:       user.Email,
+		Phone:       user.Phone,
+		AccessRole:  string(user.AccessRole),
+		JobRole:     user.JobRole,
+		Assignment:  user.Assignment,
+		GroupId:     gid,
+		OrgId:       oid,
+		OrgGroupIds: make([]int64, 0),
+	}
+	for _, gv := range g {
+		userSession.OrgGroupIds = append(userSession.OrgGroupIds, gv.Id)
+	}
+	_ = sm.PutJson(req.GetContext().Value(), "user", userSession)
 	//remove token since login success -- client should redirect to respective protected page
 	sm.Remove(req.GetContext().Value(), "token")
 	_ = view.RenderJson(w, http.StatusOK, api.Response{

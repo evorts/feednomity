@@ -3,41 +3,50 @@ package distribution
 import "time"
 
 type Distribution struct {
-	Id                int64      `json:"id"`
-	Topic             string     `json:"topic"`
-	Disabled          bool       `json:"disabled"`
-	Archived          bool       `json:"archived"`
-	Distributed       bool       `json:"distributed"`
-	DistributionLimit int        `json:"distribution_limit"`
-	DistributionCount int        `json:"distribution_count"`
-	RangeStart        *time.Time `json:"range_start"`
-	RangeEnd          *time.Time `json:"range_end"`
-	CreatedBy         int64        `json:"created_by"`
-	CreatedAt         *time.Time `json:"created_at"`
-	UpdatedAt         *time.Time `json:"updated_at"`
-	DisabledAt        *time.Time `json:"disabled_at"`
-	ArchivedAt        *time.Time `json:"archived_at"`
-	DistributedAt     *time.Time `json:"distributed_at"`
+	Id                int64      `db:"id"`
+	Topic             string     `db:"topic"`
+	Disabled          bool       `db:"disabled"`
+	Archived          bool       `db:"archived"`
+	Distributed       bool       `db:"distributed"`
+	DistributionLimit int        `db:"distribution_limit"`
+	DistributionCount int        `db:"distribution_count"`
+	RangeStart        *time.Time `db:"range_start"`
+	RangeEnd          *time.Time `db:"range_end"`
+	CreatedBy         int64      `db:"created_by"`
+	CreatedAt         *time.Time `db:"created_at"`
+	UpdatedAt         *time.Time `db:"updated_at"`
+	DisabledAt        *time.Time `db:"disabled_at"`
+	ArchivedAt        *time.Time `db:"archived_at"`
+	DistributedAt     *time.Time `db:"distributed_at"`
 }
 
 type Object struct {
-	Id               int64                    `json:"id"`
-	DistributionId   int64                    `json:"distribution_id"`
-	RecipientId      int64                    `json:"recipient_id"`
-	RespondentId     int64                    `json:"respondent_ids"`
-	LinkId           int64                    `json:"link_id"`
-	PublishingStatus string                   `json:"publishing_status"`
-	PublishingLog    []map[string]interface{} `json:"publishing_log"`
-	CreatedAt        *time.Time               `json:"created_at"`
-	UpdatedAt        *time.Time               `json:"updated_at"`
-	PublishedAt      *time.Time               `json:"published_at"`
+	Id               int64                    `db:"id"`
+	DistributionId   int64                    `db:"distribution_id"`
+	RecipientId      int64                    `db:"recipient_id"`
+	RespondentId     int64                    `db:"respondent_ids"`
+	LinkId           int64                    `db:"link_id"`
+	PublishingStatus string                   `db:"publishing_status"`
+	PublishingLog    []map[string]interface{} `db:"publishing_log"`
+	CreatedAt        *time.Time               `db:"created_at"`
+	UpdatedAt        *time.Time               `db:"updated_at"`
+	PublishedAt      *time.Time               `db:"published_at"`
+}
+
+type Queue struct {
+	Id                   int64  `db:"id"`
+	DistributionObjectId int64  `db:"distribution_object_id"`
+	FromEmail            string `db:"from_email"`
+	ToEmail              string `db:"to_email"`
+	Subject              string `db:"subject"`
+	Content              string `db:"content"`
 }
 
 type Log struct {
-	Id         int64                  `json:"id"`
-	Action     string                 `json:"action"`
-	Values     map[string]interface{} `json:"values"`
-	ValuesPrev map[string]interface{} `json:"values_prev"`
-	Notes      string                 `json:"notes"`
-	At         *time.Time             `json:"at"`
+	Id         int64                  `db:"id"`
+	Action     string                 `db:"action"`
+	Values     map[string]interface{} `db:"values"`
+	ValuesPrev map[string]interface{} `db:"values_prev"`
+	Notes      string                 `db:"notes"`
+	At         *time.Time             `db:"at"`
 }

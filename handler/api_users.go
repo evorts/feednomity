@@ -1,132 +1,120 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/evorts/feednomity/domain/distribution"
+	"github.com/evorts/feednomity/domain/users"
+	"github.com/evorts/feednomity/pkg/acl"
 	"github.com/evorts/feednomity/pkg/api"
-	"github.com/evorts/feednomity/pkg/config"
-	"github.com/evorts/feednomity/pkg/crypt"
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/session"
 	"github.com/evorts/feednomity/pkg/template"
+	"github.com/evorts/feednomity/pkg/utils"
 	"github.com/evorts/feednomity/pkg/validate"
 	"github.com/pkg/errors"
-	"github.com/segmentio/ksuid"
 	"net/http"
-	"time"
 )
 
-type HashData struct {
-	ExpireAt   time.Time   `json:"expire_at"`
-	RealHash   string      `json:"real_hash"`
-	Attributes interface{} `json:"attributes"`
-}
-
-type hashHelper struct {
-	aes crypt.ICryptAES
-}
-
-type IHashHelper interface {
-	Generate(expireAt time.Time, realHash string, attributes interface{}) string
-	Decode(value string) (*HashData, error)
-}
-
-func NewHashHelper(aes crypt.ICryptAES) IHashHelper {
-	return &hashHelper{aes: aes}
-}
-
-func (h *hashHelper) Generate(expireAt time.Time, realHash string, attributes interface{}) string {
-	data := HashData{
-		ExpireAt:   expireAt,
-		RealHash:   realHash,
-		Attributes: attributes,
-	}
-	jData, err := json.Marshal(data)
-	if err != nil {
-		return ""
-	}
-	if hash, err2 := h.aes.Encrypt(string(jData)); err2 == nil {
-		return hash
-	}
-	return ""
-}
-
-func (h *hashHelper) Decode(value string) (*HashData, error) {
-	jData, err := h.aes.Decrypt(value)
-	if err != nil {
-		return nil, err
-	}
-	var data HashData
-	err = json.Unmarshal([]byte(jData), &data)
-	return &data, err
-}
-
-func ApiLinksList(w http.ResponseWriter, r *http.Request) {
+func ApiUsersList(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	view := req.GetContext().Get("view").(template.IManager)
-
-	log.Log("links_create_api_handler", "request received")
-
-	var payload struct {
-		Page  Page  `json:"page"`
-		Limit Limit `json:"limit"`
-	}
-
-	_ = req.UnmarshallBody(&payload)
-
+	sm := req.GetContext().Get("sm").(session.IManager)
 	datasource := req.GetContext().Get("db").(database.IManager)
-	linkDomain := distribution.NewLinksDomain(datasource)
 
-	links, total, err := linkDomain.FindLinks(req.GetContext().Value(), payload.Page.Value(), payload.Limit.Value())
+	log.Log("login_api_handler", "request received")
+
+	if !req.IsLoggedIn() {
+		_ = view.RenderJson(
+			w, http.StatusForbidden,
+			api.NewResponse(
+				http.StatusForbidden, nil,
+				api.NewResponseError("OBJ:ERR:RBD", "Bad Request! now allowed.", nil, nil),
+			),
+		)
+		return
+	}
+	var payload struct {
+		Page  int    `json:"page"`
+		Limit int    `json:"limit"`
+		Csrf  string `json:"csrf"`
+	}
+	err := req.UnmarshallBody(&payload)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
-			Status:  http.StatusBadRequest,
-			Content: make(map[string]interface{}, 0),
-			Error: &api.ResponseError{
-				Code:    "LNK:ERR:FND",
-				Message: "Bad Request! Some problems occurred when searching the data.",
-				Reasons: make(map[string]string, 0),
-				Details: make([]interface{}, 0),
-			},
-		})
+		_ = view.RenderJson(w, http.StatusBadRequest,
+			api.NewResponse(
+				http.StatusBadRequest, nil,
+				api.NewResponseError(
+					"OBJ:ERR:BND",
+					"Bad Request! Something wrong with the payload of your request.", nil, nil,
+				),
+			),
+		)
+		return
+	}
+	// csrf check
+	errs := make(map[string]string, 0)
+	sessionCsrf := sm.Get(r.Context(), "token")
+	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
+		errs["session"] = "Not a valid request session!"
+	}
+	if len(errs) > 0 {
+		_ = view.RenderJson(w, http.StatusBadRequest,
+			api.NewResponse(
+				http.StatusBadRequest, nil,
+				api.NewResponseError(
+					"OBJ:ERR:VAL",
+					"Bad Request! Validation error.", nil, nil,
+				),
+			),
+		)
+		return
+	}
+	var (
+		ui    []*users.User
+		total int
+	)
+	ui, total, err = users.NewUserDomain(datasource).FindAll(req.GetContext().Value(), payload.Page, payload.Limit)
+	if err != nil {
+		_ = view.RenderJson(w, http.StatusExpectationFailed,
+			api.NewResponse(
+				http.StatusExpectationFailed, nil,
+				api.NewResponseError(
+					"OBJ:ERR:QUE",
+					"Failed during inquiry data.", nil, nil,
+				),
+			),
+		)
 		return
 	}
 	_ = view.RenderJson(w, http.StatusOK, api.Response{
 		Status: http.StatusOK,
 		Content: map[string]interface{}{
-			"total": total,
-			"links": links,
+			"total":   total,
+			"objects": ui,
 		},
-		Error: nil,
 	})
 }
 
-func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
+func ApiUserCreate(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	view := req.GetContext().Get("view").(template.IManager)
-	aes := req.GetContext().Get("aes").(crypt.ICryptAES)
-	cfg := req.GetContext().Get("cfg").(config.IManager)
 
-	log.Log("links_create_api_handler", "request received")
+	log.Log("Users_create_api_handler", "request received")
 
 	var payload struct {
-		Csrf  string           `json:"csrf"`
-		Links []distribution.Link `json:"links"`
-
-		DisableAutoGenerateHash bool `json:"disable_auto_generate_hash"`
+		Csrf  string  `json:"csrf"`
+		Users []*User `json:"users"`
 	}
 	err := req.UnmarshallBody(&payload)
-	if err != nil || len(payload.Links) < 1 {
+	if err != nil || len(payload.Users) < 1 {
 		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
-				Code:    "LNK:ERR:BND",
+				Code:    "USR:ERR:BND",
 				Message: "Bad Request! Something wrong with the payload of your request.",
 				Reasons: make(map[string]string, 0),
 				Details: make([]interface{}, 0),
@@ -142,29 +130,15 @@ func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
 	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
 		errs["session"] = "Not a valid request session!"
 	}
-	hh := NewHashHelper(aes)
-	expireAt := time.Now().Add(time.Duration(cfg.GetConfig().App.HashExpire) * time.Hour)
-	for li, link := range payload.Links {
-		hash := link.Hash
-		if !payload.DisableAutoGenerateHash {
-			hash = ksuid.New().String()
+	for usk, usv := range payload.Users {
+		if usv.GroupId < 1 {
+			errs[fmt.Sprintf("%d_group_id", usk)] = "not a valid group"
 		}
-		if len(hash) > 0 {
-			payload.Links[li].Hash = hh.Generate(expireAt, hash, map[string]interface{}{
-				"usage_limit": link.UsageLimit,
-				"distribution_object_id":    link.DistributionObjectId,
-				"pin":         link.PIN,
-			})
-			link.Hash = hash
+		if len(usv.PIN) > 0 && !users.PIN(usv.PIN).Valid() {
+			errs[fmt.Sprintf("%d_pin", usk)] = users.PIN(usv.PIN).Rule()
 		}
-		if !distribution.Hash(link.Hash).Valid() {
-			errs[fmt.Sprintf("%d_hash", li)] = "invalid hash"
-		}
-		if link.DistributionObjectId < 1 {
-			errs[fmt.Sprintf("%d_group_id", li)] = "invalid group"
-		}
-		if !distribution.PIN(link.PIN).Valid() {
-			errs[fmt.Sprintf("%d_pin", li)] = "pin must be 6 character length"
+		if len(usv.Password) > 0 && !users.PASSWORD(usv.Password).Valid() {
+			errs[fmt.Sprintf("%d_pwd", usk)] = users.PASSWORD(usv.Password).Rule()
 		}
 	}
 	if len(errs) > 0 {
@@ -172,7 +146,7 @@ func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
-				Code:    "LNK:ERR:VAL",
+				Code:    "USR:ERR:VAL",
 				Message: "Bad Request! Your request resulting validation error.",
 				Reasons: errs,
 				Details: make([]interface{}, 0),
@@ -181,13 +155,13 @@ func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	datasource := req.GetContext().Get("db").(database.IManager)
-	linkDomain := distribution.NewLinksDomain(datasource)
-	if err = linkDomain.InsertMultiple(req.GetContext().Value(), payload.Links); err != nil {
+	userDomain := users.NewUserDomain(datasource)
+	if err = userDomain.InsertMultiple(req.GetContext().Value(), transformUsers(payload.Users)); err != nil {
 		_ = view.RenderJson(w, http.StatusExpectationFailed, api.Response{
 			Status:  http.StatusExpectationFailed,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
-				Code:    "LNK:ERR:SAV",
+				Code:    "USR:ERR:SAV",
 				Message: "Fail to save your request. Please check your data and try again.",
 				Reasons: map[string]string{
 					"save_error": errors.Wrap(err, "something wrong with the execution syntax").Error(),
@@ -203,27 +177,25 @@ func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func ApiLinkUpdate(w http.ResponseWriter, r *http.Request) {
+func ApiUserUpdate(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	view := req.GetContext().Get("view").(template.IManager)
-	aes := req.GetContext().Get("aes").(crypt.ICryptAES)
-	cfg := req.GetContext().Get("cfg").(config.IManager)
 
-	log.Log("links_update_api_handler", "request received")
+	log.Log("users_update_api_handler", "request received")
 
 	var payload struct {
-		Csrf           string         `json:"csrf"`
-		RegenerateHash bool           `json:"regenerate_hash"`
-		Link           distribution.Link `json:"link"`
+		Csrf string      `json:"csrf"`
+		User *users.User `json:"user"`
 	}
+
 	err := req.UnmarshallBody(&payload)
-	if err != nil {
+	if err != nil || payload.User == nil {
 		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
-				Code:    "LNK:ERR:BND",
+				Code:    "USR:ERR:BND",
 				Message: "Bad Request! Something wrong with the payload of your request.",
 				Reasons: make(map[string]string, 0),
 				Details: make([]interface{}, 0),
@@ -233,32 +205,52 @@ func ApiLinkUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	// let's do validation
 	errs := make(map[string]string, 0)
-	// csrf check
 	sm := req.GetContext().Get("sm").(session.IManager)
+	var user reqio.UserSession
+	if err = sm.GetJson(req.GetContext().Value(), "user", &user); err != nil {
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "USR:ERR:SES",
+				Message: "Bad Request! Something wrong with the way of your request.",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	// csrf check
 	sessionCsrf := sm.Get(r.Context(), "token")
-
 	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
 		errs["session"] = "Not a valid request session!"
 	}
-	if payload.Link.Id < 1 {
+	if payload.User.Id < 1 {
 		errs["id"] = "not a valid identifier"
 	}
-	if !payload.RegenerateHash && !distribution.Hash(payload.Link.Hash).Valid() {
-		errs["hash"] = "not a valid hash code"
+	if payload.User.GroupId < 1 {
+		errs["group_id"] = "not a valid group"
 	}
-	if payload.Link.DistributionObjectId < 1 {
-		errs["distribution_object_id"] = "not a valid group"
+	if len(payload.User.PIN) > 0 && !users.PIN(payload.User.PIN).Valid() {
+		errs["pin"] = users.PIN(payload.User.PIN).Rule()
 	}
-	if !distribution.PIN(payload.Link.PIN).Valid() {
-		errs["pin"] = "pin must be 6 character length"
+	if len(payload.User.Password) > 0 && !users.PASSWORD(payload.User.Password).Valid() {
+		errs["pwd"] = users.PASSWORD(payload.User.Password).Rule()
 	}
-
+	// check eligibility of the users to update data
+	if len(errs) < 1 && !eligible(
+		user,
+		acl.AccessScope(sm.GetString(req.GetContext().Value(), "access_scope")),
+		payload.User.Id, payload.User.GroupId,
+	) {
+		errs["eligibility"] = "Not eligible to make this request."
+	}
 	if len(errs) > 0 {
 		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
-				Code:    "LNK:ERR:VAL",
+				Code:    "USR:ERR:VAL",
 				Message: "Bad Request! Your request resulting validation error.",
 				Reasons: errs,
 				Details: make([]interface{}, 0),
@@ -266,23 +258,48 @@ func ApiLinkUpdate(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	hh := NewHashHelper(aes)
-	expireAt := time.Now().Add(time.Duration(cfg.GetConfig().App.HashExpire) * time.Hour)
-	if payload.RegenerateHash {
-		payload.Link.Hash = hh.Generate(expireAt, ksuid.New().String(), map[string]interface{}{
-			"usage_limit": payload.Link.UsageLimit,
-			"distribution_object_id":    payload.Link.DistributionObjectId,
-			"pin":         payload.Link.PIN,
-		})
-	}
+
 	datasource := req.GetContext().Get("db").(database.IManager)
-	linkDomain := distribution.NewLinksDomain(datasource)
-	if err = linkDomain.UpdateLink(req.GetContext().Value(), payload.Link); err != nil {
+	usersDomain := users.NewUserDomain(datasource)
+
+	var ui []*users.User
+	ui, err = usersDomain.FindByIds(req.GetContext().Value(), payload.User.Id)
+
+	if len(ui) < 1 {
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "USR:ERR:VAL",
+				Message: "Bad Request! Your request resulting validation error.",
+				Reasons: errs,
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	var u = ui[0]
+	err = utils.MergeStruct(u, payload.User, []string{"Username", "Email", "Phone", "Password", "PIN"})
+	if err != nil {
+		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "USR:ERR:VAL",
+				Message: "Bad Request! Your request resulting validation error.",
+				Reasons: errs,
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+
+	if err = usersDomain.Update(req.GetContext().Value(), *payload.User); err != nil {
 		_ = view.RenderJson(w, http.StatusExpectationFailed, api.Response{
 			Status:  http.StatusExpectationFailed,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
-				Code:    "LNK:ERR:UPD",
+				Code:    "USR:ERR:UPD",
 				Message: "Fail to update your request. Please check your data and try again.",
 				Reasons: map[string]string{"update_error": err.Error()},
 				Details: make([]interface{}, 0),
@@ -296,16 +313,16 @@ func ApiLinkUpdate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
+func ApiUsersDelete(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	view := req.GetContext().Get("view").(template.IManager)
 
-	log.Log("links_delete_api_handler", "request received")
+	log.Log("users_delete_api_handler", "request received")
 
 	var payload struct {
-		Csrf   string `json:"csrf"`
-		LinkId int64  `json:"link_id"`
+		Csrf    string  `json:"csrf"`
+		UserIds []int64 `json:"user_ids"`
 	}
 
 	err := req.UnmarshallBody(&payload)
@@ -314,7 +331,7 @@ func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
-				Code:    "LNK:ERR:BND",
+				Code:    "USR:ERR:BND",
 				Message: "Bad Request! Something wrong with the payload of your request.",
 				Reasons: make(map[string]string, 0),
 				Details: make([]interface{}, 0),
@@ -331,7 +348,7 @@ func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
 		errs["session"] = "Not a valid request session!"
 	}
-	if payload.LinkId < 1 {
+	if len(payload.UserIds) < 1 {
 		errs["id"] = "not a valid identifier"
 	}
 	if len(errs) > 0 {
@@ -339,7 +356,7 @@ func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
-				Code:    "LNK:ERR:VAL",
+				Code:    "USR:ERR:VAL",
 				Message: "Bad Request! Your request resulting validation error.",
 				Reasons: errs,
 				Details: make([]interface{}, 0),
@@ -348,13 +365,13 @@ func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	datasource := req.GetContext().Get("db").(database.IManager)
-	linkDomain := distribution.NewLinksDomain(datasource)
-	if err = linkDomain.DisableLinksByIds(req.GetContext().Value(), payload.LinkId); err != nil {
+	usersDomain := users.NewUserDomain(datasource)
+	if err = usersDomain.DisableByIds(req.GetContext().Value(), payload.UserIds); err != nil {
 		_ = view.RenderJson(w, http.StatusExpectationFailed, api.Response{
 			Status:  http.StatusExpectationFailed,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
-				Code:    "LNK:ERR:UPD",
+				Code:    "USR:ERR:UPD",
 				Message: "Fail to update your request. Please check your data and try again.",
 				Reasons: map[string]string{"save_error": err.Error()},
 				Details: make([]interface{}, 0),
@@ -367,4 +384,3 @@ func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 		Content: make(map[string]interface{}, 0),
 	})
 }
-

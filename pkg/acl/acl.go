@@ -6,16 +6,28 @@ import (
 	"github.com/evorts/feednomity/domain/users"
 )
 
+type AccessScope string
+
+const (
+	AccessScopeSelf   AccessScope = "self"
+	AccessScopeGroup  AccessScope = "group"
+	AccessScopeOrg    AccessScope = "org"
+	AccessScopeGlobal AccessScope = "global"
+)
+
 type IManager interface {
 	Populate() error
-	IsAllowed(userId int, path, method string) bool
+	IsAllowed(userId int64, method, path string) (allowed bool, scope AccessScope)
 }
 
 type access struct {
-	Path          string   `json:"path"`
-	MethodAllowed []string `json:"method_allowed"`
-	Disabled      bool     `json:"disabled"`
-	AccessLevel   string   `json:"access_level"`
+	Path             string      `json:"path"`
+	Regex            bool        `json:"regex"`
+	MethodAllowed    []string    `json:"method_allowed"`
+	MethodDisallowed []string    `json:"method_disallowed"`
+	AccessScope      AccessScope `json:"access_scope"`
+	Disabled         bool        `json:"disabled"`
+	AccessLevel      string      `json:"access_level"`
 }
 
 type accessControl struct {
@@ -37,25 +49,27 @@ func NewACLManager(u users.IUsers, ua users.IUserAccess) IManager {
 	return &manager{u: u, ua: ua}
 }
 
-func (m *manager) IsAllowed(userId int, path, method string) bool {
-	return true
+func (m *manager) IsAllowed(userId int64, method, path string) (allowed bool, scope AccessScope) {
+	fmt.Println(userId, method, path)
+	allowed = true
+	return
 }
 
 func (m *manager) Populate() error {
 	//read users data
-	u, uerr := m.recursiveFindUsers(context.TODO(), 1, 10)
-	if uerr != nil {
-		return uerr
+	u, uErr := m.recursiveFindUsers(context.TODO(), 1, 10)
+	if uErr != nil {
+		return uErr
 	}
 	//read user role
-	ur, urerr := m.recursiveFindRoleAccess(context.TODO(), 1, 10)
-	if urerr != nil {
-		return urerr
+	ur, urErr := m.recursiveFindRoleAccess(context.TODO(), 1, 10)
+	if urErr != nil {
+		return urErr
 	}
 	//read user access
-	ua, uaerr := m.recursiveFindUserAccess(context.TODO(), 1, 10)
-	if uaerr != nil {
-		return uaerr
+	ua, uaErr := m.recursiveFindUserAccess(context.TODO(), 1, 10)
+	if uaErr != nil {
+		return uaErr
 	}
 	//populate to access control
 	fmt.Println(u, ur, ua)

@@ -6,18 +6,18 @@ import (
 
 /** storing persons or employees in this struct **/
 type Object struct {
-	Id          int                    `json:"id"`
-	Name        string                 `json:"name"`
-	Attributes  map[string]interface{} `json:"attributes"`
-	Email       string                 `json:"email"`
-	Phone       string                 `json:"phone"`
-	Role        string                 `json:"role"`
-	Assignment  string                 `json:"assignment"`
-	UserGroupId int64                    `json:"user_group_id"` // the recipient record belong to which user group
-	Disabled    bool                   `json:"disabled"`
-	Archived    bool                   `json:"archived"`
-	CreatedAt   *time.Time             `json:"created_at"`
-	UpdatedAt   *time.Time             `json:"updated_at"`
-	DisabledAt  *time.Time             `json:"disabled_at"`
-	ArchivedAt  *time.Time             `json:"archived_at"`
+	Id          int                    `db:"id"`
+	Name        string                 `db:"name"`
+	Attributes  map[string]interface{} `db:"attributes"`
+	Email       string                 `db:"email"`
+	Phone       string                 `db:"phone"`
+	Role        string                 `db:"role"`
+	Assignment  string                 `db:"assignment"`
+	UserGroupId int64                    `db:"user_group_id"` // the recipient record belong to which user group
+	Disabled    bool                   `db:"disabled"`
+	Archived    bool                   `db:"archived"`
+	CreatedAt   *time.Time             `db:"created_at"`
+	UpdatedAt   *time.Time             `db:"updated_at"`
+	DisabledAt  *time.Time             `db:"disabled_at"`
+	ArchivedAt  *time.Time             `db:"archived_at"`
 }

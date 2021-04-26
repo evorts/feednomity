@@ -1,5 +1,11 @@
 package handler
 
+import (
+	"github.com/evorts/feednomity/pkg/acl"
+	"github.com/evorts/feednomity/pkg/reqio"
+	"github.com/evorts/feednomity/pkg/utils"
+)
+
 type Page int
 
 func (p Page) Value() int {
@@ -18,3 +24,25 @@ func (l Limit) Value() int {
 	return int(l)
 }
 
+func eligible(u reqio.UserSession, as acl.AccessScope, uid, gid int64) bool {
+	switch as {
+	case acl.AccessScopeSelf:
+		if uid != u.Id {
+			return false
+		}
+	case acl.AccessScopeGroup:
+		if gid != u.GroupId {
+			return false
+		}
+	case acl.AccessScopeOrg:
+		if len(u.OrgGroupIds) < 1 {
+			return false
+		}
+		return utils.InArray(utils.ArrayInt64(u.OrgGroupIds).ToArrayInterface(), gid)
+	case acl.AccessScopeGlobal:
+		return true
+	default:
+		return false
+	}
+	return true
+}

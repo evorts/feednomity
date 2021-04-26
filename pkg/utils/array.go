@@ -32,3 +32,12 @@ func (a ArrayString) Reduce() []string {
 	}
 	return rs
 }
+
+func InArray(arr []interface{}, v interface{}) bool  {
+	for _, av := range arr {
+		if av == v {
+			return true
+		}
+	}
+	return false
+}

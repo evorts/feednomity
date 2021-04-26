@@ -17,7 +17,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	log.Log("login_handler", "request received")
 
 	if req.IsLoggedIn() {
-		http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/adm/dashboard", http.StatusTemporaryRedirect)
 		return
 	}
 	renderData := map[string]interface{}{
@@ -25,7 +25,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 	// render login page
 	sm.Put(r.Context(), "token", req.GetToken())
-	if err := view.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "login.html", renderData); err != nil {
+	if err := view.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "admin-login.html", renderData); err != nil {
 		log.Log("login_handler", err.Error())
 	}
 }

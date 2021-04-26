@@ -20,7 +20,9 @@ type database struct {
 	maxOpenConnection     int64
 	useDatabasePool       bool
 	conn                  *pgx.Conn
+	connCfg               *pgx.ConnConfig
 	pool                  *pgxpool.Pool
+	poolCfg               *pgxpool.Config
 }
 
 type StatementDescription pgconn.StatementDescription
@@ -33,6 +35,14 @@ type TypeInt4Array pgtype.Int4Array
 type TypeEnumArray pgtype.EnumArray
 type TypeEnum pgtype.EnumType
 type TypeStringArray pgtype.TextArray
+type TypeText pgtype.Text
+type TypeVarChar pgtype.Varchar
+
+const (
+	TypeStatusUndefined = pgtype.Undefined
+	TypeStatusNull = pgtype.Null
+	TypeStatusPresent = pgtype.Present
+)
 
 type IManager interface {
 	Rebind(ctx context.Context, sql string) string
@@ -185,9 +195,18 @@ func (d *database) MustConnect(ctx context.Context) {
 
 func (d *database) Connect(ctx context.Context) (err error) {
 	if d.useDatabasePool {
-		d.pool, err = pgxpool.Connect(ctx, d.dsn)
+		d.poolCfg, err = pgxpool.ParseConfig(d.dsn)
+		if err != nil {
+			return
+		}
+		d.pool, err = pgxpool.ConnectConfig(ctx, d.poolCfg)
 	} else {
-		d.conn, err = pgx.Connect(ctx, d.dsn)
+		d.connCfg, err = pgx.ParseConfig(d.dsn)
+		if err != nil {
+			return
+		}
+		//d.connCfg.PreferSimpleProtocol = true
+		d.conn, err = pgx.ConnectConfig(ctx, d.connCfg)
 	}
 	if err != nil {
 		return err

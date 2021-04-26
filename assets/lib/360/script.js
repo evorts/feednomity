@@ -166,50 +166,6 @@
         const form360Element = document.getElementById('form360');
         const submitReview = document.getElementById('submit-review');
         const submitDraft = document.getElementById('save-draft');
-        const getData = () => {
-            let data = {};
-            const formElements = form360Element.elements;
-            const inputElements = form360Element.querySelectorAll('.form-input');
-            for (let i = 0; i < inputElements.length; i++) {
-                const name = inputElements[i].name;
-                let value = formElements[name].value;
-                const type = inputElements[i].type;
-                if (type === 'radio') {
-                    if (value === "") {
-                        value = 0;
-                    } else {
-                        value = parseInt(value);
-                    }
-                }
-                if (name.endsWith(']')) {
-                    const n = name.split('[')[0];
-                    if (fc.keyExist(n, data)) {
-                        let v = data[n];
-                        if (!Array.isArray(v)) {
-                            continue;
-                        }
-                        v.push(value);
-                        data[n] = v;
-                    } else {
-                        data[n] = [value];
-                    }
-                    continue;
-                }
-                if (fc.keyExist(name, data)) {
-                    continue;
-                }
-                if (name.indexOf('.') < 1) {
-                    data[name] = value;
-                    continue;
-                }
-                //parse and rebuild into nested object when naming convention contains dot
-                const item = name.split('.').reduceRight(
-                    (all, item) => ({[item]: all}), value
-                );
-                data = fc.deepMerge(data, item);
-            }
-            return data;
-        }
         const enableButton = (v) => {
             if (v) {
                 submitReview.disabled = false;
@@ -246,7 +202,7 @@
             e.preventDefault();
             e.stopPropagation();
             fc.overrideEvents('onClickOk', function () {
-                submitData('final', getData(form360Element));
+                submitData('final', fc.getFormData(form360Element));
             });
             fc.dialog(
                 true, 'Submit Review',
@@ -259,7 +215,7 @@
             e.preventDefault();
             e.stopPropagation();
             fc.overrideEvents('onClickOk', function () {
-                submitData('draft', getData(form360Element));
+                submitData('draft', fc.getFormData(form360Element));
             });
             fc.dialog(
                 true, 'Saving as Draft', 

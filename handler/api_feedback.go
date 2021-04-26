@@ -284,7 +284,7 @@ func queryAndValidate(ctx context.Context, ds database.IManager, linkHash string
 	return
 }
 
-func Review360SubmissionAPI(w http.ResponseWriter, r *http.Request) {
+func Api360Submission(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	sm := req.GetContext().Get("sm").(session.IManager)
