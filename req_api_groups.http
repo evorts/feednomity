@@ -1,0 +1,45 @@
+POST {{api_base_url}}/groups/list
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{}
+
+###
+POST {{api_base_url}}/groups/create
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "groups": [
+    {
+      "name": "Testing Group",
+      "org_id": 1
+    }
+  ]
+}
+
+###
+PUT {{api_base_url}}/groups/update
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "group": {
+    "id": 3,
+    "name": "Testing Group 2 Update",
+    "org_id": 2
+  }
+}
+
+###
+DELETE {{api_base_url}}/groups/delete
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "ids": [3]
+}

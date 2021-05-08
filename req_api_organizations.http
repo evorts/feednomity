@@ -1,0 +1,45 @@
+POST {{api_base_url}}/organizations/list
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{}
+
+###
+POST {{api_base_url}}/organizations/create
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "orgs": [
+    {
+      "name": "Testing Organiization2",
+      "address": "somewheref"
+    }
+  ]
+}
+
+###
+PUT {{api_base_url}}/organizations/update
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "org": {
+    "id": 3,
+    "name": "Testing Org 2 Update",
+    "address": "testnig update addr"
+  }
+}
+
+###
+DELETE {{api_base_url}}/organizations/delete
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "ids": [3]
+}

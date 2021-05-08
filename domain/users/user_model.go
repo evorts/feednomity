@@ -68,7 +68,7 @@ type Group struct {
 }
 
 type Organization struct {
-	Id         int        `db:"id"`
+	Id         int64        `db:"id"`
 	Name       string     `db:"name"`
 	Address    string     `db:"address"`
 	Phone      string     `db:"phone"`

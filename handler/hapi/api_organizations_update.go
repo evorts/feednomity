@@ -11,19 +11,19 @@ import (
 	"net/http"
 )
 
-func ApiUserUpdate(w http.ResponseWriter, r *http.Request) {
+func ApiOrganizationUpdate(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	vm := req.GetContext().Get("view").(view.IManager)
 
-	log.Log("users_update_api_handler", "request received")
+	log.Log("organization_update_api_handler", "request received")
 
 	var payload struct {
-		User *User `json:"user"`
+		Org *UserOrg `json:"org"`
 	}
 
 	err := req.UnmarshallBody(&payload)
-	if err != nil || payload.User == nil {
+	if err != nil || payload.Org == nil {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
@@ -40,23 +40,17 @@ func ApiUserUpdate(w http.ResponseWriter, r *http.Request) {
 	errs := make(map[string]string, 0)
 	user := req.GetUserData()
 
-	if payload.User.Id < 1 {
+	if payload.Org.Id < 1 {
 		errs["id"] = "not a valid identifier"
 	}
-	if payload.User.GroupId < 1 {
-		errs["group_id"] = "not a valid group"
-	}
-	if len(payload.User.PIN) > 0 && !users.PIN(payload.User.PIN).Valid() {
-		errs["pin"] = users.PIN(payload.User.PIN).Rule()
-	}
-	if len(payload.User.Password) > 0 && !users.PASSWORD(payload.User.Password).Valid() {
-		errs["pwd"] = users.PASSWORD(payload.User.Password).Rule()
+	if len(payload.Org.Name) < 1 {
+		errs["name"] = "not a valid name"
 	}
 	// check eligibility of the users to update data
 	if len(errs) < 1 && !eligible(
 		*user,
 		req.GetUserAccessScope(),
-		payload.User.Id, payload.User.GroupId,
+		user.Id, payload.Org.Id,
 	) {
 		errs["eligibility"] = "Not eligible to make this request."
 	}
@@ -77,10 +71,10 @@ func ApiUserUpdate(w http.ResponseWriter, r *http.Request) {
 	datasource := req.GetContext().Get("db").(database.IManager)
 	usersDomain := users.NewUserDomain(datasource)
 
-	var ui []*users.User
-	ui, err = usersDomain.FindByIds(req.GetContext().Value(), payload.User.Id)
+	var items []*users.Organization
+	items, err = usersDomain.FindOrganizationByIds(req.GetContext().Value(), payload.Org.Id)
 
-	if len(ui) < 1 {
+	if len(items) < 1 {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
@@ -93,8 +87,8 @@ func ApiUserUpdate(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	var u = ui[0]
-	err = utils.MergeStruct(u, payload.User, []string{"Username", "Email", "Phone", "Password", "PIN"})
+	var item = items[0]
+	err = utils.MergeStruct(item, payload.Org, []string{"Name", "Address", "Phone"})
 	if err != nil {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
@@ -108,13 +102,7 @@ func ApiUserUpdate(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	if len(payload.User.Password) < 1 {
-		u.Password = ""
-	}
-	if len(payload.User.PIN) < 1 {
-		u.PIN = ""
-	}
-	if err = usersDomain.Update(req.GetContext().Value(), *u); err != nil {
+	if err = usersDomain.UpdateOrganization(req.GetContext().Value(), *item); err != nil {
 		_ = vm.RenderJson(w, http.StatusExpectationFailed, api.Response{
 			Status:  http.StatusExpectationFailed,
 			Content: make(map[string]interface{}, 0),

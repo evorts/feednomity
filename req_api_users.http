@@ -25,7 +25,6 @@ Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
 {
-  "csrf": "",
   "users": [
     {
       "username": "steven2",
@@ -53,7 +52,6 @@ Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
 {
-  "csrf": "",
   "user": {
     "id": 3,
     "username": "steven3",

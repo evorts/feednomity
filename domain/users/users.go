@@ -511,7 +511,7 @@ func (m *manager) Update(ctx context.Context, u User) error {
 	if cmd.RowsAffected() > 0 {
 		return nil
 	}
-	return fmt.Errorf("no rows created")
+	return fmt.Errorf("no rows updated")
 }
 
 func (m *manager) DeleteByIds(ctx context.Context, id []int64) error {
@@ -705,15 +705,87 @@ func (m *manager) InsertGroup(ctx context.Context, g Group) error {
 }
 
 func (m *manager) InsertGroups(ctx context.Context, groups []*Group) error {
-	panic("implement me")
+	q := fmt.Sprintf(`
+		INSERT INTO %s (
+				name, org_id, disabled, created_at, disabled_at)
+			VALUES`, tableUsersGroup)
+	placeholders := make([]string, 0)
+	values := make([]interface{}, 0)
+	for _, item := range groups {
+		var disabledAt interface{} = nil
+		placeholders = append(
+			placeholders,
+			`(?, ?, ?, NOW(), ?)`,
+		)
+		if item.Disabled {
+			disabledAt = "NOW()"
+		}
+		values = append(
+			values, item.Name, item.OrgId, item.Disabled, disabledAt,
+		)
+	}
+	q = m.dbm.Rebind(ctx, fmt.Sprintf(`%s %s`, q, strings.Join(placeholders, ",")))
+	cmd, err2 := m.dbm.Exec(ctx, q, values...)
+	if err2 != nil {
+		return errors.Wrap(err2, "failed saving groups. some errors in constraint or data.")
+	}
+	if cmd.RowsAffected() > 0 {
+		return nil
+	}
+	return fmt.Errorf("no rows created")
 }
 
 func (m *manager) UpdateGroup(ctx context.Context, g Group) error {
-	panic("implement me")
+	if g.Id < 1 {
+		return fmt.Errorf("please provide the correct identifier")
+	}
+	args := []interface{}{
+		g.Name,
+		g.OrgId,
+		g.Disabled,
+	}
+	var disabledAt interface{} = g.DisabledAt
+	if g.Disabled {
+		disabledAt = "NOW()"
+	}
+	args = append(args, disabledAt)
+	args = append(args, g.Id)
+	q := fmt.Sprintf(`
+		UPDATE %s 
+		SET 
+			name = ?,
+			org_id = ?,
+			disabled = ?,
+			updated_at = NOW(),
+			disabled_at = ?
+		WHERE id = ?`, tableUsersGroup)
+	q = m.dbm.Rebind(ctx, q)
+	cmd, err2 := m.dbm.Exec(ctx, q, args...)
+	if err2 != nil {
+		return err2
+	}
+	if cmd.RowsAffected() > 0 {
+		return nil
+	}
+	return fmt.Errorf("no rows updated")
 }
 
 func (m *manager) DeleteGroupByIds(ctx context.Context, ids ...int64) error {
-	panic("implement me")
+	q := m.dbm.Rebind(ctx, fmt.Sprintf(`
+			DELETE FROM %s WHERE id IN (%s)
+		`, tableUsersGroup, strings.TrimRight(strings.Repeat("?,", len(ids)), ",")))
+	rs, err := m.dbm.Exec(
+		ctx,
+		q,
+		utils.ArrayInt64(ids).ToArrayInterface()...,
+	)
+	if err != nil {
+		return err
+	}
+	if rs.RowsAffected() < 1 {
+		return errors.New("not a single record removed")
+	}
+	return nil
 }
 
 func (m *manager) FindOrganizationByIds(ctx context.Context, ids ...int64) ([]*Organization, error) {
@@ -783,17 +855,23 @@ func (m *manager) FindAllOrganizations(ctx context.Context, page, limit int) (it
 		return
 	}
 	for rows.Next() {
-		var item Organization
+		var (
+			item Organization
+			phone sql.NullString
+			disabled sql.NullBool
+		)
 		err = rows.Scan(
 			&item.Id,
 			&item.Name,
 			&item.Address,
-			&item.Phone,
-			&item.Disabled,
+			&phone,
+			&disabled,
 			&item.CreatedAt,
 			&item.UpdatedAt,
 			&item.DisabledAt,
 		)
+		item.Phone = phone.String
+		item.Disabled = disabled.Bool
 		if err != nil {
 			return
 		}
@@ -833,14 +911,88 @@ func (m *manager) InsertOrganization(ctx context.Context, o Organization) error 
 }
 
 func (m *manager) InsertOrganizations(ctx context.Context, o []*Organization) error {
-	panic("implement me")
+	q := fmt.Sprintf(`
+		INSERT INTO %s (
+				name, address, phone, disabled, created_at, disabled_at)
+			VALUES`, tableUsersOrg)
+	placeholders := make([]string, 0)
+	values := make([]interface{}, 0)
+	for _, item := range o {
+		var disabledAt interface{} = nil
+		placeholders = append(
+			placeholders,
+			`(?, ?, ?, ?, NOW(), ?)`,
+		)
+		if item.Disabled {
+			disabledAt = "NOW()"
+		}
+		values = append(
+			values, item.Name, item.Address, item.Phone, item.Disabled, disabledAt,
+		)
+	}
+	q = m.dbm.Rebind(ctx, fmt.Sprintf(`%s %s`, q, strings.Join(placeholders, ",")))
+	cmd, err2 := m.dbm.Exec(ctx, q, values...)
+	if err2 != nil {
+		return errors.Wrap(err2, "failed saving organizations. some errors in constraint or data.")
+	}
+	if cmd.RowsAffected() > 0 {
+		return nil
+	}
+	return fmt.Errorf("no rows created")
 }
 
 func (m *manager) UpdateOrganization(ctx context.Context, o Organization) error {
-	panic("implement me")
+	if o.Id < 1 {
+		return fmt.Errorf("please provide the correct identifier")
+	}
+	args := []interface{}{
+		o.Name,
+		o.Address,
+		o.Phone,
+		o.Disabled,
+	}
+	var disabledAt interface{} = o.DisabledAt
+	if o.Disabled {
+		disabledAt = "NOW()"
+	}
+	args = append(args, disabledAt)
+	args = append(args, o.Id)
+	q := fmt.Sprintf(`
+		UPDATE %s 
+		SET 
+			name = ?,
+			address = ?,
+			phone = ?,
+			disabled = ?,
+			updated_at = NOW(),
+			disabled_at = ?
+		WHERE id = ?`, tableUsersOrg)
+	q = m.dbm.Rebind(ctx, q)
+	cmd, err2 := m.dbm.Exec(ctx, q, args...)
+	if err2 != nil {
+		return err2
+	}
+	if cmd.RowsAffected() > 0 {
+		return nil
+	}
+	return fmt.Errorf("no rows updated")
 }
 
 func (m *manager) DeleteOrganizationByIds(ctx context.Context, ids ...int64) error {
-	panic("implement me")
+	q := m.dbm.Rebind(ctx, fmt.Sprintf(`
+			DELETE FROM %s WHERE id IN (%s)
+		`, tableUsersOrg, strings.TrimRight(strings.Repeat("?,", len(ids)), ",")))
+	rs, err := m.dbm.Exec(
+		ctx,
+		q,
+		utils.ArrayInt64(ids).ToArrayInterface()...,
+	)
+	if err != nil {
+		return err
+	}
+	if rs.RowsAffected() < 1 {
+		return errors.New("not a single record removed")
+	}
+	return nil
 }
 

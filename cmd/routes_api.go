@@ -115,6 +115,7 @@ func routingApi(
 	routes = append(routes, routesApiUsers(cfg, view, db, accessControl, jwx, hash, log)...)
 	routes = append(routes, routesApiLink(cfg, view, db, accessControl, jwx, hash, aes, log)...)
 	routes = append(routes, routesApiGroups(cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiOrganizations(cfg, view, db, accessControl, jwx, hash, log)...)
 	routes = append(routes, routesApiQuestions(cfg, view, db, accessControl, jwx, hash, log)...)
 
 	reqio.NewRoutes(routes).ExecRoutes(o)
@@ -343,77 +344,158 @@ func routesApiGroups(
 	return []reqio.Route{
 		{
 			Pattern: "/groups/list",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodGet,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiGroupsList),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-						},
-					),
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiGroupsList),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
 				),
 			),
 		},
 		{
 			Pattern: "/groups/create",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPost,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiGroupsCreate),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-						},
-					),
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiGroupsCreate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
 				),
 			),
 		},
 		{
 			Pattern: "/groups/update",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithTokenProtection(
+				http.MethodPut,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPut,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiGroupUpdate),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-						},
-					),
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiGroupUpdate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
 				),
 			),
 		},
 		{
-			Pattern: "/groups/remove",
-			Handler: middleware.WithCorsProtection(
+			Pattern: "/groups/delete",
+			Handler: middleware.WithTokenProtection(
+				http.MethodDelete,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodDelete,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiGroupsDelete),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-						},
-					),
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiGroupsDelete),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
+				),
+			),
+		},
+	}
+}
+
+func routesApiOrganizations(
+	cfg config.IManager,
+	view view.IManager,
+	db database.IManager,
+	accessControl acl.IManager,
+	jwx jwe.IManager,
+	hash crypt.ICryptHash,
+	log logger.IManager,
+) []reqio.Route {
+	return []reqio.Route{
+		{
+			Pattern: "/organizations/list",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiOrganizationsList),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/organizations/create",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiOrganizationsCreate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/organizations/update",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPut,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiOrganizationUpdate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/organizations/delete",
+			Handler: middleware.WithTokenProtection(
+				http.MethodDelete,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiOrganizationsDelete),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
 				),
 			),
 		},
