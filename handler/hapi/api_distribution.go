@@ -1,4 +1,4 @@
-package handler
+package hapi
 
 import (
 	"github.com/evorts/feednomity/domain/distribution"
@@ -7,15 +7,15 @@ import (
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/session"
-	"github.com/evorts/feednomity/pkg/template"
 	"github.com/evorts/feednomity/pkg/validate"
+	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 )
 
 func ApiLinksBlast(w http.ResponseWriter, r *http.Request) {
-	req := reqio.NewRequest(w, r).Prepare()
+	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	view := req.GetContext().Get("view").(template.IManager)
+	vm := req.GetContext().Get("view").(view.IManager)
 
 	log.Log("links_blast_api_handler", "request received")
 
@@ -26,7 +26,7 @@ func ApiLinksBlast(w http.ResponseWriter, r *http.Request) {
 
 	err := req.UnmarshallBody(&payload)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -55,7 +55,7 @@ func ApiLinksBlast(w http.ResponseWriter, r *http.Request) {
 
 	links, err := linkDomain.FindByDistObjectIds(req.GetContext().Value(), payload.DistributionObjectId)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -68,7 +68,7 @@ func ApiLinksBlast(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// @todo: doing email blast here
-	_ = view.RenderJson(w, http.StatusOK, api.Response{
+	_ = vm.RenderJson(w, http.StatusOK, api.Response{
 		Status: http.StatusOK,
 		Content: map[string]interface{}{
 			"links": links,

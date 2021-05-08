@@ -1,4 +1,4 @@
-package handler
+package hapi
 
 import (
 	"encoding/json"
@@ -11,8 +11,8 @@ import (
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/session"
-	"github.com/evorts/feednomity/pkg/template"
 	"github.com/evorts/feednomity/pkg/validate"
+	"github.com/evorts/feednomity/pkg/view"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"net/http"
@@ -65,9 +65,9 @@ func (h *hashHelper) Decode(value string) (*HashData, error) {
 }
 
 func ApiLinksList(w http.ResponseWriter, r *http.Request) {
-	req := reqio.NewRequest(w, r).Prepare()
+	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	view := req.GetContext().Get("view").(template.IManager)
+	vm := req.GetContext().Get("view").(view.IManager)
 
 	log.Log("links_create_api_handler", "request received")
 
@@ -83,7 +83,7 @@ func ApiLinksList(w http.ResponseWriter, r *http.Request) {
 
 	links, total, err := linkDomain.FindLinks(req.GetContext().Value(), payload.Page.Value(), payload.Limit.Value())
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -95,7 +95,7 @@ func ApiLinksList(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	_ = view.RenderJson(w, http.StatusOK, api.Response{
+	_ = vm.RenderJson(w, http.StatusOK, api.Response{
 		Status: http.StatusOK,
 		Content: map[string]interface{}{
 			"total": total,
@@ -106,9 +106,9 @@ func ApiLinksList(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
-	req := reqio.NewRequest(w, r).Prepare()
+	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	view := req.GetContext().Get("view").(template.IManager)
+	vm := req.GetContext().Get("view").(view.IManager)
 	aes := req.GetContext().Get("aes").(crypt.ICryptAES)
 	cfg := req.GetContext().Get("cfg").(config.IManager)
 
@@ -122,7 +122,7 @@ func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	err := req.UnmarshallBody(&payload)
 	if err != nil || len(payload.Links) < 1 {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -168,7 +168,7 @@ func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if len(errs) > 0 {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -183,7 +183,7 @@ func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
 	datasource := req.GetContext().Get("db").(database.IManager)
 	linkDomain := distribution.NewLinksDomain(datasource)
 	if err = linkDomain.InsertMultiple(req.GetContext().Value(), payload.Links); err != nil {
-		_ = view.RenderJson(w, http.StatusExpectationFailed, api.Response{
+		_ = vm.RenderJson(w, http.StatusExpectationFailed, api.Response{
 			Status:  http.StatusExpectationFailed,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -197,16 +197,16 @@ func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	_ = view.RenderJson(w, http.StatusOK, api.Response{
+	_ = vm.RenderJson(w, http.StatusOK, api.Response{
 		Status:  http.StatusOK,
 		Content: make(map[string]interface{}, 0),
 	})
 }
 
 func ApiLinkUpdate(w http.ResponseWriter, r *http.Request) {
-	req := reqio.NewRequest(w, r).Prepare()
+	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	view := req.GetContext().Get("view").(template.IManager)
+	vm := req.GetContext().Get("view").(view.IManager)
 	aes := req.GetContext().Get("aes").(crypt.ICryptAES)
 	cfg := req.GetContext().Get("cfg").(config.IManager)
 
@@ -219,7 +219,7 @@ func ApiLinkUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	err := req.UnmarshallBody(&payload)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -254,7 +254,7 @@ func ApiLinkUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(errs) > 0 {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -278,7 +278,7 @@ func ApiLinkUpdate(w http.ResponseWriter, r *http.Request) {
 	datasource := req.GetContext().Get("db").(database.IManager)
 	linkDomain := distribution.NewLinksDomain(datasource)
 	if err = linkDomain.UpdateLink(req.GetContext().Value(), payload.Link); err != nil {
-		_ = view.RenderJson(w, http.StatusExpectationFailed, api.Response{
+		_ = vm.RenderJson(w, http.StatusExpectationFailed, api.Response{
 			Status:  http.StatusExpectationFailed,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -290,16 +290,16 @@ func ApiLinkUpdate(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	_ = view.RenderJson(w, http.StatusOK, api.Response{
+	_ = vm.RenderJson(w, http.StatusOK, api.Response{
 		Status:  http.StatusOK,
 		Content: make(map[string]interface{}, 0),
 	})
 }
 
 func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
-	req := reqio.NewRequest(w, r).Prepare()
+	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	view := req.GetContext().Get("view").(template.IManager)
+	vm := req.GetContext().Get("view").(view.IManager)
 
 	log.Log("links_delete_api_handler", "request received")
 
@@ -310,7 +310,7 @@ func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 
 	err := req.UnmarshallBody(&payload)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -335,7 +335,7 @@ func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 		errs["id"] = "not a valid identifier"
 	}
 	if len(errs) > 0 {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -350,7 +350,7 @@ func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 	datasource := req.GetContext().Get("db").(database.IManager)
 	linkDomain := distribution.NewLinksDomain(datasource)
 	if err = linkDomain.DisableLinksByIds(req.GetContext().Value(), payload.LinkId); err != nil {
-		_ = view.RenderJson(w, http.StatusExpectationFailed, api.Response{
+		_ = vm.RenderJson(w, http.StatusExpectationFailed, api.Response{
 			Status:  http.StatusExpectationFailed,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -362,7 +362,7 @@ func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	_ = view.RenderJson(w, http.StatusOK, api.Response{
+	_ = vm.RenderJson(w, http.StatusOK, api.Response{
 		Status:  http.StatusOK,
 		Content: make(map[string]interface{}, 0),
 	})

@@ -2,137 +2,48 @@ package cmd
 
 import (
 	"github.com/evorts/feednomity/handler"
+	"github.com/evorts/feednomity/pkg/acl"
+	"github.com/evorts/feednomity/pkg/config"
+	"github.com/evorts/feednomity/pkg/crypt"
+	"github.com/evorts/feednomity/pkg/jwe"
+	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/middleware"
 	"github.com/evorts/feednomity/pkg/reqio"
+	"github.com/evorts/feednomity/pkg/session"
+	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 )
 
-func routesWebDashboard(lib *library) []reqio.Route {
-	return []reqio.Route{
+func routingWeb(
+	o *http.ServeMux,
+	acl acl.IManager,
+	logger logger.IManager,
+	config config.IManager,
+	session session.IManager,
+	aes crypt.ICryptAES,
+	hash crypt.ICryptHash,
+	view view.ITemplateManager,
+	jwe jwe.IManager,
+) {
+	// serving assets
+	fs := http.FileServer(http.Dir(cfg.GetConfig().App.AssetDirectory))
+	o.Handle("/assets/", http.StripPrefix("/assets", fs))
+	// serving pages
+	routes := []reqio.Route{
 		{
-			Pattern: "/adm",
+			Pattern: "/ping",
 			Handler: middleware.WithMethodFilter(
 				http.MethodGet,
 				middleware.WithInjection(
-					http.HandlerFunc(handler.AdminGate),
+					http.HandlerFunc(handler.Ping),
 					map[string]interface{}{
-						"logger": lib.logger,
-						"sm":     lib.session,
+						"view": view,
 					},
 				),
 			),
-			AdminOnly: true,
-		},
-		{
-			Pattern: "/adm/dashboard",
-			Handler: middleware.WithProtection(middleware.ProtectionLib{
-				Acl:  lib.acl,
-				Sm:   lib.session,
-				View: lib.view,
-			}, middleware.ProtectionArgs{
-				Path:           "/adm/dashboard",
-				Method:         http.MethodGet,
-			}, middleware.WithInjection(
-				http.HandlerFunc(handler.Dashboard),
-				map[string]interface{}{
-					"logger": lib.logger,
-					"view":   lib.view,
-					"sm":     lib.session,
-					"db":     lib.db,
-				},
-			)),
-			AdminOnly: true,
-		},
-		{
-			Pattern: "/adm/users",
-			Handler: middleware.WithProtection(middleware.ProtectionLib{
-				Acl:  lib.acl,
-				Sm:   lib.session,
-				View: lib.view,
-			}, middleware.ProtectionArgs{
-				Path:           "/adm/users",
-				Method:         http.MethodGet,
-			}, middleware.WithInjection(
-				http.HandlerFunc(handler.Users),
-				map[string]interface{}{
-					"logger": lib.logger,
-					"view":   lib.view,
-					"sm":     lib.session,
-					"db":     lib.db,
-				},
-			)),
-			AdminOnly: true,
-		},
-		{
-			Pattern: "/adm/objects",
-			Handler: middleware.WithProtection(middleware.ProtectionLib{
-				Acl:  lib.acl,
-				Sm:   lib.session,
-				View: lib.view,
-			}, middleware.ProtectionArgs{
-				Path:           "/adm/objects",
-				Method:         http.MethodGet,
-			}, middleware.WithInjection(
-				http.HandlerFunc(handler.Objects),
-				map[string]interface{}{
-					"logger": lib.logger,
-					"view":   lib.view,
-					"sm":     lib.session,
-					"db":     lib.db,
-				},
-			)),
-			AdminOnly: true,
-		},
-		{
-			Pattern: "/adm/login",
-			Handler: middleware.WithMethodFilter(
-				http.MethodGet,
-				middleware.WithInjection(
-					http.HandlerFunc(handler.Login),
-					map[string]interface{}{
-						"logger": lib.logger,
-						"view":   lib.view,
-						"sm":     lib.session,
-						"hash":   lib.hash,
-					},
-				),
-			),
-			AdminOnly: false,
-		},
-		{
-			Pattern: "/adm/logout",
-			Handler: middleware.WithMethodFilter(
-				http.MethodGet,
-				middleware.WithInjection(
-					http.HandlerFunc(handler.Logout),
-					map[string]interface{}{
-						"sm": lib.session,
-					},
-				),
-			),
-			AdminOnly: true,
 		},
 	}
-}
-
-func routesWebAssessments(lib *library) []reqio.Route {
-	return []reqio.Route{
-		{
-			Pattern: "/page/360/review",
-			Handler: middleware.WithMethodFilter(
-				http.MethodGet,
-				middleware.WithInjection(
-					http.HandlerFunc(handler.Form360),
-					map[string]interface{}{
-						"logger": lib.logger,
-						"view":   lib.view,
-						"db":     lib.db,
-						"sm":     lib.session,
-						"hash":   lib.hash,
-					},
-				),
-			),
-			AdminOnly: false,
-		},
-	}
+	routes = append(routes, routesWebDashboard(acl, logger, session, hash, view)...)
+	routes = append(routes, routesWebConsumers(acl, logger, session, hash, view)...)
+	reqio.NewRoutes(routes).ExecRoutes(o)
 }

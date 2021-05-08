@@ -3,7 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"github.com/evorts/feednomity/pkg/api"
-	"github.com/evorts/feednomity/pkg/template"
+	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 	"net/url"
 	"strings"
@@ -41,14 +41,25 @@ func evalCors(r *http.Request, methods, origins []string) (status int, responseE
 	return http.StatusAccepted, nil
 }
 
-func render(status int, rs interface{}, w http.ResponseWriter, tpl string, view template.IManager)  {
+func render(status int, rs interface{}, w http.ResponseWriter, tpl string, view view.ITemplateManager)  {
 	switch true {
 	case view != nil:
-		if len(tpl) < 1 {
-			_ = view.RenderJson(w, status, rs)
+		_ = view.RenderFlex(w, status, tpl, rs)
+	default:
+		w.WriteHeader(status)
+		j, err := json.Marshal(rs)
+		if err != nil {
+			_, _ = w.Write([]byte("{}"))
 			return
 		}
-		_ = view.RenderFlex(w, status, tpl, rs)
+		_, _ = w.Write(j)
+	}
+}
+
+func renderJson(status int, rs interface{}, w http.ResponseWriter, view view.IManager)  {
+	switch true {
+	case view != nil:
+		_ = view.RenderJson(w, status, rs)
 	default:
 		w.WriteHeader(status)
 		j, err := json.Marshal(rs)

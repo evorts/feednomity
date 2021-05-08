@@ -2,7 +2,9 @@ package reqio
 
 import (
 	"encoding/json"
+	"github.com/evorts/feednomity/pkg/acl"
 	"github.com/evorts/feednomity/pkg/crypt"
+	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/session"
 	"io/ioutil"
 	"net/http"
@@ -10,7 +12,14 @@ import (
 	"time"
 )
 
-type UserSession struct {
+const (
+	HeaderAuth         = "X-Authorization"
+	HeaderClientId     = "X-Client-Id"
+	UserContextKey     = "user"
+	UserAccessScopeKey = "access_scope"
+)
+
+type UserData struct {
 	Id          int64                  `json:"id"`
 	Username    string                 `json:"username"`
 	DisplayName string                 `json:"display_name"`
@@ -26,13 +35,18 @@ type UserSession struct {
 }
 
 type request struct {
-	w           http.ResponseWriter
-	r           *http.Request
-	ctx         IContext
-	token       string
-	hash        crypt.ICryptHash
-	session     session.IManager
-	userSession UserSession
+	w               http.ResponseWriter
+	r               *http.Request
+	ctx             IContext
+	csrfToken       string
+	jweToken        string
+	clientId        string
+	hash            crypt.ICryptHash
+	session         session.IManager
+	userData        *UserData
+	expireAt        *time.Time
+	userAccessScope acl.AccessScope
+	jwx             jwe.IManager
 }
 
 type IRequest interface {
@@ -42,14 +56,26 @@ type IRequest interface {
 	IsMethodDelete() bool
 	IsMethodOptions() bool
 	IsLoggedIn() bool
+
+	PrepareRestful() IRequest
 	Prepare() IRequest
 	UnmarshallForm(dst interface{}) error
 	UnmarshallBody(dst interface{}) error
 	GetFormValue(field string) []string
+	GetCsrfToken() string
 	GetToken() string
-	RenewToken() IRequest
+	RenewSessionToken() IRequest
 	GetContext() IContext
-	GetUser() *UserSession
+	GetUserData() *UserData
+	GetUserAccessScope() acl.AccessScope
+	GetJweToken() string
+	GetJwx() jwe.IManager
+	GetClientId() string
+
+	getUserAccessScopeFromContext() acl.AccessScope
+	getUserAccessScopeFromSession() acl.AccessScope
+	getUserDataFromSession() *UserData
+	getUserDataFromContext() *UserData
 }
 
 func NewRequest(w http.ResponseWriter, r *http.Request) IRequest {
@@ -65,6 +91,9 @@ func NewRequest(w http.ResponseWriter, r *http.Request) IRequest {
 	if c := ctx.Get("hash"); c != nil {
 		req.hash = c.(crypt.ICryptHash)
 	}
+	if j := ctx.Get("jwx"); j != nil {
+		req.jwx = j.(jwe.IManager)
+	}
 	return req
 }
 
@@ -72,33 +101,92 @@ func (req *request) GetContext() IContext {
 	return req.ctx
 }
 
-func (req *request) GetToken() string {
-	return req.token
+func (req *request) GetCsrfToken() string {
+	return req.csrfToken
 }
 
-func (req *request) RenewToken() IRequest {
+func (req *request) GetToken() string {
+	return req.jweToken
+}
+
+func (req *request) GetJwx() jwe.IManager {
+	return req.jwx
+}
+
+func (req *request) RenewSessionToken() IRequest {
 	req.Prepare()
 	return req
 }
 
-func (req *request) IsMethodGet() bool {
-	return strings.ToUpper(req.r.Method) == "GET"
+func (req *request) GetFormValue(field string) []string {
+	return req.r.Form[field]
 }
 
-func (req *request) IsMethodPost() bool {
-	return strings.ToUpper(req.r.Method) == "POST"
+func (req *request) PrepareRestful() IRequest {
+	req.userData = req.getUserDataFromContext()
+	req.csrfToken = req.hash.HashWithSalt(time.Now().String())
+	req.userAccessScope = req.getUserAccessScopeFromContext()
+	return req
 }
 
-func (req *request) IsMethodPut() bool {
-	return strings.ToUpper(req.r.Method) == "PUT"
+func (req *request) Prepare() IRequest {
+	if req.hash == nil {
+		return req
+	}
+	req.csrfToken = req.hash.HashWithSalt(time.Now().String())
+	req.userData = req.getUserDataFromSession()
+	req.userAccessScope = req.getUserAccessScopeFromSession()
+	return req
 }
 
-func (req *request) IsMethodDelete() bool {
-	return strings.ToUpper(req.r.Method) == "DELETE"
+func (req *request) IsLoggedIn() bool {
+	if req.userData == nil || req.userData.Id < 1 {
+		return false
+	}
+	return true
 }
 
-func (req *request) IsMethodOptions() bool {
-	return strings.ToUpper(req.r.Method) == "OPTIONS"
+func (req *request) GetUserData() *UserData {
+	return req.userData
+}
+
+func (req *request) getUserDataFromSession() *UserData {
+	if req.session.GetJson(req.GetContext().Value(), UserContextKey, req.userData) != nil {
+		return nil
+	}
+	return req.userData
+}
+
+func (req *request) getUserDataFromContext() *UserData {
+	u := req.GetContext().Get(UserContextKey)
+	if u == nil {
+		return nil
+	}
+	return u.(*UserData)
+}
+
+func (req *request) GetJweToken() string {
+	return strings.Trim(req.r.Header.Get(HeaderAuth), " ")
+}
+
+func (req *request) GetClientId() string {
+	return strings.Trim(req.r.Header.Get(HeaderClientId), " ")
+}
+
+func (req *request) GetUserAccessScope() acl.AccessScope {
+	return req.userAccessScope
+}
+
+func (req *request) getUserAccessScopeFromContext() acl.AccessScope {
+	acc := req.GetContext().Get(UserAccessScopeKey)
+	if acc == nil {
+		return ""
+	}
+	return acc.(acl.AccessScope)
+}
+
+func (req *request) getUserAccessScopeFromSession() acl.AccessScope {
+	return acl.AccessScope(req.session.GetString(req.GetContext().Value(), UserAccessScopeKey))
 }
 
 func (req *request) UnmarshallForm(dst interface{}) error {
@@ -129,30 +217,22 @@ func (req *request) UnmarshallBody(dst interface{}) error {
 	return json.Unmarshal(body, dst)
 }
 
-func (req *request) GetFormValue(field string) []string {
-	return req.r.Form[field]
+func (req *request) IsMethodGet() bool {
+	return strings.ToUpper(req.r.Method) == "GET"
 }
 
-func (req *request) Prepare() IRequest {
-	if req.hash == nil {
-		return req
-	}
-	req.token = req.hash.HashWithSalt(time.Now().String())
-	return req
+func (req *request) IsMethodPost() bool {
+	return strings.ToUpper(req.r.Method) == "POST"
 }
 
-func (req *request) IsLoggedIn() bool {
-	user := req.GetUser()
-	if user == nil || user.Id < 1 {
-		return false
-	}
-	return true
+func (req *request) IsMethodPut() bool {
+	return strings.ToUpper(req.r.Method) == "PUT"
 }
 
-func (req *request) GetUser() *UserSession {
-	err := req.session.GetJson(req.GetContext().Value(), "user", &req.userSession)
-	if err != nil {
-		return nil
-	}
-	return &req.userSession
+func (req *request) IsMethodDelete() bool {
+	return strings.ToUpper(req.r.Method) == "DELETE"
+}
+
+func (req *request) IsMethodOptions() bool {
+	return strings.ToUpper(req.r.Method) == "OPTIONS"
 }

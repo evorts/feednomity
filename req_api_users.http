@@ -1,15 +1,26 @@
-POST http://localhost:3700/api/login
+POST {{api_base_url}}/login
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
+X-Client-Id: web
 
 {
   "username": "root",
   "password": "ttest11"
 }
 
-### create
+> {% client.global.set("auth_token", response.body.content.token); %}
 
-POST http://localhost:3700/api/users/create
+### list
+POST {{api_base_url}}/users/list
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{}
+
+### create
+POST {{api_base_url}}/users/create
+X-Authorization: {{auth_token}}
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
@@ -17,12 +28,12 @@ Referer: https://anonymity.evorts.com
   "csrf": "",
   "users": [
     {
-      "username": "steven",
+      "username": "steven2",
       "display_name": "Steven",
       "attributes": {
         "nik": "1243453"
       },
-      "email": "steven@playground.com",
+      "email": "steven2@playground.com",
       "phone": "",
       "password": "testing123",
       "pin": "",
@@ -36,7 +47,8 @@ Referer: https://anonymity.evorts.com
 }
 
 ### update
-PUT http://localhost:3700/api/users/update
+PUT {{api_base_url}}/users/update
+X-Authorization: {{auth_token}}
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
@@ -44,8 +56,8 @@ Referer: https://anonymity.evorts.com
   "csrf": "",
   "user": {
     "id": 3,
-    "username": "steven2",
-    "display_name": "Steven2",
+    "username": "steven3",
+    "display_name": "Steven3",
     "attributes": {
       "nik": "1243453"
     },
@@ -59,4 +71,14 @@ Referer: https://anonymity.evorts.com
     "group_id": 2,
     "disabled": false
   }
+}
+
+### delete
+DELETE {{api_base_url}}/users/delete
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "ids": [3]
 }

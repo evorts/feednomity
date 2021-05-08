@@ -22,7 +22,8 @@ func MergeStruct(dst interface{}, src interface{}, skipFieldsOnEmpty []string) e
 		t2 = v2.Elem().Type()
 		v2 = reflect.Indirect(v2)
 	}
-	if t1.Kind() != reflect.Struct || t2.Kind() != reflect.Struct || !reflect.DeepEqual(t1, t2) {
+	//if t1.Kind() != reflect.Struct || t2.Kind() != reflect.Struct || !reflect.DeepEqual(t1, t2) {
+	if t1.Kind() != reflect.Struct || t2.Kind() != reflect.Struct {
 		return errors.New("invalid arguments data type")
 	}
 	for i := 0; i < v1.NumField(); i++ {

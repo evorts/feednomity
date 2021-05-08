@@ -1,37 +1,30 @@
-package handler
+package hapi
 
 import (
 	"github.com/evorts/feednomity/domain/users"
 	"github.com/evorts/feednomity/pkg/api"
 	"github.com/evorts/feednomity/pkg/crypt"
 	"github.com/evorts/feednomity/pkg/database"
+	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
-	"github.com/evorts/feednomity/pkg/session"
-	"github.com/evorts/feednomity/pkg/template"
 	"github.com/evorts/feednomity/pkg/validate"
+	"github.com/evorts/feednomity/pkg/view"
+	"gopkg.in/square/go-jose.v2/jwt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
 
 func ApiLogin(w http.ResponseWriter, r *http.Request) {
-	req := reqio.NewRequest(w, r).Prepare()
+	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	view := req.GetContext().Get("view").(template.IManager)
-	sm := req.GetContext().Get("sm").(session.IManager)
+	vm := req.GetContext().Get("view").(view.IManager)
 	hash := req.GetContext().Get("hash").(crypt.ICryptHash)
 	datasource := req.GetContext().Get("db").(database.IManager)
 
 	log.Log("login_api_handler", "request received")
-
-	if req.IsLoggedIn() {
-		_ = view.RenderJson(w, http.StatusContinue, api.Response{
-			Status:  http.StatusContinue,
-			Content: make(map[string]interface{}, 0),
-		})
-		return
-	}
 
 	var payload struct {
 		Username string `json:"username"`
@@ -39,9 +32,10 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 		Remember string `json:"remember"`
 		Csrf     string `json:"csrf"`
 	}
+
 	err := req.UnmarshallBody(&payload)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -61,13 +55,8 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 	if !validate.ValidPassword(payload.Password) {
 		errs["password"] = "Not a valid password!"
 	}
-	// csrf check
-	sessionCsrf := sm.Get(r.Context(), "token")
-	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
-		//errs["session"] = "Not a valid request session!"
-	}
 	if len(errs) > 0 {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -83,7 +72,7 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 	usersDomain := users.NewUserDomain(datasource)
 	user, err = usersDomain.FindByUsername(req.GetContext().Value(), payload.Username)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -97,12 +86,12 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	// find out the organizations
 	var (
-		g []*users.Group
+		g        []*users.Group
 		gid, oid int64
 	)
 	g, err = usersDomain.FindGroupByIds(req.GetContext().Value(), user.GroupId)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -118,7 +107,7 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 	oid = g[0].OrgId
 	g, err = usersDomain.FindGroupByOrgId(req.GetContext().Value(), oid)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -133,7 +122,7 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 	// ensure the user and password are correct
 	passCrypt := hash.RenewHash().HashWithoutSalt(payload.Password)
 	if strings.ToLower(passCrypt) != strings.ToLower(strings.TrimLeft(user.Password, "\\x")) {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -145,24 +134,12 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	rememberExpiration := 3 * 24 * time.Hour
+	//by default expiration only in 6 hour
+	expiration := 6 * time.Hour
 	if len(payload.Remember) > 0 {
-		sm.SetSessionLifetime(rememberExpiration)
+		expiration = 3 * 24 * time.Hour
 	}
-	if err := sm.RenewToken(req.GetContext().Value()); err != nil {
-		_ = view.RenderJson(w, http.StatusFailedDependency, api.Response{
-			Status:  http.StatusFailedDependency,
-			Content: make(map[string]interface{}, 0),
-			Error: &api.ResponseError{
-				Code:    "LOG:ERR:SES",
-				Message: "Invalid session!",
-				Reasons: make(map[string]string, 0),
-				Details: make([]interface{}, 0),
-			},
-		})
-		return
-	}
-	userSession := reqio.UserSession{
+	userData := reqio.UserData{
 		Id:          user.Id,
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
@@ -177,13 +154,36 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 		OrgGroupIds: make([]int64, 0),
 	}
 	for _, gv := range g {
-		userSession.OrgGroupIds = append(userSession.OrgGroupIds, gv.Id)
+		userData.OrgGroupIds = append(userData.OrgGroupIds, gv.Id)
 	}
-	_ = sm.PutJson(req.GetContext().Value(), "user", userSession)
-	//remove token since login success -- client should redirect to respective protected page
-	sm.Remove(req.GetContext().Value(), "token")
-	_ = view.RenderJson(w, http.StatusOK, api.Response{
-		Status:  http.StatusOK,
-		Content: make(map[string]interface{}, 0),
+	jwxToken, _ := req.GetJwx().Encode(
+		jwt.Claims{
+			Issuer:   jwe.ISSUER,
+			Subject:  "basic",
+			Expiry:   jwt.NewNumericDate(time.Now().Add(expiration)),
+			IssuedAt: jwt.NewNumericDate(time.Now()),
+			ID:       strconv.FormatInt(userData.Id, 10),
+		},
+		jwe.PrivateClaims{
+			ClientId:    req.GetClientId(),
+			Id:          userData.Id,
+			Username:    userData.Username,
+			DisplayName: userData.DisplayName,
+			Attributes:  userData.Attributes,
+			Email:       userData.Email,
+			Phone:       userData.Phone,
+			AccessRole:  userData.AccessRole,
+			JobRole:     userData.JobRole,
+			Assignment:  userData.Assignment,
+			GroupId:     userData.GroupId,
+			OrgId:       userData.OrgId,
+			OrgGroupIds: userData.OrgGroupIds,
+		},
+	)
+	_ = vm.RenderJson(w, http.StatusOK, api.Response{
+		Status: http.StatusOK,
+		Content: map[string]interface{}{
+			"token": jwxToken,
+		},
 	})
 }

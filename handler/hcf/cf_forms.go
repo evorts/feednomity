@@ -1,4 +1,4 @@
-package handler
+package hcf
 
 import (
 	"context"
@@ -6,11 +6,12 @@ import (
 	"github.com/evorts/feednomity/domain/assessments"
 	"github.com/evorts/feednomity/domain/distribution"
 	"github.com/evorts/feednomity/domain/feedbacks"
+	"github.com/evorts/feednomity/handler/hapi"
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/session"
-	"github.com/evorts/feednomity/pkg/template"
+	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 	"strings"
 )
@@ -21,7 +22,7 @@ func populateFields(ctx context.Context, lh string, f feedbacks.IFeedback, facto
 		return
 	}
 	var (
-		content FeedbackPayload
+		content hapi.FeedbackPayload
 		cb      []byte
 	)
 	cb, err = json.Marshal(fd.Content)
@@ -33,7 +34,7 @@ func populateFields(ctx context.Context, lh string, f feedbacks.IFeedback, facto
 		return
 	}
 	var fieldsValue = make(map[string]interface{}, 0)
-	content.filterFieldsAndTransform(nil, fieldsValue)
+	content.FilterFieldsAndTransform(nil, fieldsValue)
 	if len(fieldsValue) < 1 {
 		return
 	}
@@ -41,7 +42,7 @@ func populateFields(ctx context.Context, lh string, f feedbacks.IFeedback, facto
 	for k, v := range fieldsValue {
 		for _, f1 := range factors.Items {
 			if f1.Key == k {
-				if vv, ok := v.(ItemValue); ok {
+				if vv, ok := v.(hapi.ItemValue); ok {
 					f1.Rating = vv.Rating
 					f1.Note = vv.Note
 				}
@@ -52,7 +53,7 @@ func populateFields(ctx context.Context, lh string, f feedbacks.IFeedback, facto
 			}
 			for _, f2 := range f1.Items {
 				if f2.Key == k {
-					if vv, ok := v.(ItemValue); ok {
+					if vv, ok := v.(hapi.ItemValue); ok {
 						f2.Rating = vv.Rating
 						f2.Note = vv.Note
 					}
@@ -63,7 +64,7 @@ func populateFields(ctx context.Context, lh string, f feedbacks.IFeedback, facto
 				}
 				for _, f3 := range f2.Items {
 					if f3.Key == k {
-						if vv, ok := v.(ItemValue); ok {
+						if vv, ok := v.(hapi.ItemValue); ok {
 							f3.Rating = vv.Rating
 							f3.Note = vv.Note
 						}
@@ -89,7 +90,7 @@ func populateFields(ctx context.Context, lh string, f feedbacks.IFeedback, facto
 func Form360(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	view := req.GetContext().Get("view").(template.IManager)
+	vm := req.GetContext().Get("view").(view.ITemplateManager)
 	sm := req.GetContext().Get("sm").(session.IManager)
 	datasource := req.GetContext().Get("db").(database.IManager)
 
@@ -102,14 +103,14 @@ func Form360(w http.ResponseWriter, r *http.Request) {
 	)
 	lh := query.Get("hash")
 	if len(lh) < 1 {
-		_ = view.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
+		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
 			"PageTitle": "Page Not Found",
 		})
 		return
 	}
-	link, linkDomain, usageCount, dist, _, recipient, respondent, group, _, er := queryAndValidate(req.GetContext().Value(), datasource, lh)
+	link, linkDomain, usageCount, dist, _, recipient, respondent, group, _, er := hapi.QueryAndValidate(req.GetContext().Value(), datasource, lh)
 	if er != nil {
-		_ = view.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
+		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
 			"PageTitle": "Page Not Found",
 		})
 		return
@@ -117,7 +118,7 @@ func Form360(w http.ResponseWriter, r *http.Request) {
 	//detect if the link has reached maximum visits
 	if link.UsageLimit > 0 {
 		if usageCount >= link.UsageLimit {
-			_ = view.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
+			_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
 				"PageTitle": "Page Not Found",
 			})
 			return
@@ -145,7 +146,7 @@ func Form360(w http.ResponseWriter, r *http.Request) {
 		improvements = make([]string, factors.ImprovementsFieldCount)
 	}
 
-	if err = view.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "360-review.html", map[string]interface{}{
+	if err = vm.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "360-review.html", map[string]interface{}{
 		"PageTitle":    factors.Factors.Title,
 		"RatingsLabel": strings.Join(factors.Ratings.Labels, ","),
 		"Seq": func(i int) int {
@@ -179,7 +180,7 @@ func Form360(w http.ResponseWriter, r *http.Request) {
 func Forms(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	view := req.GetContext().Get("view").(template.IManager)
+	vm := req.GetContext().Get("view").(view.ITemplateManager)
 	datasource := req.GetContext().Get("db").(database.IManager)
 
 	log.Log("forms_handler", "request received")
@@ -218,7 +219,7 @@ func Forms(w http.ResponseWriter, r *http.Request) {
 			"ip":      r.RemoteAddr,
 		},
 	)
-	if err = view.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "forms.html", map[string]interface{}{
+	if err = vm.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "forms.html", map[string]interface{}{
 		"PageTitle": "Anonymous Feedback Submission Page",
 		"Data":      questions,
 	}); err != nil {

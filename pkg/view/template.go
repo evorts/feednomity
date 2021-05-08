@@ -1,4 +1,4 @@
-package template
+package view
 
 import (
 	"encoding/json"
@@ -16,17 +16,25 @@ type manager struct {
 	templates map[string]*template.Template
 }
 
-type IManager interface {
-	LoadTemplates() (IManager, error)
+type ITemplateManager interface {
+	LoadTemplates() (ITemplateManager, error)
 	Render(w http.ResponseWriter, status int, template string, data map[string]interface{}) error
 	RenderFlex(w http.ResponseWriter, status int, template string, data interface{}) error
 	RenderRaw(w http.ResponseWriter, status int, content interface{}) error
-	RenderJson(w http.ResponseWriter, status int, value interface{}) error
-	AddData(key string, value interface{}) IManager
-	InjectData(key string, value interface{}) IManager
+	AddData(key string, value interface{}) ITemplateManager
+	InjectData(key string, value interface{}) ITemplateManager
 }
 
-func NewTemplates(dir string, defaultData map[string]interface{}) IManager {
+type IManager interface {
+	RenderJson(w http.ResponseWriter, status int, value interface{}) error
+	RenderRaw(w http.ResponseWriter, status int, content interface{}) error
+}
+
+func NewJsonManager() IManager {
+	return &manager{}
+}
+
+func NewTemplateManager(dir string, defaultData map[string]interface{}) ITemplateManager {
 	return &manager{
 		dir:       dir,
 		data:      defaultData,
@@ -34,7 +42,7 @@ func NewTemplates(dir string, defaultData map[string]interface{}) IManager {
 	}
 }
 
-func (t *manager) LoadTemplates() (IManager, error) {
+func (t *manager) LoadTemplates() (ITemplateManager, error) {
 	layouts, err := filepath.Glob(fmt.Sprintf("%s/layouts/*.html", t.dir))
 	if err != nil {
 		return nil, errors.Unwrap(fmt.Errorf("error %w when parsing views template at: %s/layouts/*.html", err, t.dir))
@@ -120,14 +128,14 @@ func (t *manager) getTemplate(name string) (*template.Template, error) {
 	return nil, fmt.Errorf("template %s not found", name)
 }
 
-func (t *manager) AddData(key string, value interface{}) IManager {
+func (t *manager) AddData(key string, value interface{}) ITemplateManager {
 	if _, ok := t.data[key]; !ok {
 		t.data[key] = value
 	}
 	return t
 }
 
-func (t *manager) InjectData(key string, value interface{}) IManager {
+func (t *manager) InjectData(key string, value interface{}) ITemplateManager {
 	t.data[key] = value
 	return t
 }

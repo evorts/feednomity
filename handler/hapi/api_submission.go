@@ -1,4 +1,4 @@
-package handler
+package hapi
 
 import (
 	"fmt"
@@ -8,16 +8,16 @@ import (
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/session"
-	"github.com/evorts/feednomity/pkg/template"
 	"github.com/evorts/feednomity/pkg/validate"
+	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 	"strings"
 )
 
 func ApiFeedbackSubmission(w http.ResponseWriter, r *http.Request) {
-	req := reqio.NewRequest(w, r).Prepare()
+	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	view := req.GetContext().Get("view").(template.IManager)
+	vm := req.GetContext().Get("view").(view.IManager)
 	sm := req.GetContext().Get("sm").(session.IManager)
 	//hash := req.GetContext().Get("hash").(crypt.ICryptHash)
 	datasource := req.GetContext().Get("db").(database.IManager)
@@ -37,7 +37,7 @@ func ApiFeedbackSubmission(w http.ResponseWriter, r *http.Request) {
 	}
 	err := req.UnmarshallBody(&payload)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -63,7 +63,7 @@ func ApiFeedbackSubmission(w http.ResponseWriter, r *http.Request) {
 		errs["session"] = "Not a valid request session!"
 	}
 	if len(errs) > 0 {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -95,7 +95,7 @@ func ApiFeedbackSubmission(w http.ResponseWriter, r *http.Request) {
 	substanceDomain := feedbacks.NewSubstanceDomain(datasource)
 	questions, err = substanceDomain.FindQuestionsByGroupId(req.GetContext().Value(), 1)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -127,7 +127,7 @@ func ApiFeedbackSubmission(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if len(errs) > 0 {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -145,7 +145,7 @@ func ApiFeedbackSubmission(w http.ResponseWriter, r *http.Request) {
 	)
 	groups, err = substanceDomain.FindGroupsByIds(req.GetContext().Value(), 1)
 	if err != nil || len(groups) < 1 {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.Response{
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -184,7 +184,7 @@ func ApiFeedbackSubmission(w http.ResponseWriter, r *http.Request) {
 	submissionDomain := feedbacks.NewSubmissionDomain(datasource)
 	err = submissionDomain.SaveSubmission(req.GetContext().Value(), submittedFeedback...)
 	if err != nil {
-		_ = view.RenderJson(w, http.StatusInternalServerError, api.Response{
+		_ = vm.RenderJson(w, http.StatusInternalServerError, api.Response{
 			Status:  http.StatusInternalServerError,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
@@ -196,7 +196,7 @@ func ApiFeedbackSubmission(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	_ = view.RenderJson(w, http.StatusOK, api.Response{
+	_ = vm.RenderJson(w, http.StatusOK, api.Response{
 		Status:  http.StatusOK,
 		Content: make(map[string]interface{}, 0),
 	})

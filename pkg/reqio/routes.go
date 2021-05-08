@@ -5,7 +5,6 @@ import "net/http"
 type Route struct {
 	Pattern   string
 	Handler   http.Handler
-	AdminOnly bool
 }
 
 type manager struct {
@@ -14,8 +13,6 @@ type manager struct {
 
 type IRoutes interface {
 	GetRoutes() []Route
-	GetMemberOnlyRoutes() (routes []Route)
-	GetPublicRoutes() (routes []Route)
 	ExecRoutes(server *http.ServeMux)
 }
 
@@ -31,26 +28,4 @@ func (m *manager) ExecRoutes(server *http.ServeMux) {
 
 func (m *manager) GetRoutes() []Route {
 	return m.routes
-}
-
-func (m *manager) GetMemberOnlyRoutes() (routes []Route) {
-	routes = make([]Route, 0)
-	for _, route := range m.routes {
-		if !route.AdminOnly {
-			continue
-		}
-		routes = append(routes, route)
-	}
-	return
-}
-
-func (m *manager) GetPublicRoutes() (routes []Route) {
-	routes = make([]Route, 0)
-	for _, route := range m.routes {
-		if route.AdminOnly {
-			continue
-		}
-		routes = append(routes, route)
-	}
-	return
 }

@@ -1,4 +1,4 @@
-package handler
+package hadm
 
 import (
 	"github.com/evorts/feednomity/pkg/reqio"

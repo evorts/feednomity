@@ -1,18 +1,18 @@
-package handler
+package hadm
 
 import (
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
-	"github.com/evorts/feednomity/pkg/template"
+	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 )
 
-func Users(w http.ResponseWriter, r *http.Request) {
+func Dashboard(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	view := req.GetContext().Get("view").(template.IManager)
+	vm := req.GetContext().Get("view").(view.ITemplateManager)
 
-	log.Log("users_handler", "request received")
+	log.Log("dashboard_handler", "request received")
 
 	if !req.IsLoggedIn() {
 		//http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
@@ -20,7 +20,7 @@ func Users(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// render dashboard page
-	if err := view.Render(w, http.StatusOK, "admin-users.html", map[string]interface{}{
+	if err := vm.Render(w, http.StatusOK, "admin-dashboard.html", map[string]interface{}{
 		"PageTitle": "Admin Dashboard Page",
 	}); err != nil {
 		log.Log("dashboard_handler", err.Error())

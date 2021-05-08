@@ -1,4 +1,4 @@
-package handler
+package hapi
 
 import "net/http"
 

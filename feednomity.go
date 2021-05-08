@@ -8,7 +8,8 @@ import (
 
 func main() {
 	commands := cli.NewCli()
-	commands.AddCommand("app", cmd.App)
+	commands.AddCommand("api", cmd.Api)
+	commands.AddCommand("web", cmd.Web)
 	commands.AddCommand("blaster", cmd.Blaster)
 	if err := commands.Listen(); err != nil {
 		log.Fatal(err)

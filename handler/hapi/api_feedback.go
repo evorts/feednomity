@@ -1,4 +1,4 @@
-package handler
+package hapi
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/session"
-	"github.com/evorts/feednomity/pkg/template"
 	"github.com/evorts/feednomity/pkg/utils"
 	"github.com/evorts/feednomity/pkg/validate"
+	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 	"reflect"
 	"strings"
@@ -64,7 +64,7 @@ func (d *FeedbackPayload) validate() map[string]string {
 		return map[string]string{"payload": "There's no valid payload submitted!"}
 	}
 	var fieldsValue = make(map[string]interface{}, 0)
-	d.filterFieldsAndTransform(nil, fieldsValue)
+	d.FilterFieldsAndTransform(nil, fieldsValue)
 	if len(fieldsValue) < 1 {
 		return map[string]string{"payload": "There's no valid payload submitted!"}
 	}
@@ -93,7 +93,7 @@ func (d *FeedbackPayload) validate() map[string]string {
 	return errs
 }
 
-func (d *FeedbackPayload) filterFieldsAndTransform(value interface{}, rs map[string]interface{}) {
+func (d *FeedbackPayload) FilterFieldsAndTransform(value interface{}, rs map[string]interface{}) {
 	var v reflect.Value
 	if value == nil {
 		v = reflect.ValueOf(*d)
@@ -107,7 +107,7 @@ func (d *FeedbackPayload) filterFieldsAndTransform(value interface{}, rs map[str
 			continue
 		}
 		if typeOfs.Field(i).Type.String() != "handler.ItemValue" && v.Field(i).Kind() == reflect.Struct {
-			d.filterFieldsAndTransform(v.Field(i).Interface(), rs)
+			d.FilterFieldsAndTransform(v.Field(i).Interface(), rs)
 			continue
 		}
 		tagName := strings.Split(tag, "\"")[1]
@@ -197,7 +197,7 @@ func (d *FeedbackPayload) save(
 	return
 }
 
-func queryAndValidate(ctx context.Context, ds database.IManager, linkHash string) (
+func QueryAndValidate(ctx context.Context, ds database.IManager, linkHash string) (
 	link distribution.Link,
 	linkDomain distribution.ILinks,
 	linkUsageCount int,
@@ -285,11 +285,11 @@ func queryAndValidate(ctx context.Context, ds database.IManager, linkHash string
 }
 
 func Api360Submission(w http.ResponseWriter, r *http.Request) {
-	req := reqio.NewRequest(w, r).Prepare()
+	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	sm := req.GetContext().Get("sm").(session.IManager)
 	lh := sm.Get(r.Context(), "link_hash")
-	view := req.GetContext().Get("view").(template.IManager)
+	vm := req.GetContext().Get("view").(view.IManager)
 	datasource := req.GetContext().Get("db").(database.IManager)
 
 	var payload *FeedbackPayload
@@ -316,7 +316,7 @@ func Api360Submission(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(errs) > 0 {
-		_ = view.RenderJson(w, http.StatusBadRequest, api.NewResponse(
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.NewResponse(
 			http.StatusBadRequest, nil,
 			api.NewResponseError(
 				"SUB:ERR:VAL",
@@ -329,10 +329,10 @@ func Api360Submission(w http.ResponseWriter, r *http.Request) {
 
 	payload.Hash = lh.(string)
 
-	link, _, _, dist, distObject, recipient, respondent, group, user, er := queryAndValidate(req.GetContext().Value(), datasource, lh.(string))
+	link, _, _, dist, distObject, recipient, respondent, group, user, er := QueryAndValidate(req.GetContext().Value(), datasource, lh.(string))
 
 	if er != nil {
-		_ = view.RenderJson(
+		_ = vm.RenderJson(
 			w, http.StatusBadRequest, api.NewResponse(
 				http.StatusBadRequest, nil,
 				api.NewResponseError(
@@ -347,7 +347,7 @@ func Api360Submission(w http.ResponseWriter, r *http.Request) {
 	er = payload.save(req.GetContext().Value(), datasource, link, dist, distObject, recipient, respondent, group, user)
 
 	if er != nil {
-		_ = view.RenderJson(
+		_ = vm.RenderJson(
 			w, http.StatusBadRequest, api.NewResponse(
 				http.StatusBadRequest, nil,
 				api.NewResponseError(
@@ -358,7 +358,7 @@ func Api360Submission(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	_ = view.RenderJson(w, http.StatusOK, api.Response{
+	_ = vm.RenderJson(w, http.StatusOK, api.Response{
 		Status:  http.StatusOK,
 		Content: make(map[string]interface{}, 0),
 	})

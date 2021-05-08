@@ -1,4 +1,4 @@
-package handler
+package hapi
 
 import (
 	"github.com/evorts/feednomity/domain/users"
@@ -17,7 +17,7 @@ type User struct {
 	AccessRole  users.UserRole         `json:"access_role"`
 	JobRole     string                 `json:"job_role"`
 	Assignment  string                 `json:"assignment"`
-	GroupId     int                    `json:"group_id"`
+	GroupId     int64                    `json:"group_id"`
 	Disabled    bool                   `json:"disabled"`
 }
 

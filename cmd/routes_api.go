@@ -1,504 +1,510 @@
 package cmd
 
 import (
-	"github.com/evorts/feednomity/handler"
+	"github.com/evorts/feednomity/handler/hapi"
+	"github.com/evorts/feednomity/pkg/acl"
+	"github.com/evorts/feednomity/pkg/config"
+	"github.com/evorts/feednomity/pkg/crypt"
+	"github.com/evorts/feednomity/pkg/database"
+	"github.com/evorts/feednomity/pkg/jwe"
+	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/middleware"
 	"github.com/evorts/feednomity/pkg/reqio"
+	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 )
 
-func routesApi(lib *library) []reqio.Route {
-	apiRoutes := []reqio.Route{
+func routingApi(
+	o *http.ServeMux,
+	cfg config.IManager,
+	view view.IManager,
+	db database.IManager,
+	accessControl acl.IManager,
+	jwx jwe.IManager,
+	hash crypt.ICryptHash,
+	aes crypt.ICryptAES,
+	log logger.IManager,
+) {
+	routes := []reqio.Route{
 		{
-			Pattern: "/api/reload",
-			Handler: middleware.WithProtection(middleware.ProtectionLib{
-				Acl:  lib.acl,
-				Sm:   lib.session,
-				View: lib.view,
-			}, middleware.ProtectionArgs{
-				Path:           "/api/reload",
-				Method:         http.MethodPost,
-				AllowedMethods: lib.config.GetConfig().App.Cors.AllowedMethods,
-				AllowedOrigins: lib.config.GetConfig().App.Cors.AllowedOrigins,
-				RenderType:     "json",
-			}, http.HandlerFunc(handler.ApiReload)),
-			AdminOnly: true,
+			Pattern: "/ping",
+			Handler: middleware.WithMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.Ping),
+					map[string]interface{}{
+						"view": view,
+					},
+				),
+			),
 		},
 		{
-			Pattern: "/api/login",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/reload",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiReload),
+					map[string]interface{}{
+						"view": view,
+						"logger": log,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/login",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodPost,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiLogin),
+						http.HandlerFunc(hapi.ApiLogin),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
+							"jwx":    jwx,
 						},
 					),
 				),
 			),
-			AdminOnly: false,
 		},
 		{
-			Pattern: "/api/feedbacks",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPost,
-					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiFeedbackSubmission),
-						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
-						},
-					),
+			Pattern: "/feedbacks",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiFeedbackSubmission),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
 				),
 			),
-			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/360/submission",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPost,
-					middleware.WithInjection(
-						http.HandlerFunc(handler.Api360Submission),
-						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"db":     lib.db,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-						},
-					),
+			Pattern: "/360/submission",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.Api360Submission),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+						"hash":   hash,
+					},
 				),
 			),
-			AdminOnly: false,
 		},
 	}
-	apiRoutes = append(apiRoutes, routesApiDistribution(lib)...)
-	apiRoutes = append(apiRoutes, routesApiUsers(lib)...)
-	apiRoutes = append(apiRoutes, routesApiLink(lib)...)
-	apiRoutes = append(apiRoutes, routesApiGroups(lib)...)
-	apiRoutes = append(apiRoutes, routesApiQuestions(lib)...)
-	return apiRoutes
+	routes = append(routes, routesApiDistribution(cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiUsers(cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiLink(cfg, view, db, accessControl, jwx, hash, aes, log)...)
+	routes = append(routes, routesApiGroups(cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiQuestions(cfg, view, db, accessControl, jwx, hash, log)...)
+
+	reqio.NewRoutes(routes).ExecRoutes(o)
 }
 
-func routesApiDistribution(lib *library) []reqio.Route {
+func routesApiDistribution(
+	cfg config.IManager,
+	view view.IManager,
+	db database.IManager,
+	accessControl acl.IManager,
+	jwx jwe.IManager,
+	hash crypt.ICryptHash,
+	log logger.IManager,
+) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/api/distribution/publish",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/distribution/publish",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodPost,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiLinksBlast),
+						http.HandlerFunc(hapi.ApiLinksBlast),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
-							"mm":     lib.mm,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 	}
 }
 
-func routesApiUsers(lib *library) []reqio.Route {
+func routesApiUsers(
+	cfg config.IManager,
+	view view.IManager,
+	db database.IManager,
+	accessControl acl.IManager,
+	jwx jwe.IManager,
+	hash crypt.ICryptHash,
+	log logger.IManager,
+) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/api/users/list",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/users/list",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiUsersList),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/users/create",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiUserCreate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/users/update",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPut,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiUserUpdate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/users/delete",
+			Handler: middleware.WithTokenProtection(
+				http.MethodDelete,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiUsersDelete),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
+				),
+			),
+		},
+	}
+}
+
+func routesApiLink(
+	cfg config.IManager,
+	view view.IManager,
+	db database.IManager,
+	accessControl acl.IManager,
+	jwx jwe.IManager,
+	hash crypt.ICryptHash,
+	aes crypt.ICryptAES,
+	log logger.IManager,
+) []reqio.Route {
+	return []reqio.Route{
+		{
+			Pattern: "/links/list",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodGet,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiUsersList),
+						http.HandlerFunc(hapi.ApiLinksList),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/users/create",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/links/create",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodPost,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiUserCreate),
+						http.HandlerFunc(hapi.ApiLinksCreate),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
+							"aes":    aes,
+							"cfg":    cfg,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/users/update",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/links/update",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodPut,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiUserUpdate),
+						http.HandlerFunc(hapi.ApiLinkUpdate),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
+							"aes":    aes,
+							"cfg":    cfg,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/users/delete",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/links/delete",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodDelete,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiUsersDelete),
+						http.HandlerFunc(hapi.ApiLinksDelete),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 	}
 }
 
-func routesApiLink(lib *library) []reqio.Route {
+func routesApiGroups(
+	cfg config.IManager,
+	view view.IManager,
+	db database.IManager,
+	accessControl acl.IManager,
+	jwx jwe.IManager,
+	hash crypt.ICryptHash,
+	log logger.IManager,
+) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/api/links/list",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/groups/list",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodGet,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiLinksList),
+						http.HandlerFunc(hapi.ApiGroupsList),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/links/create",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/groups/create",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodPost,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiLinksCreate),
+						http.HandlerFunc(hapi.ApiGroupsCreate),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
-							"aes":    lib.aes,
-							"cfg":    lib.config,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/links/update",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/groups/update",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodPut,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiLinkUpdate),
+						http.HandlerFunc(hapi.ApiGroupUpdate),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
-							"aes":    lib.aes,
-							"cfg":    lib.config,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/links/delete",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/groups/remove",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodDelete,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiLinksDelete),
+						http.HandlerFunc(hapi.ApiGroupsDelete),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 	}
 }
 
-func routesApiGroups(lib *library) []reqio.Route {
+func routesApiQuestions(
+	cfg config.IManager,
+	view view.IManager,
+	db database.IManager,
+	accessControl acl.IManager,
+	jwx jwe.IManager,
+	hash crypt.ICryptHash,
+	log logger.IManager,
+) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/api/groups/list",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/questions",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodGet,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiGroupsList),
+						http.HandlerFunc(hapi.ApiQuestions),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/groups/create",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/questions/create",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodPost,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiGroupsCreate),
+						http.HandlerFunc(hapi.ApiQuestionCreate),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/groups/update",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/questions/update",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodPut,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiGroupUpdate),
+						http.HandlerFunc(hapi.ApiQuestionUpdate),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
 		},
 		{
-			Pattern: "/api/groups/remove",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
+			Pattern: "/questions/remove",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
 				middleware.WithMethodFilter(
 					http.MethodDelete,
 					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiGroupsDelete),
+						http.HandlerFunc(hapi.ApiQuestionRemove),
 						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
 						},
 					),
 				),
 			),
-			AdminOnly: true,
-		},
-	}
-}
-
-func routesApiQuestions(lib *library) []reqio.Route {
-	return []reqio.Route{
-		{
-			Pattern: "/api/questions",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodGet,
-					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiQuestions),
-						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
-						},
-					),
-				),
-			),
-			AdminOnly: true,
-		},
-		{
-			Pattern: "/api/questions/create",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPost,
-					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiQuestionCreate),
-						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
-						},
-					),
-				),
-			),
-			AdminOnly: true,
-		},
-		{
-			Pattern: "/api/questions/update",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPut,
-					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiQuestionUpdate),
-						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
-						},
-					),
-				),
-			),
-			AdminOnly: true,
-		},
-		{
-			Pattern: "/api/questions/remove",
-			Handler: middleware.WithCors(
-				lib.view,
-				lib.config.GetConfig().App.Cors.AllowedMethods,
-				lib.config.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodDelete,
-					middleware.WithInjection(
-						http.HandlerFunc(handler.ApiQuestionRemove),
-						map[string]interface{}{
-							"logger": lib.logger,
-							"view":   lib.view,
-							"sm":     lib.session,
-							"hash":   lib.hash,
-							"db":     lib.db,
-						},
-					),
-				),
-			),
-			AdminOnly: true,
 		},
 	}
 }

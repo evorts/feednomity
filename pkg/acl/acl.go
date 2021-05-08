@@ -52,6 +52,7 @@ func NewACLManager(u users.IUsers, ua users.IUserAccess) IManager {
 func (m *manager) IsAllowed(userId int64, method, path string) (allowed bool, scope AccessScope) {
 	fmt.Println(userId, method, path)
 	allowed = true
+	scope = AccessScopeGlobal
 	return
 }
 
@@ -77,9 +78,9 @@ func (m *manager) Populate() error {
 }
 
 func (m *manager) recursiveFindUsers(ctx context.Context, page, limit int) ([]*users.User, error) {
-	u, ut, uerr := m.u.FindAll(ctx, page, limit)
-	if uerr != nil {
-		return nil, uerr
+	u, ut, uErr := m.u.FindAll(ctx, page, limit)
+	if uErr != nil {
+		return nil, uErr
 	}
 	if (page-1)*limit > ut {
 		return u, nil
@@ -107,9 +108,9 @@ func (m *manager) recursiveFindRoleAccess(ctx context.Context, page, limit int) 
 }
 
 func (m *manager) recursiveFindUserAccess(ctx context.Context, page, limit int) ([]*users.UserAccess, error) {
-	ua, uat, uaerr := m.ua.FindAllUserAccess(ctx, page, limit)
-	if uaerr != nil {
-		return nil, uaerr
+	ua, uat, uaErr := m.ua.FindAllUserAccess(ctx, page, limit)
+	if uaErr != nil {
+		return nil, uaErr
 	}
 	if (page-1)*limit > uat {
 		return ua, nil

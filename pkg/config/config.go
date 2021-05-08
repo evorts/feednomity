@@ -24,13 +24,14 @@ func (m MapMailProvider) Get(key string) MailProvider {
 }
 
 type App struct {
-	Port              int           `yaml:"port"`
-	HashSalt          string        `yaml:"hash_salt"`
-	AESSalt           string        `yaml:"aes_salt"`
-	HashExpire        int           `yaml:"hash_expire"`
-	SessionExpiration int64 `yaml:"session_expire"`
-	CookieDomain      string        `yaml:"cookie_domain"`
-	CookieSecure      int           `yaml:"cookie_secure"`
+	Port              int    `yaml:"port"`
+	PortApi           int    `yaml:"port_api"`
+	HashSalt          string `yaml:"hash_salt"`
+	AESSalt           string `yaml:"aes_salt"`
+	HashExpire        int    `yaml:"hash_expire"`
+	SessionExpiration int64  `yaml:"session_expire"`
+	CookieDomain      string `yaml:"cookie_domain"`
+	CookieSecure      int    `yaml:"cookie_secure"`
 	Cors              struct {
 		AllowedMethods []string `yaml:"allowed_methods"`
 		AllowedOrigins []string `yaml:"allowed_origins"`
@@ -51,15 +52,19 @@ type App struct {
 
 type Config struct {
 	App App `yaml:"app"`
-	DB  struct {
+	Jwe struct {
+		Key    string `yaml:"key"`
+		Expire int64  `yaml:"expire"`
+	} `yaml:"jwe"`
+	DB struct {
 		Dsn                   string `yaml:"dsn"`
 		MaxConnectionLifetime int64  `yaml:"max_connection_lifetime"`
 		MaxIdleConnection     int64  `yaml:"max_idle_connection"`
 		MaxOpenConnection     int64  `yaml:"max_open_connection"`
 	} `yaml:"db"`
 	Mailer struct {
-		DailyLimit int `yaml:"daily_limit"`
-		Providers MapMailProvider `yaml:"providers"`
+		DailyLimit int             `yaml:"daily_limit"`
+		Providers  MapMailProvider `yaml:"providers"`
 	} `yaml:"mailer"`
 	CronJobs struct {
 		Blaster struct {

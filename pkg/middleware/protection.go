@@ -1,21 +1,22 @@
 package middleware
 
 import (
-	"fmt"
+	"context"
 	"github.com/evorts/feednomity/pkg/acl"
 	"github.com/evorts/feednomity/pkg/api"
+	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/session"
-	"github.com/evorts/feednomity/pkg/template"
-	"github.com/evorts/feednomity/pkg/utils"
+	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 	"strings"
 )
 
 type ProtectionLib struct {
+	Jwe  jwe.IManager
 	Acl  acl.IManager
 	Sm   session.IManager
-	View template.IManager
+	View view.IManager
 }
 
 type ProtectionArgs struct {
@@ -28,56 +29,110 @@ type ProtectionArgs struct {
 
 const forbiddenTemplate = "forbidden.html"
 
-//WithProtection when using session or jwe
-func WithProtection(lib ProtectionLib, args ProtectionArgs, next http.Handler) http.Handler {
+// WithSessionProtection when using session, e.g. web
+func WithSessionProtection(sm session.IManager, vm view.ITemplateManager, acc acl.IManager, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var (
-			status int
-			errRs  *api.ResponseError
-		)
+		var userSession reqio.UserData
 		ctx := r.Context()
-		if len(args.AllowedMethods) > 0 && len(args.AllowedOrigins) > 0 {
-			status, errRs = evalCors(r, args.AllowedMethods, args.AllowedOrigins)
-		}
-		if errRs != nil {
-			render(status, errRs, w, "", lib.View)
-			return
-		}
-		if lib.Sm != nil && lib.Acl != nil && len(args.Path) > 0 && len(args.Method) > 0 {
-			var user reqio.UserSession
-			err := lib.Sm.GetJson(ctx, "user", &user)
-			//check access permission
-			//render template when violate permission
-			allowed, accessScope := lib.Acl.IsAllowed(user.Id, args.Method, args.Path)
-			if err != nil || !allowed {
-				render(
-					http.StatusForbidden, api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil),
-					w, utils.IIf(args.RenderType == "json", "", forbiddenTemplate), lib.View,
-				)
-				return
-			}
-			lib.Sm.Put(ctx, "access_scope", accessScope)
-			lib.View.InjectData("user", user)
-		}
-		if len(args.Method) > 0 && strings.ToUpper(r.Method) != args.Method {
+		err := sm.GetJson(ctx, "user", &userSession)
+		if err != nil {
 			render(
-				http.StatusMethodNotAllowed,
-				api.NewResponseError("FIL:MTD:NA", "Not allowed!", nil, nil),
-				w, utils.IIf(args.RenderType == "json", "", forbiddenTemplate), lib.View,
+				http.StatusForbidden, api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil),
+				w, forbiddenTemplate, vm,
 			)
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			_, _ = fmt.Fprintln(w, "")
 			return
 		}
+		//check access permission
+		//render template when violate permission
+		allowed, accessScope := acc.IsAllowed(userSession.Id, r.Method, r.URL.Path)
+		if !allowed {
+			render(
+				http.StatusForbidden, api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil),
+				w, forbiddenTemplate, vm,
+			)
+			return
+		}
+		sm.Put(ctx, "access_scope", accessScope)
+		vm.InjectData("user", userSession)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func WithCors(view template.IManager, allowedMethods []string, allowedOrigins []string, next http.Handler) http.Handler {
+//WithTokenProtection when using jwe, e.g. API
+func WithTokenProtection(
+	method string, allowedMethods, allowedOrigins []string, acc acl.IManager, jw jwe.IManager, next http.Handler,
+) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.ToUpper(r.Method) != method {
+			renderJson(
+				http.StatusMethodNotAllowed,
+				api.NewResponseError("FIL:MTD:NA", "Not allowed!", nil, nil),
+				w, nil,
+			)
+			return
+		}
+		var (
+			status int
+			errRs  *api.ResponseError
+			err    error
+		)
+		ctx := r.Context()
+		if len(allowedMethods) > 0 && len(allowedOrigins) > 0 {
+			status, errRs = evalCors(r, allowedMethods, allowedOrigins)
+		}
+		if errRs != nil {
+			renderJson(status, errRs, w, nil)
+			return
+		}
+		var (
+			userData reqio.UserData
+			pri      jwe.PrivateClaims
+		)
+		jweToken := strings.Trim(r.Header.Get("X-Authorization"), " ")
+		_, pri, err = jw.Decode(jweToken)
+		if err != nil {
+			renderJson(
+				http.StatusForbidden, api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil),
+				w, nil,
+			)
+			return
+		}
+		userData = reqio.UserData{
+			Id:          pri.Id,
+			Username:    pri.Username,
+			DisplayName: pri.DisplayName,
+			Attributes:  pri.Attributes,
+			Email:       pri.Email,
+			Phone:       pri.Phone,
+			AccessRole:  pri.AccessRole,
+			JobRole:     pri.JobRole,
+			Assignment:  pri.Assignment,
+			GroupId:     pri.GroupId,
+			OrgId:       pri.OrgId,
+			OrgGroupIds: pri.OrgGroupIds,
+		}
+
+		//check access permission
+		//render template when violate permission
+		allowed, accessScope := acc.IsAllowed(userData.Id, method, r.URL.Path)
+		if !allowed {
+			renderJson(
+				http.StatusForbidden, api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil),
+				w, nil,
+			)
+			return
+		}
+		ctx = context.WithValue(ctx, "user", &userData)
+		ctx = context.WithValue(ctx, "access_scope", accessScope)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func WithCorsProtection(allowedMethods []string, allowedOrigins []string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		status, err := evalCors(r, allowedMethods, allowedOrigins)
 		if err != nil {
-			_ = view.RenderJson(w, status, err)
+			renderJson(status, err, w, nil)
 			return
 		}
 		next.ServeHTTP(w, r)

@@ -1,4 +1,4 @@
-package handler
+package hapi
 
 import (
 	"github.com/evorts/feednomity/pkg/acl"
@@ -24,7 +24,7 @@ func (l Limit) Value() int {
 	return int(l)
 }
 
-func eligible(u reqio.UserSession, as acl.AccessScope, uid, gid int64) bool {
+func eligible(u reqio.UserData, as acl.AccessScope, uid, gid int64) bool {
 	switch as {
 	case acl.AccessScopeSelf:
 		if uid != u.Id {

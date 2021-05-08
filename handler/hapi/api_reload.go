@@ -1,22 +1,22 @@
-package handler
+package hapi
 
 import (
 	"github.com/evorts/feednomity/pkg/config"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
-	"github.com/evorts/feednomity/pkg/template"
+	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 )
 
 func ApiReload(w http.ResponseWriter, r *http.Request) {
-	req := reqio.NewRequest(w, r).Prepare()
+	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	view := req.GetContext().Get("view").(template.IManager)
+	vm := req.GetContext().Get("view").(view.IManager)
 	cfg := req.GetContext().Get("config").(config.IManager)
 	log.Log("reload_handler", "request received")
 	if err := cfg.Reload(); err != nil {
-		_ = view.RenderRaw(w,  http.StatusBadGateway, "Error reloading")
+		_ = vm.RenderRaw(w,  http.StatusBadGateway, "Error reloading")
 		return
 	}
-	_ = view.RenderRaw(w, http.StatusOK, "Reloading done.")
+	_ = vm.RenderRaw(w, http.StatusOK, "Reloading done.")
 }

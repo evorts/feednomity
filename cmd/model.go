@@ -5,10 +5,11 @@ import (
 	"github.com/evorts/feednomity/pkg/config"
 	"github.com/evorts/feednomity/pkg/crypt"
 	"github.com/evorts/feednomity/pkg/database"
+	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/mailer"
 	"github.com/evorts/feednomity/pkg/session"
-	"github.com/evorts/feednomity/pkg/template"
+	"github.com/evorts/feednomity/pkg/view"
 )
 
 type library struct {
@@ -20,5 +21,6 @@ type library struct {
 	session session.IManager
 	aes     crypt.ICryptAES
 	hash    crypt.ICryptHash
-	view    template.IManager
+	view    view.ITemplateManager
+	jwe     jwe.IManager
 }

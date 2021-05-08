@@ -9,16 +9,14 @@ import (
 	"github.com/evorts/feednomity/pkg/config"
 	"github.com/evorts/feednomity/pkg/crypt"
 	"github.com/evorts/feednomity/pkg/database"
+	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/logger"
-	"github.com/evorts/feednomity/pkg/session"
-	"github.com/evorts/feednomity/pkg/template"
+	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
-	"strconv"
-	"time"
 )
 
-var App = &cli.Command{
-	Description: "Main application",
+var Api = &cli.Command{
+	Description: "API Application",
 	Run: func(cmd *cli.Command, args []string) {
 		logging := logger.NewLogger()
 		cfg, err := config.NewConfig("config.main.yml", "config.yml").Initiate()
@@ -48,32 +46,21 @@ var App = &cli.Command{
 			logging.Fatal(err2.Error())
 			return
 		}
-		sm := session.NewSession(
-			time.Duration(cfg.GetConfig().App.SessionExpiration),
-			time.Duration(30),
-			session.Cookie{
-				Name:     "feednomid",
-				Domain:   cfg.GetConfig().App.CookieDomain,
-				HttpOnly: false,
-				Path:     "/",
-				Persist:  false,
-				SameSite: http.SameSiteLaxMode,
-				Secure:   false,
-			},
-		)
-		tm, _ := template.NewTemplates(cfg.GetConfig().App.TemplateDirectory, map[string]interface{}{
-			"CopyrightYear": strconv.Itoa(time.Now().Year()),
-			"FavIcon":       cfg.GetConfig().App.Logo.FavIcon,
-			"LogoUrl":       cfg.GetConfig().App.Logo.Url,
-			"LogoAlt":       cfg.GetConfig().App.Logo.Alt,
-		}).LoadTemplates()
+		key := jwe.Key{Value: cfg.GetConfig().Jwe.Key}
+		pk, errJwe := key.GetPrivate()
+		if pk == nil || errJwe != nil {
+			logging.Log("fatal_error", "error initialize jwe")
+			logging.Fatal(errJwe)
+			return
+		}
+		jwx := jwe.NewJWE(pk, cfg.GetConfig().Jwe.Expire)
 		o := http.NewServeMux()
-		routes(o, &library{
-			ds, nil, accessControl, logging, cfg, sm,
-			aesCryptic, crypt.NewHashEncryption(cfg.GetConfig().App.HashSalt), tm,
-		})
-		logging.Log("started", "Dashboard app started.")
-		if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.GetConfig().App.Port), sm.LoadAndSave(o)); err != nil {
+		routingApi(
+			o, cfg, view.NewJsonManager(), ds, accessControl, jwx,
+			crypt.NewHashEncryption(cfg.GetConfig().App.HashSalt), aesCryptic, logging,
+		)
+		logging.Log("started", "API Started.")
+		if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.GetConfig().App.PortApi), o); err != nil {
 			logging.Fatal(err)
 		}
 	},
