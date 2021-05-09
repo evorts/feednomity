@@ -55,26 +55,6 @@ func routingApi(
 			),
 		},
 		{
-			Pattern: "/login",
-			Handler: middleware.WithCorsProtection(
-				cfg.GetConfig().App.Cors.AllowedMethods,
-				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPost,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiLogin),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-							"jwx":    jwx,
-						},
-					),
-				),
-			),
-		},
-		{
 			Pattern: "/feedbacks",
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
@@ -111,7 +91,7 @@ func routingApi(
 			),
 		},
 	}
-	routes = append(routes, routesApiDistribution(cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiDistribution(cfg, view, db, accessControl, jwx, log)...)
 	routes = append(routes, routesApiUsers(cfg, view, db, accessControl, jwx, hash, log)...)
 	routes = append(routes, routesApiLink(cfg, view, db, accessControl, jwx, hash, aes, log)...)
 	routes = append(routes, routesApiGroups(cfg, view, db, accessControl, jwx, hash, log)...)
@@ -127,26 +107,91 @@ func routesApiDistribution(
 	db database.IManager,
 	accessControl acl.IManager,
 	jwx jwe.IManager,
-	hash crypt.ICryptHash,
 	log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/distribution/publish",
-			Handler: middleware.WithCorsProtection(
+			Pattern: "/distributions/publish",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPost,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiLinksBlast),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-						},
-					),
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiDistributionBlast),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/distributions/list",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiDistributionsList),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/distributions/create",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiDistributionsCreate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/distributions/update",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPut,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiDistributionsUpdate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/distributions/delete",
+			Handler: middleware.WithTokenProtection(
+				http.MethodDelete,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiDistributionsDelete),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+					},
 				),
 			),
 		},
@@ -164,6 +209,26 @@ func routesApiUsers(
 ) []reqio.Route {
 	return []reqio.Route{
 		{
+			Pattern: "/users/login",
+			Handler: middleware.WithCorsProtection(
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				middleware.WithMethodFilter(
+					http.MethodPost,
+					middleware.WithInjection(
+						http.HandlerFunc(hapi.ApiLogin),
+						map[string]interface{}{
+							"logger": log,
+							"view":   view,
+							"hash":   hash,
+							"db":     db,
+							"jwx":    jwx,
+						},
+					),
+				),
+			),
+		},
+		{
 			Pattern: "/users/list",
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
@@ -175,7 +240,6 @@ func routesApiUsers(
 					map[string]interface{}{
 						"logger": log,
 						"view":   view,
-						"hash":   hash,
 						"db":     db,
 					},
 				),
@@ -193,7 +257,6 @@ func routesApiUsers(
 					map[string]interface{}{
 						"logger": log,
 						"view":   view,
-						"hash":   hash,
 						"db":     db,
 					},
 				),
@@ -211,7 +274,6 @@ func routesApiUsers(
 					map[string]interface{}{
 						"logger": log,
 						"view":   view,
-						"hash":   hash,
 						"db":     db,
 					},
 				),
@@ -229,7 +291,6 @@ func routesApiUsers(
 					map[string]interface{}{
 						"logger": log,
 						"view":   view,
-						"hash":   hash,
 						"db":     db,
 					},
 				),
@@ -251,81 +312,75 @@ func routesApiLink(
 	return []reqio.Route{
 		{
 			Pattern: "/links/list",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodGet,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiLinksList),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-						},
-					),
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiLinksList),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+					},
 				),
 			),
 		},
 		{
 			Pattern: "/links/create",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPost,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiLinksCreate),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-							"aes":    aes,
-							"cfg":    cfg,
-						},
-					),
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiLinksCreate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+						"aes":    aes,
+						"cfg":    cfg,
+					},
 				),
 			),
 		},
 		{
 			Pattern: "/links/update",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPut,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiLinkUpdate),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-							"aes":    aes,
-							"cfg":    cfg,
-						},
-					),
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiLinkUpdate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+						"aes":    aes,
+						"cfg":    cfg,
+					},
 				),
 			),
 		},
 		{
 			Pattern: "/links/delete",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodDelete,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiLinksDelete),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-						},
-					),
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiLinksDelete),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+					},
 				),
 			),
 		},

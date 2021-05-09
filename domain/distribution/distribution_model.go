@@ -13,6 +13,7 @@ type Distribution struct {
 	RangeStart        *time.Time `db:"range_start"`
 	RangeEnd          *time.Time `db:"range_end"`
 	CreatedBy         int64      `db:"created_by"`
+	ForGroupId        int64      `db:"for_group_id"`
 	CreatedAt         *time.Time `db:"created_at"`
 	UpdatedAt         *time.Time `db:"updated_at"`
 	DisabledAt        *time.Time `db:"disabled_at"`
@@ -20,14 +21,23 @@ type Distribution struct {
 	DistributedAt     *time.Time `db:"distributed_at"`
 }
 
+type PublishingStatus string
+
+const (
+	PublishingNone   PublishingStatus = "none"
+	PublishingSent   PublishingStatus = "sent"
+	PublishingFailed PublishingStatus = "failed"
+)
+
 type Object struct {
 	Id               int64                    `db:"id"`
 	DistributionId   int64                    `db:"distribution_id"`
 	RecipientId      int64                    `db:"recipient_id"`
 	RespondentId     int64                    `db:"respondent_ids"`
 	LinkId           int64                    `db:"link_id"`
-	PublishingStatus string                   `db:"publishing_status"`
+	PublishingStatus PublishingStatus         `db:"publishing_status"`
 	PublishingLog    []map[string]interface{} `db:"publishing_log"`
+	RetryCount       int                      `db:"retry_count"`
 	CreatedAt        *time.Time               `db:"created_at"`
 	UpdatedAt        *time.Time               `db:"updated_at"`
 	PublishedAt      *time.Time               `db:"published_at"`

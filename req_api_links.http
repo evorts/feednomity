@@ -1,9 +1,11 @@
-GET http://localhost:3700/api/links
+GET {{api_base_url}}/links/list
+X-Authorization: {{auth_token}}
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
 ###
-POST http://localhost:3700/api/links/create
+POST {{api_base_url}}/links/create
+X-Authorization: {{auth_token}}
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
@@ -18,7 +20,8 @@ Referer: https://anonymity.evorts.com
 }
 
 ###
-PUT http://localhost:3700/api/links/update
+PUT {{api_base_url}}/links/update
+X-Authorization: {{auth_token}}
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
@@ -32,9 +35,9 @@ Referer: https://anonymity.evorts.com
   }
 }
 
-
 ###
-DELETE http://localhost:3700/api/links/remove
+DELETE {{api_base_url}}/links/remove
+X-Authorization: {{auth_token}}
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
 

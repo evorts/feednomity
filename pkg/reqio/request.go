@@ -124,7 +124,7 @@ func (req *request) GetFormValue(field string) []string {
 
 func (req *request) PrepareRestful() IRequest {
 	req.userData = req.getUserDataFromContext()
-	req.csrfToken = req.hash.HashWithSalt(time.Now().String())
+	//req.csrfToken = req.hash.HashWithSalt(time.Now().String())
 	req.userAccessScope = req.getUserAccessScopeFromContext()
 	return req
 }

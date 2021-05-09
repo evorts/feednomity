@@ -64,15 +64,18 @@ func MergeStruct(dst interface{}, src interface{}, skipFieldsOnEmpty []string) e
 				if fv.IsNil() {
 					break
 				}
-			default:
-				v1.Field(i).Set(v2.Field(j))
 			}
+			v1.Field(i).Set(v2.Field(j))
 		}
 	}
 	return nil
 }
 
 func TransformStruct(dst interface{}, src interface{}) error {
+	return TransformStructWithExcludes(dst, src, make([]string, 0))
+}
+
+func TransformStructWithExcludes(dst interface{}, src interface{}, excludes []string) error {
 	var v1, v2 reflect.Value
 	var t1, t2 reflect.Type
 
@@ -92,8 +95,16 @@ func TransformStruct(dst interface{}, src interface{}) error {
 	if t1.Kind() != reflect.Struct || t2.Kind() != reflect.Struct {
 		return errors.New("invalid arguments data type")
 	}
+	dstLoop:
 	for i := 0; i < v1.NumField(); i++ {
 		fn1 := t1.Field(i).Name
+		if len(excludes) > 0 {
+			for _, fnn := range excludes {
+				if fn1 == fnn {
+					continue dstLoop
+				}
+			}
+		}
 		for j := 0; j < v2.NumField(); j++ {
 			if fn1 != t2.Field(j).Name {
 				continue
@@ -104,9 +115,8 @@ func TransformStruct(dst interface{}, src interface{}) error {
 				if fv.IsNil() {
 					break
 				}
-			default:
-				v1.Field(i).Set(v2.Field(j))
 			}
+			v1.Field(i).Set(v2.Field(j))
 		}
 	}
 	return nil

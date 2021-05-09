@@ -169,6 +169,8 @@ create table distributions
     range_end          timestamp, /** review end **/
     created_by         int
         constraint distributions_created_by_users_id references users (id),
+    updated_by         int
+        constraint distributions_updated_by_users_id references users (id),
     for_group_id       int
         constraint distributions_users_group_id references users_group (id),
     created_at         timestamp,

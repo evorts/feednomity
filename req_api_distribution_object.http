@@ -1,0 +1,50 @@
+POST {{api_base_url}}/distributions/list
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{}
+
+###
+POST {{api_base_url}}/distributions/create
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "items": [
+    {
+      "topic": "360 Review May 2021",
+      "distribution_limit": 5,
+      "range_start": "2021-01-01T00:00:00+07:00",
+      "range_end": "2021-06-30T23:59:59+07:00",
+      "for_group_id": 2
+    }
+  ]
+}
+
+###
+PUT {{api_base_url}}/distributions/update
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "item": {
+    "id": 2,
+    "topic": "360 Review May 2021 (Updated)",
+    "range_start": "2021-01-01T00:00:00+07:00",
+    "range_end": "2021-06-30T23:59:59+07:00",
+    "for_group_id": 2
+  }
+}
+
+###
+DELETE {{api_base_url}}/distributions/delete
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "ids": [3]
+}

@@ -38,10 +38,10 @@ func ApiOrganizationsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var (
-		orgs  []*users.Organization
+		items []*users.Organization
 		total int
 	)
-	orgs, total, err = users.NewUserDomain(datasource).FindAllOrganizations(req.GetContext().Value(), payload.Page, payload.Limit)
+	items, total, err = users.NewUserDomain(datasource).FindAllOrganizations(req.GetContext().Value(), payload.Page, payload.Limit)
 	if err != nil {
 		_ = vm.RenderJson(w, http.StatusExpectationFailed,
 			api.NewResponse(
@@ -57,8 +57,8 @@ func ApiOrganizationsList(w http.ResponseWriter, r *http.Request) {
 	_ = vm.RenderJson(w, http.StatusOK, api.Response{
 		Status: http.StatusOK,
 		Content: map[string]interface{}{
-			"total":  total,
-			"orgs": orgs,
+			"total": total,
+			"items": items,
 		},
 	})
 }

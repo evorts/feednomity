@@ -14,36 +14,6 @@ type manager struct {
 	dbm database.IManager
 }
 
-type IUsers interface {
-	FindByIds(ctx context.Context, ids ...int64) ([]*User, error)
-	FindByUsername(ctx context.Context, username string) (*User, error)
-	FindByNameAndGroupId(ctx context.Context, name string, groupId int) ([]*User, error)
-	FindByNameAndOrgId(ctx context.Context, name string, orgId int) ([]*User, error)
-	FindByName(ctx context.Context, name string) ([]*User, error)
-	FindAll(ctx context.Context, page, limit int) (u []*User, total int, err error)
-
-	Insert(ctx context.Context, u User) error
-	InsertMultiple(ctx context.Context, u []*User) error
-	Update(ctx context.Context, u User) error
-	DeleteByIds(ctx context.Context, id []int64) error
-	DisableByIds(ctx context.Context, id []int64) error
-
-	FindGroupByIds(ctx context.Context, ids ...int64) ([]*Group, error)
-	FindGroupByOrgId(ctx context.Context, id int64) ([]*Group, error)
-	FindAllGroups(ctx context.Context, page, limit int) (groups []*Group, total int, err error)
-	InsertGroup(ctx context.Context, g Group) error
-	InsertGroups(ctx context.Context, groups []*Group) error
-	UpdateGroup(ctx context.Context, g Group) error
-	DeleteGroupByIds(ctx context.Context, ids ...int64) error
-
-	FindOrganizationByIds(ctx context.Context, ids ...int64) ([]*Organization, error)
-	FindAllOrganizations(ctx context.Context, page, limit int) (organizations []*Organization, total int, err error)
-	InsertOrganization(ctx context.Context, o Organization) error
-	InsertOrganizations(ctx context.Context, o []*Organization) error
-	UpdateOrganization(ctx context.Context, o Organization) error
-	DeleteOrganizationByIds(ctx context.Context, ids ...int64) error
-}
-
 const (
 	tableUsers      = "users"
 	tableUsersGroup = "users_group"
@@ -303,12 +273,12 @@ func (m *manager) FindByName(ctx context.Context, name string) ([]*User, error) 
 	return u, nil
 }
 
-func (m *manager) FindAll(ctx context.Context, page, limit int) (u []*User, total int, err error) {
+func (m *manager) FindAll(ctx context.Context, page, limit int) (items []*User, total int, err error) {
 	var (
 		rows database.Rows
 	)
 	q := fmt.Sprintf(`SELECT count(id) FROM %s`, tableUsers)
-	u = make([]*User, 0)
+	items = make([]*User, 0)
 	err = m.dbm.QueryRowAndBind(ctx, q, nil, &total)
 	if err != nil || total < 1 {
 		err = errors.Wrap(err, "It looks like the data is not exist")
@@ -326,7 +296,7 @@ func (m *manager) FindAll(ctx context.Context, page, limit int) (u []*User, tota
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return u, total, nil
+			return items, total, nil
 		}
 		return
 	}
@@ -354,24 +324,24 @@ func (m *manager) FindAll(ctx context.Context, page, limit int) (u []*User, tota
 		if err != nil {
 			return
 		}
-		u = append(u, &ui)
+		items = append(items, &ui)
 	}
 	return
 }
 
-func (m *manager) Insert(ctx context.Context, u User) error {
-	if u.Attributes == nil {
-		u.Attributes = make(map[string]interface{}, 0)
+func (m *manager) Insert(ctx context.Context, item User) error {
+	if item.Attributes == nil {
+		item.Attributes = make(map[string]interface{}, 0)
 	}
 	var disabledAt, pwd, pin interface{} = nil, nil, nil
 	var pwdArg, pinArg = "?", "?"
-	if len(u.Password) > 0 {
+	if len(item.Password) > 0 {
 		pwdArg = "digest(?, 'sha1')"
-		pwd = u.Password
+		pwd = item.Password
 	}
-	if len(u.PIN) > 0 {
+	if len(item.PIN) > 0 {
 		pinArg = "digest(?, 'sha1')"
-		pin = u.PIN
+		pin = item.PIN
 	}
 	q := m.dbm.Rebind(ctx, fmt.Sprintf(`
 			INSERT INTO %s (
@@ -385,7 +355,7 @@ func (m *manager) Insert(ctx context.Context, u User) error {
 				?, NOW(), ?
 			)
 		`, tableUsers, pwdArg, pinArg))
-	if u.Disabled {
+	if item.Disabled {
 		disabledAt = "NOW()"
 	}
 	p, err := m.dbm.Prepare(ctx, "users_insert", q)
@@ -394,9 +364,9 @@ func (m *manager) Insert(ctx context.Context, u User) error {
 	}
 	rs, err := m.dbm.Exec(
 		ctx, p.SQL,
-		u.Username, u.DisplayName, u.Attributes, u.Email, u.Phone,
-		pwd, pin, u.AccessRole, u.JobRole, u.Assignment, u.GroupId,
-		u.Disabled, disabledAt,
+		item.Username, item.DisplayName, item.Attributes, item.Email, item.Phone,
+		pwd, pin, item.AccessRole, item.JobRole, item.Assignment, item.GroupId,
+		item.Disabled, disabledAt,
 	)
 	if err != nil {
 		return err
@@ -407,7 +377,7 @@ func (m *manager) Insert(ctx context.Context, u User) error {
 	return nil
 }
 
-func (m *manager) InsertMultiple(ctx context.Context, u []*User) error {
+func (m *manager) InsertMultiple(ctx context.Context, items []*User) error {
 	q := fmt.Sprintf(`
 		INSERT INTO %s (
 				username, display_name, attributes, email, phone,
@@ -416,7 +386,7 @@ func (m *manager) InsertMultiple(ctx context.Context, u []*User) error {
 			VALUES`, tableUsers)
 	placeholders := make([]string, 0)
 	values := make([]interface{}, 0)
-	for _, usv := range u {
+	for _, usv := range items {
 		var pwdArg, pinArg = "?", "?"
 		var disabledAt, pwd, pin interface{} = nil, nil, nil
 		if len(usv.Password) > 0 {
@@ -455,37 +425,37 @@ func (m *manager) InsertMultiple(ctx context.Context, u []*User) error {
 	return fmt.Errorf("no rows created")
 }
 
-func (m *manager) Update(ctx context.Context, u User) error {
-	if u.Id < 1 {
+func (m *manager) Update(ctx context.Context, item User) error {
+	if item.Id < 1 {
 		return fmt.Errorf("please provide the correct user identifier")
 	}
 	args := []interface{}{
-		u.Username,
-		u.DisplayName,
-		u.Attributes,
-		u.Email,
-		u.Phone,
-		u.AccessRole,
-		u.JobRole,
-		u.Assignment,
-		u.GroupId,
-		u.Disabled,
+		item.Username,
+		item.DisplayName,
+		item.Attributes,
+		item.Email,
+		item.Phone,
+		item.AccessRole,
+		item.JobRole,
+		item.Assignment,
+		item.GroupId,
+		item.Disabled,
 	}
 	var pwdArg, pinArg = "", ""
-	if len(u.Password) > 0 {
+	if len(item.Password) > 0 {
 		pwdArg = "password = digest(?, 'sha1'),"
-		args = append(args, u.Password)
+		args = append(args, item.Password)
 	}
-	if len(u.PIN) > 0 {
+	if len(item.PIN) > 0 {
 		pinArg = "pin = digest(?, 'sha1'),"
-		args = append(args, u.PIN)
+		args = append(args, item.PIN)
 	}
-	var disabledAt interface{} = u.DisabledAt
-	if u.Disabled {
+	var disabledAt interface{} = item.DisabledAt
+	if item.Disabled {
 		disabledAt = "NOW()"
 	}
 	args = append(args, disabledAt)
-	args = append(args, u.Id)
+	args = append(args, item.Id)
 	q := fmt.Sprintf(`
 		UPDATE %s 
 		SET 
@@ -674,7 +644,7 @@ func (m *manager) FindAllGroups(ctx context.Context, page, limit int) (items []*
 	return
 }
 
-func (m *manager) InsertGroup(ctx context.Context, g Group) error {
+func (m *manager) InsertGroup(ctx context.Context, item Group) error {
 	var disabledAt interface{} = nil
 	q := m.dbm.Rebind(ctx, fmt.Sprintf(`
 			INSERT INTO %s (
@@ -684,7 +654,7 @@ func (m *manager) InsertGroup(ctx context.Context, g Group) error {
 				?, ?, ?, NOW(), ?
 			)
 		`, tableUsersGroup))
-	if g.Disabled {
+	if item.Disabled {
 		disabledAt = "NOW()"
 	}
 	p, err := m.dbm.Prepare(ctx, "groups_insert", q)
@@ -693,7 +663,7 @@ func (m *manager) InsertGroup(ctx context.Context, g Group) error {
 	}
 	rs, err := m.dbm.Exec(
 		ctx, p.SQL,
-		g.Name, g.OrgId, g.Disabled, disabledAt,
+		item.Name, item.OrgId, item.Disabled, disabledAt,
 	)
 	if err != nil {
 		return err
@@ -704,14 +674,14 @@ func (m *manager) InsertGroup(ctx context.Context, g Group) error {
 	return nil
 }
 
-func (m *manager) InsertGroups(ctx context.Context, groups []*Group) error {
+func (m *manager) InsertGroups(ctx context.Context, items []*Group) error {
 	q := fmt.Sprintf(`
 		INSERT INTO %s (
 				name, org_id, disabled, created_at, disabled_at)
 			VALUES`, tableUsersGroup)
 	placeholders := make([]string, 0)
 	values := make([]interface{}, 0)
-	for _, item := range groups {
+	for _, item := range items {
 		var disabledAt interface{} = nil
 		placeholders = append(
 			placeholders,
@@ -735,21 +705,21 @@ func (m *manager) InsertGroups(ctx context.Context, groups []*Group) error {
 	return fmt.Errorf("no rows created")
 }
 
-func (m *manager) UpdateGroup(ctx context.Context, g Group) error {
-	if g.Id < 1 {
+func (m *manager) UpdateGroup(ctx context.Context, item Group) error {
+	if item.Id < 1 {
 		return fmt.Errorf("please provide the correct identifier")
 	}
 	args := []interface{}{
-		g.Name,
-		g.OrgId,
-		g.Disabled,
+		item.Name,
+		item.OrgId,
+		item.Disabled,
 	}
-	var disabledAt interface{} = g.DisabledAt
-	if g.Disabled {
+	var disabledAt interface{} = item.DisabledAt
+	if item.Disabled {
 		disabledAt = "NOW()"
 	}
 	args = append(args, disabledAt)
-	args = append(args, g.Id)
+	args = append(args, item.Id)
 	q := fmt.Sprintf(`
 		UPDATE %s 
 		SET 
@@ -880,7 +850,7 @@ func (m *manager) FindAllOrganizations(ctx context.Context, page, limit int) (it
 	return
 }
 
-func (m *manager) InsertOrganization(ctx context.Context, o Organization) error {
+func (m *manager) InsertOrganization(ctx context.Context, item Organization) error {
 	var disabledAt interface{} = nil
 	q := m.dbm.Rebind(ctx, fmt.Sprintf(`
 			INSERT INTO %s (
@@ -890,7 +860,7 @@ func (m *manager) InsertOrganization(ctx context.Context, o Organization) error 
 				?, ?, ?, ?, NOW(), ?
 			)
 		`, tableUsersOrg))
-	if o.Disabled {
+	if item.Disabled {
 		disabledAt = "NOW()"
 	}
 	p, err := m.dbm.Prepare(ctx, "organizations_insert", q)
@@ -899,7 +869,7 @@ func (m *manager) InsertOrganization(ctx context.Context, o Organization) error 
 	}
 	rs, err := m.dbm.Exec(
 		ctx, p.SQL,
-		o.Name, o.Address, o.Phone, o.Disabled, disabledAt,
+		item.Name, item.Address, item.Phone, item.Disabled, disabledAt,
 	)
 	if err != nil {
 		return err
@@ -910,14 +880,14 @@ func (m *manager) InsertOrganization(ctx context.Context, o Organization) error 
 	return nil
 }
 
-func (m *manager) InsertOrganizations(ctx context.Context, o []*Organization) error {
+func (m *manager) InsertOrganizations(ctx context.Context, items []*Organization) error {
 	q := fmt.Sprintf(`
 		INSERT INTO %s (
 				name, address, phone, disabled, created_at, disabled_at)
 			VALUES`, tableUsersOrg)
 	placeholders := make([]string, 0)
 	values := make([]interface{}, 0)
-	for _, item := range o {
+	for _, item := range items {
 		var disabledAt interface{} = nil
 		placeholders = append(
 			placeholders,
@@ -941,22 +911,22 @@ func (m *manager) InsertOrganizations(ctx context.Context, o []*Organization) er
 	return fmt.Errorf("no rows created")
 }
 
-func (m *manager) UpdateOrganization(ctx context.Context, o Organization) error {
-	if o.Id < 1 {
+func (m *manager) UpdateOrganization(ctx context.Context, item Organization) error {
+	if item.Id < 1 {
 		return fmt.Errorf("please provide the correct identifier")
 	}
 	args := []interface{}{
-		o.Name,
-		o.Address,
-		o.Phone,
-		o.Disabled,
+		item.Name,
+		item.Address,
+		item.Phone,
+		item.Disabled,
 	}
-	var disabledAt interface{} = o.DisabledAt
-	if o.Disabled {
+	var disabledAt interface{} = item.DisabledAt
+	if item.Disabled {
 		disabledAt = "NOW()"
 	}
 	args = append(args, disabledAt)
-	args = append(args, o.Id)
+	args = append(args, item.Id)
 	q := fmt.Sprintf(`
 		UPDATE %s 
 		SET 

@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-func ApiLinksBlast(w http.ResponseWriter, r *http.Request) {
+func ApiDistributionBlast(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	vm := req.GetContext().Get("view").(view.IManager)
@@ -76,4 +76,3 @@ func ApiLinksBlast(w http.ResponseWriter, r *http.Request) {
 		Error: nil,
 	})
 }
-
