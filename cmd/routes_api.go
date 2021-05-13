@@ -257,7 +257,7 @@ func routesApiDistribution(
 				cfg.GetConfig().App.Cors.AllowedOrigins,
 				accessControl, jwx,
 				middleware.WithInjection(
-					http.HandlerFunc(hapi.ApiDistributionsDelete),
+					http.HandlerFunc(hapi.ApiDistObjectsDelete),
 					map[string]interface{}{
 						"logger": log,
 						"view":   view,

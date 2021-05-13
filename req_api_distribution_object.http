@@ -44,5 +44,5 @@ Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
 {
-  "ids": [3]
+  "ids": [1]
 }
