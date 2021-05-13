@@ -270,6 +270,14 @@ func (m *manager) FindObjectByIds(ctx context.Context, ids ...int64) ([]*Object,
 	return o, nil
 }
 
+func (m *manager) FindObjectByLinkIds(ctx context.Context, ids ...int64) ([]*Object, error) {
+	panic("implement me")
+}
+
+func (m *manager) FindObjectByRespondentAndLinkId(ctx context.Context, respondentId, id int64) ([]*Object, error) {
+	panic("implement me")
+}
+
 func (m *manager) FindAllObjects(ctx context.Context, page, limit int) (items []*Object, total int, err error) {
 	var (
 		rows database.Rows
@@ -323,8 +331,8 @@ func (m *manager) FindAllObjects(ctx context.Context, page, limit int) (items []
 func (m *manager) InsertObjects(ctx context.Context, items []*Object) error {
 	q := fmt.Sprintf(`
 		INSERT INTO %s (
-			distribution_id, recipient_id, respondent_id, 
-			publishing_status, publishing_log,
+			distribution_id, recipient_id, respondent_id, link_id, 
+			publishing_status, publishing_log, created_by,
 			retry_count, created_at
 		) VALUES`, tableDistributionObjects)
 	placeholders := make([]string, 0)
@@ -332,11 +340,11 @@ func (m *manager) InsertObjects(ctx context.Context, items []*Object) error {
 	for _, item := range items {
 		placeholders = append(
 			placeholders,
-			`(?, ?, ?, ?, [], 0, NOW())`,
+			`(?, ?, ?, ?, 'none', '[]', ?, 0, NOW())`,
 		)
 		values = append(
 			values, item.DistributionId, item.RecipientId, item.RespondentId,
-			item.PublishingStatus,
+			item.LinkId, item.CreatedBy,
 		)
 	}
 	q = m.dbm.Rebind(ctx, fmt.Sprintf(`%s %s`, q, strings.Join(placeholders, ",")))
@@ -361,6 +369,7 @@ func (m *manager) UpdateObject(ctx context.Context, item Object) error {
 		item.PublishingStatus,
 		item.PublishingLog,
 		item.RetryCount,
+		item.UpdatedBy,
 	}
 	var publishedAt interface{} = item.PublishedAt
 	if item.PublishingStatus != PublishingNone {
@@ -377,6 +386,7 @@ func (m *manager) UpdateObject(ctx context.Context, item Object) error {
 			publishing_status = ?,
 			publishing_log = ?,
 			retry_count = ?,
+			updated_by = ?,
 			updated_at = NOW(),
 			published_at = ?
 		WHERE id = ?`, tableDistributionObjects)

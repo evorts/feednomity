@@ -31,13 +31,13 @@ type Feedback struct {
 
 type Detail struct {
 	Id              int64
-	FeedbackId      int
+	FeedbackId      int64
 	LinkId          int64
 	Hash            string
-	RespondentId    int
+	RespondentId    int64
 	RespondentName  string
 	RespondentEmail string
-	RecipientId     int
+	RecipientId     int64
 	RecipientName   string
 	RecipientEmail  string
 	Content         interface{}

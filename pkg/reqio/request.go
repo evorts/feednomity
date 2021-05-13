@@ -65,6 +65,7 @@ type IRequest interface {
 	GetCsrfToken() string
 	GetToken() string
 	RenewSessionToken() IRequest
+	GetSession() session.IManager
 	GetContext() IContext
 	GetUserData() *UserData
 	GetUserAccessScope() acl.AccessScope
@@ -111,6 +112,10 @@ func (req *request) GetToken() string {
 
 func (req *request) GetJwx() jwe.IManager {
 	return req.jwx
+}
+
+func (req *request) GetSession() session.IManager {
+	return req.session
 }
 
 func (req *request) RenewSessionToken() IRequest {

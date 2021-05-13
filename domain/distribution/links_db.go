@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/evorts/feednomity/pkg/database"
-	"github.com/evorts/feednomity/pkg/utils"
 	"github.com/jackc/pgtype"
 	"github.com/pkg/errors"
 	"regexp"
@@ -48,12 +47,11 @@ type linksManager struct {
 type ILinks interface {
 	FindLinks(ctx context.Context, page, limit int) ([]Link, int, error)
 	FindByHash(ctx context.Context, hash string) (Link, error)
-	FindByDistObjectIds(ctx context.Context, ids ...int64) ([]*Link, error)
-	InsertMultiple(ctx context.Context, links []Link) error
+	InsertMultiple(ctx context.Context, links []*Link) ([]int64, error)
 	UpdateLink(ctx context.Context, link Link) error
 	DisableLinksByIds(ctx context.Context, ids ...int64) error
 	LinkVisitsCountById(ctx context.Context, id int64) int
-	RecordLinkVisitor(ctx context.Context, link Link, agent string, ref map[string]interface{}) error
+	RecordLinkVisitor(ctx context.Context, link Link, by int64, byName, agent string, ref map[string]interface{}) error
 }
 
 const (
@@ -78,7 +76,7 @@ func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []
 	}
 	q = fmt.Sprintf(`
 		SELECT 
-			id, hash, pin, distribution_object_id, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
+			id, hash, pin, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
 		FROM %s ORDER BY id DESC LIMIT %d OFFSET %d`, tableLinks, limit, (page-1)*limit)
 	rows, err = l.dbm.Query(ctx, q, nil)
 	if err != nil {
@@ -93,7 +91,6 @@ func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []
 			&link.Id,
 			&link.Hash,
 			&link.PIN,
-			&link.DistributionObjectId,
 			&link.Disabled,
 			&link.UsageLimit,
 			&link.Published,
@@ -113,12 +110,12 @@ func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []
 func (l *linksManager) FindByHash(ctx context.Context, hash string) (link Link, err error) {
 	q := fmt.Sprintf(`
 		SELECT 
-			id, hash, pin, distribution_object_id, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
+			id, hash, pin, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
 		FROM %s
 		WHERE hash = $1`, tableLinks)
 	var pinDb, hashDb sql.NullString
 	err = l.dbm.QueryRowAndBind(ctx, q, []interface{}{hash},
-		&link.Id, &hashDb, &pinDb, &link.DistributionObjectId, &link.Disabled, &link.UsageLimit, &link.Published,
+		&link.Id, &hashDb, &pinDb, &link.Disabled, &link.UsageLimit, &link.Published,
 		&link.CreatedAt, &link.UpdatedAt, &link.DisabledAt, &link.PublishedAt,
 	)
 	link.PIN = pinDb.String
@@ -126,50 +123,18 @@ func (l *linksManager) FindByHash(ctx context.Context, hash string) (link Link, 
 	return
 }
 
-func (l *linksManager) FindByDistObjectIds(ctx context.Context, ids ...int64) ([]*Link, error) {
-	links := make([]*Link, 0)
+func (l *linksManager) InsertMultiple(ctx context.Context, links []*Link) ([]int64, error) {
 	q := fmt.Sprintf(`
-		SELECT 
-			id, hash, pin, distribution_object_id, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
-		FROM %s WHERE id IN (%s)`, tableLinks, strings.TrimRight(strings.Repeat("?", len(ids)), ","))
-	rows, err := l.dbm.Query(ctx, q, utils.ArrayInt64(ids).ToArrayInterface()...)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return links, nil
-		}
-		return nil, err
-	}
-	for rows.Next() {
-		var link Link
-		err = rows.Scan(
-			&link.Id,
-			&link.Hash,
-			&link.PIN,
-			&link.DistributionObjectId,
-			&link.Disabled,
-			&link.UsageLimit,
-			&link.Published,
-			&link.CreatedAt,
-			&link.UpdatedAt,
-			&link.DisabledAt,
-			&link.PublishedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		links = append(links, &link)
-	}
-	return links, nil
-}
-
-func (l *linksManager) InsertMultiple(ctx context.Context, links []Link) error {
-	q := fmt.Sprintf(`
-		INSERT INTO %s (hash, pin, distribution_object_id, disabled, usage_limit, published, created_at, disabled_at, published_at) 
+		INSERT INTO %s (
+			hash, pin, disabled, usage_limit, published, created_by,
+			created_at, disabled_at, published_at
+		) 
 		VALUES`, tableLinks)
 	placeholders := make([]string, 0)
 	values := make([]interface{}, 0)
+	ids := make([]int64, 0)
 	for _, link := range links {
-		placeholders = append(placeholders, "(?,?,?,?,?,?,?,?,?,?)")
+		placeholders = append(placeholders, "(?,?,?,?,?,?,?,?,?)")
 		var disabledAt, publishedAt interface{} = nil, nil
 		if link.Disabled {
 			disabledAt = "NOW()"
@@ -177,18 +142,29 @@ func (l *linksManager) InsertMultiple(ctx context.Context, links []Link) error {
 		if link.Published {
 			publishedAt = "NOW()"
 		}
-		values = append(values, link.Hash, link.PIN, link.DistributionObjectId, link.Disabled, link.UsageLimit, link.Published,
-			"NOW()", disabledAt, publishedAt)
+		values = append(
+			values,
+			link.Hash, link.PIN, link.Disabled, link.UsageLimit, link.Published,
+			link.CreatedBy, "NOW()", disabledAt, publishedAt,
+		)
 	}
-	q = l.dbm.Rebind(ctx, fmt.Sprintf(`%s %s`, q, strings.Join(placeholders, ",")))
-	cmd, err2 := l.dbm.Exec(ctx, q, values...)
+	q = l.dbm.Rebind(ctx, fmt.Sprintf(`%s %s RETURNING id`, q, strings.Join(placeholders, ",")))
+	rows, err2 := l.dbm.Query(ctx, q, values...)
 	if err2 != nil {
-		return errors.Wrap(err2, "failed saving links. some errors in constraint or data.")
+		return ids, errors.Wrap(err2, "failed saving links. some errors in constraint or data.")
 	}
-	if cmd.RowsAffected() > 0 {
-		return nil
+	//get returning ids here
+	for rows.Next() {
+		var id int64
+		if er := rows.Scan(&id); er != nil {
+			continue
+		}
+		ids = append(ids, id)
 	}
-	return fmt.Errorf("no rows created")
+	if len(ids) > 0 {
+		return ids, nil
+	}
+	return ids, fmt.Errorf("no rows created")
 }
 
 func (l *linksManager) UpdateLink(ctx context.Context, link Link) error {
@@ -249,11 +225,11 @@ func (l *linksManager) DisableLinksByIds(ctx context.Context, ids ...int64) (err
 	return fmt.Errorf("no rows updated")
 }
 
-func (l *linksManager) RecordLinkVisitor(ctx context.Context, link Link, agent string, ref map[string]interface{}) error {
+func (l *linksManager) RecordLinkVisitor(ctx context.Context, link Link, by int64, byName, agent string, ref map[string]interface{}) error {
 	q := fmt.Sprintf(`
-		INSERT INTO %s (link_id, at, agent, ref) 
+		INSERT INTO %s (link_id, by, by_name, at, agent, ref) 
 		VALUES($1, NOW(), $2, $3)`, tableLinkVisits)
-	cmd, err := l.dbm.Exec(ctx, q, link.Id, agent, ref)
+	cmd, err := l.dbm.Exec(ctx, q, link.Id, by, byName, agent, ref)
 	if err != nil {
 		return err
 	}

@@ -191,9 +191,15 @@ create table distribution_objects
         constraint distribution_recipients_recipient_id_recipients_id references users (id),
     respondent_id     int
         constraint distribution_respondents_respondent_id references users (id),
+    link_id           int
+        constraint distribution_objects_links_id references links (id),
     publishing_status distribution_object_status default 'none', /** when its published -- sent to respondent **/
     publishing_log    jsonb                      default '[]',
     retry_count       int,
+    created_by        int
+        constraint distribution_objects_created_by references users (id),
+    updated_by        int
+        constraint distribution_objects_updated_by references users (id),
     created_at        timestamp,
     updated_at        timestamp,
     published_at      timestamp
@@ -224,17 +230,21 @@ create table distribution_log
 
 create table links
 (
-    id                     serial primary key,
-    hash                   varchar(128),
-    pin                    varchar(10),
-    distribution_object_id int,
-    disabled               boolean default false,
-    published              bool    default false,
-    usage_limit            integer default 0,
-    created_at             timestamp,
-    updated_at             timestamp,
-    disabled_at            timestamp,
-    published_at           timestamp
+    id           serial primary key,
+    hash         varchar(128),
+    pin          varchar(10),
+    disabled     boolean default false,
+    published    bool    default false,
+    usage_limit  integer default 0,
+    attributes   jsonb   default '{}',
+    created_by   int
+        constraint links_created_by references users (id),
+    updated_by   int
+        constraint links_updated_by references users (id),
+    created_at   timestamp,
+    updated_at   timestamp,
+    disabled_at  timestamp,
+    published_at timestamp
 );
 
 create

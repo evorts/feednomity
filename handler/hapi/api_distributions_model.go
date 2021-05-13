@@ -40,15 +40,24 @@ func transformDistribution(createdBy int64, items []*Distribution, excludeFields
 }
 
 type DistributionObject struct {
-	Id               int64                    `json:"id"`
-	DistributionId   int64                    `json:"distribution_id"`
-	RecipientId      int64                    `json:"recipient_id"`
-	RespondentId     int64                    `json:"respondent_ids"`
-	LinkId           int64                    `json:"link_id"`
-	PublishingStatus string                   `json:"publishing_status"`
-	PublishingLog    []map[string]interface{} `json:"publishing_log"`
-	RetryCount       int                      `json:"retry_count"`
-	CreatedAt        *time.Time               `json:"created_at"`
-	UpdatedAt        *time.Time               `json:"updated_at"`
-	PublishedAt      *time.Time               `json:"published_at"`
+	Id               int64                         `json:"id"`
+	DistributionId   int64                         `json:"distribution_id"`
+	RecipientId      int64                         `json:"recipient_id"`
+	RespondentId     int64                         `json:"respondent_id"`
+	LinkId           int64                         `json:"link_id"`
+	PublishingStatus distribution.PublishingStatus `json:"publishing_status"`
+}
+
+func transformDistributionObjects(createdBy int64, items []*DistributionObject, linksId []int64, excludeFields []string) (rs []*distribution.Object) {
+	rs = make([]*distribution.Object, 0)
+	for fi, fv := range items {
+		item := &distribution.Object{
+			CreatedBy: createdBy,
+			LinkId:    linksId[fi],
+		}
+		if err := utils.TransformStructWithExcludes(item, fv, excludeFields); err == nil {
+			rs = append(rs, item)
+		}
+	}
+	return
 }

@@ -1,4 +1,4 @@
-GET {{api_base_url}}/links/list
+POST {{api_base_url}}/links/list
 X-Authorization: {{auth_token}}
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
@@ -10,9 +10,8 @@ Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
 {
-  "csrf": "",
   "disable_auto_generate_hash": false,
-  "links": [
+  "items": [
     {
       "group_id": 1
     }
@@ -26,9 +25,8 @@ Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
 {
-  "csrf": "",
   "regenerate_hash": true,
-  "link": {
+  "item": {
     "id": 2,
     "group_id": 1,
     "pin": "133535"
@@ -36,12 +34,11 @@ Referer: https://anonymity.evorts.com
 }
 
 ###
-DELETE {{api_base_url}}/links/remove
+DELETE {{api_base_url}}/links/delete
 X-Authorization: {{auth_token}}
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
 {
-  "csrf": "",
-  "link_id": 2
+  "ids": [2]
 }

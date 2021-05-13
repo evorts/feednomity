@@ -38,6 +38,8 @@ type Object struct {
 	PublishingStatus PublishingStatus         `db:"publishing_status"`
 	PublishingLog    []map[string]interface{} `db:"publishing_log"`
 	RetryCount       int                      `db:"retry_count"`
+	CreatedBy        int64                    `db:"created_by"`
+	UpdatedBy        int64                    `db:"updated_by"`
 	CreatedAt        *time.Time               `db:"created_at"`
 	UpdatedAt        *time.Time               `db:"updated_at"`
 	PublishedAt      *time.Time               `db:"published_at"`

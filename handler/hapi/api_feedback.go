@@ -10,9 +10,7 @@ import (
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
-	"github.com/evorts/feednomity/pkg/session"
 	"github.com/evorts/feednomity/pkg/utils"
-	"github.com/evorts/feednomity/pkg/validate"
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 	"reflect"
@@ -84,11 +82,11 @@ func (d *FeedbackPayload) validate() map[string]string {
 			errs[k] = "field should not be empty!"
 			continue
 		}
-		/*v4, ok3 := v.(string)
+		v4, ok3 := v.(string)
 		if ok3 && k == "hash" && len(v4) < 1 {
 			errs[k] = "field should not be empty!"
 			continue
-		}*/
+		}
 	}
 	return errs
 }
@@ -197,7 +195,7 @@ func (d *FeedbackPayload) save(
 	return
 }
 
-func QueryAndValidate(ctx context.Context, ds database.IManager, linkHash string) (
+func QueryAndValidate(ctx context.Context, ds database.IManager, userId int64, linkHash string) (
 	link distribution.Link,
 	linkDomain distribution.ILinks,
 	linkUsageCount int,
@@ -228,7 +226,7 @@ func QueryAndValidate(ctx context.Context, ds database.IManager, linkHash string
 		return
 	}
 	distDomain := distribution.NewDistributionDomain(ds)
-	do, err = distDomain.FindObjectByIds(ctx, link.DistributionObjectId)
+	do, err = distDomain.FindObjectByRespondentAndLinkId(ctx, userId, link.Id)
 	if err != nil || len(do) < 1 {
 		errs = &Error{
 			Code:    "SUB:ERR:DIO4",
@@ -287,33 +285,29 @@ func QueryAndValidate(ctx context.Context, ds database.IManager, linkHash string
 func Api360Submission(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
-	sm := req.GetContext().Get("sm").(session.IManager)
-	lh := sm.Get(r.Context(), "link_hash")
 	vm := req.GetContext().Get("view").(view.IManager)
 	datasource := req.GetContext().Get("db").(database.IManager)
 
+	log.Log("360_submit_handler", "request received")
+
 	var payload *FeedbackPayload
 
-	_ = req.UnmarshallBody(&payload)
-
-	log.Log("forms360_submit_handler", "request received")
-
-	errs := make(map[string]string, 0)
-
-	// csrf check
-	sessionCsrf := sm.Get(r.Context(), "token")
-
-	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
-		errs["session"] = "Not a valid request session!"
+	err := req.UnmarshallBody(&payload)
+	if err != nil || payload == nil {
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "FEED:ERR:BND",
+				Message: "Bad Request! Something wrong with the payload of your request.",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
 	}
 
-	if lh == nil || len(lh.(string)) < 1 {
-		errs["session"] = "Not a valid request!"
-	}
-
-	if len(errs) < 1 {
-		errs = payload.validate()
-	}
+	errs := payload.validate()
 
 	if len(errs) > 0 {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.NewResponse(
@@ -327,9 +321,7 @@ func Api360Submission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload.Hash = lh.(string)
-
-	link, _, _, dist, distObject, recipient, respondent, group, user, er := QueryAndValidate(req.GetContext().Value(), datasource, lh.(string))
+	link, _, _, dist, distObject, recipient, respondent, group, user, er := QueryAndValidate(req.GetContext().Value(), datasource, req.GetUserData().Id, payload.Hash)
 
 	if er != nil {
 		_ = vm.RenderJson(

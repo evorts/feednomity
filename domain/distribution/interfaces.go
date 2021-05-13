@@ -10,6 +10,8 @@ type IManager interface {
 	DeleteByIds(ctx context.Context, ids ...int64) error
 
 	FindObjectByIds(ctx context.Context, ids ...int64) ([]*Object, error)
+	FindObjectByLinkIds(ctx context.Context, ids ...int64) ([]*Object, error)
+	FindObjectByRespondentAndLinkId(ctx context.Context, respondentId, id int64) ([]*Object, error)
 	FindAllObjects(ctx context.Context, page, limit int) (items []*Object, total int, err error)
 	InsertObjects(ctx context.Context, items []*Object) error
 	UpdateObject(ctx context.Context, item Object) error

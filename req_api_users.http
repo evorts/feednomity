@@ -1,4 +1,4 @@
-POST {{api_base_url}}/login
+POST {{api_base_url}}/users/login
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
 X-Client-Id: web

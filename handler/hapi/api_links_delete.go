@@ -6,22 +6,19 @@ import (
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
-	"github.com/evorts/feednomity/pkg/session"
-	"github.com/evorts/feednomity/pkg/validate"
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 )
 
-func ApiDistributionBlast(w http.ResponseWriter, r *http.Request) {
+func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	vm := req.GetContext().Get("view").(view.IManager)
 
-	log.Log("links_blast_api_handler", "request received")
+	log.Log("links_delete_api_handler", "request received")
 
 	var payload struct {
-		Csrf    string `json:"csrf"`
-		DistributionObjectId int64  `json:"distribution_object_id"`
+		Ids []int64  `json:"link_id"`
 	}
 
 	err := req.UnmarshallBody(&payload)
@@ -40,39 +37,39 @@ func ApiDistributionBlast(w http.ResponseWriter, r *http.Request) {
 	}
 	// let's do validation
 	errs := make(map[string]string, 0)
-	// csrf check
-	sm := req.GetContext().Get("sm").(session.IManager)
-	sessionCsrf := sm.Get(r.Context(), "token")
-	if validate.IsEmpty(payload.Csrf) || sessionCsrf == nil || payload.Csrf != sessionCsrf.(string) {
-		errs["session"] = "Not a valid request session!"
+	if len(payload.Ids) < 1 {
+		errs["ids"] = "not a valid identifier"
 	}
-	if payload.DistributionObjectId < 1 {
-		errs["session"] = "Not a valid group id"
-	}
-
-	datasource := req.GetContext().Get("db").(database.IManager)
-	linkDomain := distribution.NewLinksDomain(datasource)
-
-	links, err := linkDomain.FindByDistObjectIds(req.GetContext().Value(), payload.DistributionObjectId)
-	if err != nil {
+	if len(errs) > 0 {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
-				Code:    "LNK:ERR:FND",
-				Message: "Bad Request! Some problems occurred when searching the data.",
-				Reasons: make(map[string]string, 0),
+				Code:    "LNK:ERR:VAL",
+				Message: "Bad Request! Your request resulting validation error.",
+				Reasons: errs,
 				Details: make([]interface{}, 0),
 			},
 		})
 		return
 	}
-	// @todo: doing email blast here
+	datasource := req.GetContext().Get("db").(database.IManager)
+	linkDomain := distribution.NewLinksDomain(datasource)
+	if err = linkDomain.DisableLinksByIds(req.GetContext().Value(), payload.Ids...); err != nil {
+		_ = vm.RenderJson(w, http.StatusExpectationFailed, api.Response{
+			Status:  http.StatusExpectationFailed,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LNK:ERR:UPD",
+				Message: "Fail to update your request. Please check your data and try again.",
+				Reasons: map[string]string{"save_error": err.Error()},
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
 	_ = vm.RenderJson(w, http.StatusOK, api.Response{
-		Status: http.StatusOK,
-		Content: map[string]interface{}{
-			"links": links,
-		},
-		Error: nil,
+		Status:  http.StatusOK,
+		Content: make(map[string]interface{}, 0),
 	})
 }
