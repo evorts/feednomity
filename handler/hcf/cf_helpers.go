@@ -15,7 +15,7 @@ func QueryAndValidate(
 	linkHash string,
 ) (
 	link distribution.Link,
-	linkDomain distribution.ILinks,
+	linkDomain distribution.ILinksManager,
 	linkUsageCount int,
 	dist *distribution.Distribution,
 	distObject *distribution.Object,

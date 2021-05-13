@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/evorts/feednomity/pkg/database"
+	"github.com/evorts/feednomity/pkg/utils"
 	"github.com/jackc/pgtype"
 	"github.com/pkg/errors"
 	"regexp"
@@ -44,12 +45,14 @@ type linksManager struct {
 	dbm database.IManager
 }
 
-type ILinks interface {
-	FindLinks(ctx context.Context, page, limit int) ([]Link, int, error)
+type ILinksManager interface {
+	FindAll(ctx context.Context, page, limit int) ([]Link, int, error)
 	FindByHash(ctx context.Context, hash string) (Link, error)
+	FindByIds(ctx context.Context, ids ...int64) ([]*Link, error)
 	InsertMultiple(ctx context.Context, links []*Link) ([]int64, error)
 	UpdateLink(ctx context.Context, link Link) error
 	DisableLinksByIds(ctx context.Context, ids ...int64) error
+	DeleteLinksByIds(ctx context.Context, ids ...int64) error
 	LinkVisitsCountById(ctx context.Context, id int64) int
 	RecordLinkVisitor(ctx context.Context, link Link, by int64, byName, agent string, ref map[string]interface{}) error
 }
@@ -59,11 +62,11 @@ const (
 	tableLinkVisits = "link_visits"
 )
 
-func NewLinksDomain(dbm database.IManager) ILinks {
+func NewLinksDomain(dbm database.IManager) ILinksManager {
 	return &linksManager{dbm: dbm}
 }
 
-func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []Link, total int, err error) {
+func (l *linksManager) FindAll(ctx context.Context, page, limit int) (links []Link, total int, err error) {
 	q := fmt.Sprintf(`SELECT count(id) FROM %s`, tableLinks)
 	var (
 		rows database.Rows
@@ -76,9 +79,11 @@ func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []
 	}
 	q = fmt.Sprintf(`
 		SELECT 
-			id, hash, pin, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
+			id, hash, pin, disabled, usage_limit, published, 
+			created_by, updated_by, attributes,
+			created_at, updated_at, disabled_at, published_at 
 		FROM %s ORDER BY id DESC LIMIT %d OFFSET %d`, tableLinks, limit, (page-1)*limit)
-	rows, err = l.dbm.Query(ctx, q, nil)
+	rows, err = l.dbm.Query(ctx, q)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return links, total, nil
@@ -86,25 +91,81 @@ func (l *linksManager) FindLinks(ctx context.Context, page, limit int) (links []
 		return
 	}
 	for rows.Next() {
-		var link Link
+		var (
+			link      Link
+			pin       sql.NullString
+			updatedBy sql.NullInt64
+		)
 		err = rows.Scan(
 			&link.Id,
 			&link.Hash,
-			&link.PIN,
+			&pin,
 			&link.Disabled,
 			&link.UsageLimit,
 			&link.Published,
+			&link.CreatedBy,
+			&updatedBy,
+			&link.Attributes,
 			&link.CreatedAt,
 			&link.UpdatedAt,
 			&link.DisabledAt,
 			&link.PublishedAt,
 		)
+		link.PIN = pin.String
+		link.UpdatedBy = updatedBy.Int64
 		if err != nil {
 			return
 		}
 		links = append(links, link)
 	}
 	return
+}
+
+func (l *linksManager) FindByIds(ctx context.Context, ids ...int64) ([]*Link, error) {
+	q := fmt.Sprintf(`
+		SELECT 
+			id, hash, pin, disabled, usage_limit, published, 
+			created_by, updated_by, attributes,
+			created_at, updated_at, disabled_at, published_at  
+		FROM %s
+		WHERE id IN (%s)`, tableLinks, strings.TrimRight(strings.Repeat("?", len(ids)), ","))
+	links := make([]*Link, 0)
+	rows, err := l.dbm.Query(ctx, l.dbm.Rebind(ctx, q), utils.ArrayInt64(ids).ToArrayInterface()...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return links, nil
+		}
+		return nil, err
+	}
+	for rows.Next() {
+		var (
+			link      Link
+			pin       sql.NullString
+			updatedBy sql.NullInt64
+		)
+		err = rows.Scan(
+			&link.Id,
+			&link.Hash,
+			&pin,
+			&link.Disabled,
+			&link.UsageLimit,
+			&link.Published,
+			&link.CreatedBy,
+			&updatedBy,
+			&link.Attributes,
+			&link.CreatedAt,
+			&link.UpdatedAt,
+			&link.DisabledAt,
+			&link.PublishedAt,
+		)
+		link.PIN = pin.String
+		link.UpdatedBy = updatedBy.Int64
+		if err != nil {
+			return links, err
+		}
+		links = append(links, &link)
+	}
+	return links, nil
 }
 
 func (l *linksManager) FindByHash(ctx context.Context, hash string) (link Link, err error) {
@@ -134,18 +195,25 @@ func (l *linksManager) InsertMultiple(ctx context.Context, links []*Link) ([]int
 	values := make([]interface{}, 0)
 	ids := make([]int64, 0)
 	for _, link := range links {
-		placeholders = append(placeholders, "(?,?,?,?,?,?,?,?,?)")
-		var disabledAt, publishedAt interface{} = nil, nil
+		var (
+			pinArg                                   = "?"
+			disabledAt, publishedAt, pin interface{} = nil, nil, nil
+		)
 		if link.Disabled {
 			disabledAt = "NOW()"
 		}
 		if link.Published {
 			publishedAt = "NOW()"
 		}
+		if len(link.PIN) > 0 {
+			pinArg = "digest(?, 'sha1')"
+			pin = link.PIN
+		}
+		placeholders = append(placeholders, fmt.Sprintf("(?, %s, ?, ?, ?, ?, NOW(), ?, ?)", pinArg))
 		values = append(
 			values,
-			link.Hash, link.PIN, link.Disabled, link.UsageLimit, link.Published,
-			link.CreatedBy, "NOW()", disabledAt, publishedAt,
+			link.Hash, pin, link.Disabled, link.UsageLimit, link.Published,
+			link.CreatedBy, disabledAt, publishedAt,
 		)
 	}
 	q = l.dbm.Rebind(ctx, fmt.Sprintf(`%s %s RETURNING id`, q, strings.Join(placeholders, ",")))
@@ -171,29 +239,36 @@ func (l *linksManager) UpdateLink(ctx context.Context, link Link) error {
 	if link.Id < 1 {
 		return fmt.Errorf("please provide the correct link identifier")
 	}
-	q := fmt.Sprintf(`
-		UPDATE %s 
-		SET 
-			hash = ?,
-			pin = ?,
-			disabled = ?,
-			usage_limit = ?,
-			published = ?,
-			updated_at = NOW(),
-			disabled_at = ?,
-			published_at = ?
-		WHERE id = ?`, tableLinks)
-	q = l.dbm.Rebind(ctx, q)
-	var disabledAt, publishedAt interface{} = nil, nil
+	var (
+		pinArg                                   = "?"
+		disabledAt, publishedAt, pin interface{} = nil, nil, nil
+	)
+	if len(link.PIN) > 0 {
+		pinArg = "digest(?, 'sha1')"
+		pin = link.PIN
+	}
 	if link.Disabled {
 		disabledAt = "NOW()"
 	}
 	if link.Published {
 		publishedAt = "NOW()"
 	}
+	q := fmt.Sprintf(`
+		UPDATE %s 
+		SET 
+			hash = ?,
+			pin = %s,
+			disabled = ?,
+			usage_limit = ?,
+			published = ?,
+			updated_at = NOW(),
+			disabled_at = ?,
+			published_at = ?
+		WHERE id = ?`, tableLinks, pinArg)
+	q = l.dbm.Rebind(ctx, q)
 	cmd, err2 := l.dbm.Exec(
 		ctx, q,
-		link.Hash, link.PIN, link.Disabled, link.UsageLimit, link.Published,
+		link.Hash, pin, link.Disabled, link.UsageLimit, link.Published,
 		disabledAt, publishedAt, link.Id)
 	if err2 != nil {
 		return err2
@@ -223,6 +298,24 @@ func (l *linksManager) DisableLinksByIds(ctx context.Context, ids ...int64) (err
 		return nil
 	}
 	return fmt.Errorf("no rows updated")
+}
+
+func (l *linksManager) DeleteLinksByIds(ctx context.Context, ids ...int64) error {
+	q := l.dbm.Rebind(ctx, fmt.Sprintf(`
+			DELETE FROM %s WHERE id IN (%s)
+		`, tableLinks, strings.TrimRight(strings.Repeat("?,", len(ids)), ",")))
+	rs, err := l.dbm.Exec(
+		ctx,
+		q,
+		utils.ArrayInt64(ids).ToArrayInterface()...,
+	)
+	if err != nil {
+		return err
+	}
+	if rs.RowsAffected() < 1 {
+		return errors.New("not a single record removed")
+	}
+	return nil
 }
 
 func (l *linksManager) RecordLinkVisitor(ctx context.Context, link Link, by int64, byName, agent string, ref map[string]interface{}) error {

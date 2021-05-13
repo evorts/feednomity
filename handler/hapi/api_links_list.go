@@ -27,7 +27,7 @@ func ApiLinksList(w http.ResponseWriter, r *http.Request) {
 	datasource := req.GetContext().Get("db").(database.IManager)
 	linkDomain := distribution.NewLinksDomain(datasource)
 
-	links, total, err := linkDomain.FindLinks(req.GetContext().Value(), payload.Page.Value(), payload.Limit.Value())
+	links, total, err := linkDomain.FindAll(req.GetContext().Value(), payload.Page.Value(), payload.Limit.Value())
 	if err != nil {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
@@ -45,7 +45,7 @@ func ApiLinksList(w http.ResponseWriter, r *http.Request) {
 		Status: http.StatusOK,
 		Content: map[string]interface{}{
 			"total": total,
-			"links": links,
+			"items": links,
 		},
 		Error: nil,
 	})

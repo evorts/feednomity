@@ -197,7 +197,7 @@ func (d *FeedbackPayload) save(
 
 func QueryAndValidate(ctx context.Context, ds database.IManager, userId int64, linkHash string) (
 	link distribution.Link,
-	linkDomain distribution.ILinks,
+	linkDomain distribution.ILinksManager,
 	linkUsageCount int,
 	dist *distribution.Distribution,
 	distObject *distribution.Object,

@@ -18,7 +18,7 @@ func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 	log.Log("links_delete_api_handler", "request received")
 
 	var payload struct {
-		Ids []int64  `json:"link_id"`
+		Ids []int64  `json:"ids"`
 	}
 
 	err := req.UnmarshallBody(&payload)
@@ -55,7 +55,7 @@ func ApiLinksDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	datasource := req.GetContext().Get("db").(database.IManager)
 	linkDomain := distribution.NewLinksDomain(datasource)
-	if err = linkDomain.DisableLinksByIds(req.GetContext().Value(), payload.Ids...); err != nil {
+	if err = linkDomain.DeleteLinksByIds(req.GetContext().Value(), payload.Ids...); err != nil {
 		_ = vm.RenderJson(w, http.StatusExpectationFailed, api.Response{
 			Status:  http.StatusExpectationFailed,
 			Content: make(map[string]interface{}, 0),

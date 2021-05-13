@@ -10,7 +10,6 @@ import (
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/view"
 	"github.com/pkg/errors"
-	"github.com/segmentio/ksuid"
 	"net/http"
 	"time"
 )
@@ -25,7 +24,6 @@ func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
 
 	var payload struct {
 		Items                   []*Link `json:"items"`
-		DisableAutoGenerateHash bool    `json:"disable_auto_generate_hash"`
 	}
 	err := req.UnmarshallBody(&payload)
 	if err != nil || len(payload.Items) < 1 {
@@ -45,17 +43,6 @@ func ApiLinksCreate(w http.ResponseWriter, r *http.Request) {
 	errs := make(map[string]string, 0)
 	expireAt := time.Now().Add(time.Duration(cfg.GetConfig().App.HashExpire) * time.Hour)
 	for li, link := range payload.Items {
-		hash := link.Hash
-		if !payload.DisableAutoGenerateHash {
-			hash = ksuid.New().String()
-			link.Hash = hash
-		}
-		if len(hash) > 0 {
-			payload.Items[li].Hash = hash
-		}
-		if !distribution.Hash(link.Hash).Valid() {
-			errs[fmt.Sprintf("%d_hash", li)] = "invalid hash"
-		}
 		if len(link.PIN) > 0 && !distribution.PIN(link.PIN).Valid() {
 			errs[fmt.Sprintf("%d_pin", li)] = "pin must be 6 character length"
 		}

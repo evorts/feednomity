@@ -13,7 +13,11 @@ Referer: https://anonymity.evorts.com
   "disable_auto_generate_hash": false,
   "items": [
     {
-      "group_id": 1
+      "pin": "122424",
+      "usage_limit": 5,
+      "attributes": {
+        "test": 1
+      }
     }
   ]
 }
@@ -28,7 +32,6 @@ Referer: https://anonymity.evorts.com
   "regenerate_hash": true,
   "item": {
     "id": 2,
-    "group_id": 1,
     "pin": "133535"
   }
 }
@@ -40,5 +43,5 @@ Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
 {
-  "ids": [2]
+  "ids": [1,2,3]
 }

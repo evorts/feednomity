@@ -420,7 +420,7 @@ func routesApiLink(
 		{
 			Pattern: "/links/update",
 			Handler: middleware.WithTokenProtection(
-				http.MethodPost,
+				http.MethodPut,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
 				accessControl, jwx,
@@ -440,7 +440,7 @@ func routesApiLink(
 		{
 			Pattern: "/links/delete",
 			Handler: middleware.WithTokenProtection(
-				http.MethodPost,
+				http.MethodDelete,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
 				accessControl, jwx,

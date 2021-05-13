@@ -232,7 +232,7 @@ create table links
 (
     id           serial primary key,
     hash         varchar(128),
-    pin          varchar(10),
+    pin          varchar(64),
     disabled     boolean default false,
     published    bool    default false,
     usage_limit  integer default 0,
