@@ -15,7 +15,9 @@ type sibManager struct {
 }
 
 type sibPayload struct {
+	Name        string   `json:"name"`
 	Sender      Target   `json:"sender"`
+	ReplyTo     Target   `json:"reply_to"`
 	To          []Target `json:"to"`
 	Subject     string   `json:"subject"`
 	HtmlContent string   `json:"htmlContent"`
@@ -36,24 +38,35 @@ func (s *sibManager) SetSender(sender, email string) IMailer {
 	return s
 }
 
-func (s *sibManager) SendHtml(ctx context.Context, to []Target, subject, html string, data map[string]string) error {
+func (s *sibManager) SetReplyTo(name, email string) IMailer {
+	s.replyToName = email
+	s.replyToEmail = email
+	return s
+}
+
+func (s *sibManager) SendHtml(ctx context.Context, to []Target, subject, html string, data map[string]string) ([]byte, error) {
 	if err := validate(to, subject, html); err != nil {
-		return err
+		return nil, err
 	}
 	payload := sibPayload{
+		Name: "Mail Sender",
 		Sender: Target{
 			Name:  s.senderName,
 			Email: s.senderEmail,
+		},
+		ReplyTo: Target{
+			Name:  s.replyToName,
+			Email: s.replyToEmail,
 		},
 		To:          to,
 		Subject:     subject,
 		HtmlContent: bindDataToTemplate(data, html),
 	}
 	if args, err := json.Marshal(payload); err == nil {
-		_, err := s.call(args)
-		return err
+		body, err2 := s.call(args)
+		return body, err2
 	}
-	return errors.New("serializing payload failed")
+	return nil, errors.New("serializing payload failed")
 }
 
 func (s *sibManager) call(payload []byte) ([]byte, error) {
@@ -69,5 +82,13 @@ func (s *sibManager) call(payload []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ioutil.ReadAll(res.Body)
+	var body []byte
+	body, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
+		err = errors.New("http status are not 2xx, thus something must have been wrong!")
+	}
+	return body, err
 }

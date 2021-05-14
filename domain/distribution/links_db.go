@@ -80,7 +80,7 @@ func (l *linksManager) FindAll(ctx context.Context, page, limit int) (links []Li
 	q = fmt.Sprintf(`
 		SELECT 
 			id, hash, pin, disabled, usage_limit, published, 
-			created_by, updated_by, attributes,
+			created_by, updated_by, attributes, expired_at,
 			created_at, updated_at, disabled_at, published_at 
 		FROM %s ORDER BY id DESC LIMIT %d OFFSET %d`, tableLinks, limit, (page-1)*limit)
 	rows, err = l.dbm.Query(ctx, q)
@@ -106,6 +106,7 @@ func (l *linksManager) FindAll(ctx context.Context, page, limit int) (links []Li
 			&link.CreatedBy,
 			&updatedBy,
 			&link.Attributes,
+			&link.ExpiredAt,
 			&link.CreatedAt,
 			&link.UpdatedAt,
 			&link.DisabledAt,
@@ -125,7 +126,7 @@ func (l *linksManager) FindByIds(ctx context.Context, ids ...int64) ([]*Link, er
 	q := fmt.Sprintf(`
 		SELECT 
 			id, hash, pin, disabled, usage_limit, published, 
-			created_by, updated_by, attributes,
+			created_by, updated_by, attributes, expired_at,
 			created_at, updated_at, disabled_at, published_at  
 		FROM %s
 		WHERE id IN (%s)`, tableLinks, strings.TrimRight(strings.Repeat("?,", len(ids)), ","))
@@ -153,6 +154,7 @@ func (l *linksManager) FindByIds(ctx context.Context, ids ...int64) ([]*Link, er
 			&link.CreatedBy,
 			&updatedBy,
 			&link.Attributes,
+			&link.ExpiredAt,
 			&link.CreatedAt,
 			&link.UpdatedAt,
 			&link.DisabledAt,
@@ -171,12 +173,12 @@ func (l *linksManager) FindByIds(ctx context.Context, ids ...int64) ([]*Link, er
 func (l *linksManager) FindByHash(ctx context.Context, hash string) (link Link, err error) {
 	q := fmt.Sprintf(`
 		SELECT 
-			id, hash, pin, disabled, usage_limit, published, created_at, updated_at, disabled_at, published_at 
+			id, hash, pin, disabled, usage_limit, published, expired_at, created_at, updated_at, disabled_at, published_at 
 		FROM %s
 		WHERE hash = $1`, tableLinks)
 	var pinDb, hashDb sql.NullString
 	err = l.dbm.QueryRowAndBind(ctx, q, []interface{}{hash},
-		&link.Id, &hashDb, &pinDb, &link.Disabled, &link.UsageLimit, &link.Published,
+		&link.Id, &hashDb, &pinDb, &link.Disabled, &link.UsageLimit, &link.Published, &link.ExpiredAt,
 		&link.CreatedAt, &link.UpdatedAt, &link.DisabledAt, &link.PublishedAt,
 	)
 	link.PIN = pinDb.String
@@ -188,7 +190,7 @@ func (l *linksManager) InsertMultiple(ctx context.Context, links []*Link) ([]int
 	q := fmt.Sprintf(`
 		INSERT INTO %s (
 			hash, pin, disabled, usage_limit, published, created_by,
-			created_at, disabled_at, published_at
+			expired_at, created_at, disabled_at, published_at
 		) 
 		VALUES`, tableLinks)
 	placeholders := make([]string, 0)
@@ -209,11 +211,11 @@ func (l *linksManager) InsertMultiple(ctx context.Context, links []*Link) ([]int
 			pinArg = "digest(?, 'sha1')"
 			pin = link.PIN
 		}
-		placeholders = append(placeholders, fmt.Sprintf("(?, %s, ?, ?, ?, ?, NOW(), ?, ?)", pinArg))
+		placeholders = append(placeholders, fmt.Sprintf("(?, %s, ?, ?, ?, ?, ?, NOW(), ?, ?)", pinArg))
 		values = append(
 			values,
 			link.Hash, pin, link.Disabled, link.UsageLimit, link.Published,
-			link.CreatedBy, disabledAt, publishedAt,
+			link.CreatedBy, link.ExpiredAt, disabledAt, publishedAt,
 		)
 	}
 	q = l.dbm.Rebind(ctx, fmt.Sprintf(`%s %s RETURNING id`, q, strings.Join(placeholders, ",")))
@@ -240,12 +242,16 @@ func (l *linksManager) UpdateLink(ctx context.Context, link Link) error {
 		return fmt.Errorf("please provide the correct link identifier")
 	}
 	var (
-		pinArg                                   = "?"
+		pinArg = "?"
+		expArg = ""
+
 		disabledAt, publishedAt, pin interface{} = nil, nil, nil
 	)
+	args := []interface{}{link.Hash}
 	if len(link.PIN) > 0 {
 		pinArg = "digest(?, 'sha1')"
 		pin = link.PIN
+		args = append(args, pin)
 	}
 	if link.Disabled {
 		disabledAt = "NOW()"
@@ -253,6 +259,12 @@ func (l *linksManager) UpdateLink(ctx context.Context, link Link) error {
 	if link.Published {
 		publishedAt = "NOW()"
 	}
+	args = append(args, link.Disabled, link.UsageLimit, link.Published, disabledAt, publishedAt)
+	if link.ExpiredAt != nil {
+		expArg = ", expired_at = ?"
+		args = append(args, link.ExpiredAt)
+	}
+	args = append(args, link.Id)
 	q := fmt.Sprintf(`
 		UPDATE %s 
 		SET 
@@ -264,12 +276,11 @@ func (l *linksManager) UpdateLink(ctx context.Context, link Link) error {
 			updated_at = NOW(),
 			disabled_at = ?,
 			published_at = ?
-		WHERE id = ?`, tableLinks, pinArg)
+			%s
+		WHERE id = ?`, tableLinks, pinArg, expArg)
 	q = l.dbm.Rebind(ctx, q)
 	cmd, err2 := l.dbm.Exec(
-		ctx, q,
-		link.Hash, pin, link.Disabled, link.UsageLimit, link.Published,
-		disabledAt, publishedAt, link.Id)
+		ctx, q, args...)
 	if err2 != nil {
 		return err2
 	}

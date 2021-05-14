@@ -633,7 +633,55 @@ func (m *manager) DeleteObjectByIds(ctx context.Context, ids ...int64) error {
 	return nil
 }
 
-func (m *manager) InsertQueue(ctx context.Context, items []*Queue) ([]int64, error) {
+func (m *manager) FindAllQueues(ctx context.Context, page, limit int) (items []*Queue, total int64, err error) {
+	var (
+		rows database.Rows
+	)
+	q := fmt.Sprintf(`SELECT count(id) FROM %s`, tableDistributionMailQueue)
+	items = make([]*Queue, 0)
+	err = m.dbm.QueryRowAndBind(ctx, q, nil, &total)
+	if err != nil || total < 1 {
+		err = errors.Wrap(err, "It looks like the data is not exist")
+		return
+	}
+	rows, err = m.dbm.Query(
+		ctx, fmt.Sprintf(
+			`SELECT 
+						id, distribution_object_id, recipient_id, respondent_id, 
+						from_email, to_email, subject, template, arguments
+					FROM %s LIMIT %d OFFSET %d`,
+			tableDistributionMailQueue, limit, (page-1)*limit),
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return items, total, nil
+		}
+		return
+	}
+	for rows.Next() {
+		var (
+			item Queue
+		)
+		err = rows.Scan(
+			&item.Id,
+			&item.DistributionObjectId,
+			&item.RecipientId,
+			&item.RespondentId,
+			&item.FromEmail,
+			&item.ToEmail,
+			&item.Subject,
+			&item.Template,
+			&item.Arguments,
+		)
+		if err != nil {
+			return
+		}
+		items = append(items, &item)
+	}
+	return
+}
+
+func (m *manager) InsertQueues(ctx context.Context, items []*Queue) ([]int64, error) {
 	q := fmt.Sprintf(`
 		INSERT INTO %s (
 			distribution_object_id, recipient_id, respondent_id, 
@@ -685,6 +733,34 @@ func (m *manager) DeleteQueueByIds(ctx context.Context, ids ...int64) error {
 	}
 	if rs.RowsAffected() < 1 {
 		return errors.New("not a single record removed")
+	}
+	return nil
+}
+
+func (m *manager) InsertLogs(ctx context.Context, items []*Log) error {
+	q := fmt.Sprintf(`
+		INSERT INTO %s (
+			action, values, values_prev, 
+			notes, at
+		) VALUES`, tableDistributionLog)
+	placeholders := make([]string, 0)
+	values := make([]interface{}, 0)
+	for _, item := range items {
+		placeholders = append(
+			placeholders,
+			`(?, ?, ?, ?, NOW())`,
+		)
+		values = append(
+			values, item.Action, item.Values, item.ValuesPrev, item.Notes,
+		)
+	}
+	q = m.dbm.Rebind(ctx, fmt.Sprintf(`%s %s`, q, strings.Join(placeholders, ",")))
+	cmd, err := m.dbm.Exec(ctx, q, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed saving logs. some errors in constraint or data.")
+	}
+	if cmd.RowsAffected() < 1 {
+		return fmt.Errorf("no rows created")
 	}
 	return nil
 }

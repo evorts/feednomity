@@ -1,6 +1,6 @@
 # API
 
-[x] `/api/login`
+[x] `/api/users/login`
 
 [x] `/api/users/list`
 
@@ -17,6 +17,8 @@
 [x] `/api/links/update`
 
 [x] `/api/links/delete`
+
+[x] `/api/distributions/publish`
 
 [x] `/api/distributions/list`
 
@@ -50,6 +52,22 @@
 
 [x] `/api/organizations/delete`
 
+# Cron Jobs
+
+[x] `mail blast queue`
+
+# Web (Member)
+
+[ ] `/mbr/link/:hash`
+
+[ ] `/mbr/review/list`
+
+[ ] `/mbr/review/360`
+
+[ ] `/mbr/login`
+
+[ ] `/mbr/logout`
+
 # Web (Admin)
 
 [x] `/adm/login`
@@ -73,11 +91,3 @@
 [ ] `/adm/links`
 
 [ ] `/adm/distributions`
-
-# Web (Member)
-
-[ ] `/mbr/feedback/360`
-
-[ ] `/mbr/login`
-
-[ ] `/mbr/logout`

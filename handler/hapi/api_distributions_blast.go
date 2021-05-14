@@ -9,8 +9,10 @@ import (
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
+	"github.com/evorts/feednomity/pkg/utils"
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
+	"strings"
 )
 
 func ApiDistributionBlast(w http.ResponseWriter, r *http.Request) {
@@ -160,7 +162,7 @@ objectLoop:
 		})
 		return
 	}
-	usersLoop:
+usersLoop:
 	for _, u := range usersData {
 		usersMap[u.Id] = u
 		if _, ok2 := groupsMap[u.Id]; !ok2 {
@@ -248,8 +250,10 @@ objectLoop:
 			continue
 		}
 		link := ""
+		linkExpiredAt := ""
 		if v, ok2 := linksMap[obj.LinkId]; ok2 {
 			link = fmt.Sprintf("%s/mbr/link/%s", cfg.GetConfig().App.BaseUrlWeb, v.Hash)
+			linkExpiredAt = v.ExpiredAt.Format("02 Jan 2006 15:04:05")
 		}
 		respondent := &users.User{}
 		if v, ok2 := usersMap[obj.RespondentId]; ok2 {
@@ -267,7 +271,8 @@ objectLoop:
 				organizationName = ov.Name
 			}
 		}
-		subject := fmt.Sprintf("Request Feedback: %s", d.Topic)
+		recipientName := utils.IIf(len(recipient.DisplayName) < 1, strings.Title(recipient.Username), recipient.DisplayName)
+		subject := fmt.Sprintf("Request Feedback: %s - For: %s", d.Topic, recipientName)
 		queueItems = append(queueItems, &distribution.Queue{
 			DistributionObjectId: obj.Id,
 			RecipientId:          obj.RecipientId,
@@ -276,18 +281,17 @@ objectLoop:
 			ToEmail:              respondent.Email,
 			Subject:              subject,
 			Template:             cfg.GetConfig().App.ReviewMailTemplate,
-			Arguments:            map[string]interface{}{
-				"subject":    subject,
-				"respondent": respondent,
-				"recipient": map[string]interface{}{
-					"name":         recipient.DisplayName,
-					"job_role":     recipient.JobRole,
-					"group":        groupName,
-					"organization": organizationName,
-				},
-				"from": d.RangeStart.Format("Jan 2006"),
-				"to":   d.RangeEnd.Format("Jan 2006"),
-				"link": link,
+			Arguments: map[string]interface{}{
+				"subject":              subject,
+				"respondent_name":      utils.IIf(len(respondent.DisplayName) < 1, strings.Title(respondent.Username), respondent.DisplayName),
+				"recipient_name":       recipientName,
+				"recipient_job_role":   recipient.JobRole,
+				"recipient_group_name": groupName,
+				"recipient_org_name":   organizationName,
+				"from":                 d.RangeStart.Format("Jan 2006"),
+				"to":                   d.RangeEnd.Format("Jan 2006"),
+				"link":                 link,
+				"expired_at":           linkExpiredAt,
 			},
 		})
 	}
@@ -304,7 +308,7 @@ objectLoop:
 		})
 		return
 	}
-	_, err = distDomain.InsertQueue(req.GetContext().Value(), queueItems)
+	_, err = distDomain.InsertQueues(req.GetContext().Value(), queueItems)
 	if err != nil {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,

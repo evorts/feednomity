@@ -22,8 +22,8 @@ func routesWebConsumers(
 	return []reqio.Route{
 		{
 			Pattern: "/mbr/login",
-			Handler: middleware.WithSessionProtection(
-				session, view, accessControl,
+			Handler: middleware.WithMethodFilter(
+				http.MethodGet,
 				middleware.WithInjection(
 					http.HandlerFunc(hcf.Login),
 					map[string]interface{}{
@@ -31,6 +31,22 @@ func routesWebConsumers(
 						"view":   view,
 						"sm":     session,
 						"hash":   hash,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/mbr/link/",
+			Handler: middleware.WithMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					http.HandlerFunc(hcf.Link),
+					map[string]interface{}{
+						"logger": logger,
+						"view":   view,
+						"sm":     session,
+						"hash":   hash,
+						"db":     ds,
 					},
 				),
 			),
@@ -51,7 +67,7 @@ func routesWebConsumers(
 			),
 		},
 		{
-			Pattern: "/mbr/review/form",
+			Pattern: "/mbr/review/form/",
 			Handler: middleware.WithSessionProtection(
 				session, view, accessControl,
 				middleware.WithInjection(

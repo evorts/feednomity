@@ -73,7 +73,7 @@ func ApiDistObjectsCreate(w http.ResponseWriter, r *http.Request) {
 	if !payload.DisableLinkCreation {
 		linkDomain := distribution.NewLinksDomain(datasource)
 		links := make([]*distribution.Link, 0)
-		expireAt := time.Now().Add(time.Duration(cfg.GetConfig().App.HashExpire) * time.Hour)
+		expireAt := time.Now().Add(time.Duration(cfg.GetConfig().App.HashExpire) * time.Second)
 		for i := 0; i < len(payload.Items); i++ {
 			links = append(links, &distribution.Link{
 				Hash: ksuid.New().String(),

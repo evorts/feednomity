@@ -8,6 +8,7 @@ import (
 	"github.com/evorts/feednomity/pkg/session"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -47,6 +48,7 @@ type request struct {
 	expireAt        *time.Time
 	userAccessScope acl.AccessScope
 	jwx             jwe.IManager
+	url             *url.URL
 }
 
 type IRequest interface {
@@ -72,6 +74,7 @@ type IRequest interface {
 	GetJweToken() string
 	GetJwx() jwe.IManager
 	GetClientId() string
+	GetPath() string
 
 	getUserAccessScopeFromContext() acl.AccessScope
 	getUserAccessScopeFromSession() acl.AccessScope
@@ -131,6 +134,7 @@ func (req *request) PrepareRestful() IRequest {
 	req.userData = req.getUserDataFromContext()
 	//req.csrfToken = req.hash.HashWithSalt(time.Now().String())
 	req.userAccessScope = req.getUserAccessScopeFromContext()
+	req.url = req.r.URL
 	return req
 }
 
@@ -141,7 +145,12 @@ func (req *request) Prepare() IRequest {
 	req.csrfToken = req.hash.HashWithSalt(time.Now().String())
 	req.userData = req.getUserDataFromSession()
 	req.userAccessScope = req.getUserAccessScopeFromSession()
+	req.url = req.r.URL
 	return req
+}
+
+func (req *request) GetPath() string {
+	return req.url.Path
 }
 
 func (req *request) IsLoggedIn() bool {

@@ -9,15 +9,21 @@ import (
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/mailer"
+	"github.com/evorts/feednomity/pkg/utils"
 	"github.com/robfig/cron/v3"
+	"io/ioutil"
 	"sync"
+	"time"
 )
 
 var (
-	l logger.IManager
-	cfg config.IManager
-	ds database.IManager
-	initLib sync.Once
+	l          logger.IManager
+	cfg        config.IManager
+	ds         database.IManager
+	initLib    sync.Once
+	m          mailer.IMailer
+	today      *time.Time
+	todayLimit int
 )
 var Blaster = &cli.Command{
 	Description: "Mail blaster command line, cron job style",
@@ -34,7 +40,7 @@ var Blaster = &cli.Command{
 	},
 }
 
-func instantiateLib()  {
+func instantiateLib() {
 	var err error
 	l = logger.NewLogger()
 	cfg, err = config.NewConfig("config.main.yml", "config.yml").Initiate()
@@ -50,15 +56,104 @@ func instantiateLib()  {
 		false,
 	)
 	ds.MustConnect(context.Background())
-	_ = mailer.NewSendInBlue(
+	m = mailer.NewSendInBlue(
 		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").ApiUrl,
 		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").ApiKey,
 	)
+	m.SetSender(
+		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").SenderName,
+		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").SenderEmail,
+	)
 }
 
-func runCronBlaster()  {
+func runCronBlaster() {
+	l.Log("cron_phase_start", "cron for email blasting started...")
 	initLib.Do(instantiateLib)
-	_ = distribution.NewDistributionDomain(ds)
-
-	fmt.Println("cron email blaster")
+	now := time.Now()
+	if today == nil || today.Day() != now.Day() {
+		today = &now
+		todayLimit = cfg.GetConfig().Mailer.DailyLimit
+	}
+	if todayLimit-cfg.GetConfig().CronJobs.Blaster.BatchRows < 1 {
+		l.Log(
+			"cron_mail_blast_limit",
+			fmt.Sprintf("reaching mail blast limit for today: %s", today.Format("2006-01-02")),
+		)
+		return
+	}
+	distDomain := distribution.NewDistributionDomain(ds)
+	items, _, err := distDomain.FindAllQueues(context.Background(), 1, cfg.GetConfig().CronJobs.Blaster.BatchRows)
+	if err != nil {
+		l.Log("cron_queue_find_all_error", err)
+		return
+	}
+	if len(items) < 1 {
+		l.Log("cron_queue_find_all_empty", "no items in queue found")
+		return
+	}
+	objectIds := make([]int64, 0)
+	templates := make(map[string]string, 0)
+	for _, item := range items {
+		time.Sleep(10 * time.Millisecond)
+		respondentName := ""
+		if v, ok := item.Arguments["respondent_name"]; ok {
+			respondentName = v.(string)
+		}
+		_, ok := templates[item.Template]
+		if !ok {
+			content, err2 := ioutil.ReadFile(fmt.Sprintf("%s/%s", cfg.GetConfig().App.MailTemplateDirectory, item.Template))
+			if err2 != nil {
+				continue
+			}
+			templates[item.Template] = string(content)
+		}
+		html := templates[item.Template]
+		m.SetReplyTo("No Reply", "no-reply@evorts.com")
+		var body []byte
+		body, err = m.SendHtml(
+			context.Background(),
+			[]mailer.Target{
+				{
+					Name:  respondentName,
+					Email: item.ToEmail,
+				},
+			},
+			item.Subject, html,
+			utils.MapStringInterface(item.Arguments).ToMapString(),
+		)
+		if err != nil {
+			l.Log(
+				"cron_mail_send_error",
+				fmt.Sprintf(
+					"sending mail to: %s, with subject: %s, error: %v",
+					item.ToEmail,
+					item.Subject, err,
+				),
+			)
+			continue
+		}
+		fmt.Println(string(body))
+		l.Log(
+			"cron_mail_send_success",
+			fmt.Sprintf(
+				"sending mail to: %s, with subject: %s, id: %d",
+				item.ToEmail,
+				item.Subject, item.Id,
+			),
+		)
+		objectIds = append(objectIds, item.Id)
+	}
+	todayLimit -= cfg.GetConfig().CronJobs.Blaster.BatchRows
+	if len(objectIds) > 0 {
+		err = distDomain.UpdateObjectRetryCountByIds(context.Background(), objectIds...)
+		if err != nil {
+			l.Log("cron_queue_update_retry_error", err)
+		}
+		l.Log("cron_queue_deletion_in_progress", objectIds)
+		err = distDomain.DeleteQueueByIds(context.Background(), objectIds...)
+		if err != nil {
+			l.Log("cron_queue_deletion_error", err)
+		}
+	}
+	l.Log("cron_mail_daily_limit_left", fmt.Sprintf("daily limit left: %d", todayLimit))
 }

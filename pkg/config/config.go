@@ -10,8 +10,10 @@ import (
 )
 
 type MailProvider struct {
-	ApiKey string `yaml:"api_key"`
-	ApiUrl string `yaml:"api_url"`
+	ApiKey      string `yaml:"api_key"`
+	ApiUrl      string `yaml:"api_url"`
+	SenderName  string `yaml:"sender_name"`
+	SenderEmail string `yaml:"sender_email"`
 }
 
 type MapMailProvider map[string]MailProvider
@@ -24,23 +26,24 @@ func (m MapMailProvider) Get(key string) MailProvider {
 }
 
 type App struct {
-	Port              int    `yaml:"port"`
-	PortApi           int    `yaml:"port_api"`
-	BaseUrlWeb        string `yaml:"base_url_web"`
-	ReviewMailTemplate        string `yaml:"review_mail_template"`
-	HashSalt          string `yaml:"hash_salt"`
-	AESSalt           string `yaml:"aes_salt"`
-	HashExpire        int    `yaml:"hash_expire"`
-	SessionExpiration int64  `yaml:"session_expire"`
-	CookieDomain      string `yaml:"cookie_domain"`
-	CookieSecure      int    `yaml:"cookie_secure"`
-	Cors              struct {
+	Port               int    `yaml:"port"`
+	PortApi            int    `yaml:"port_api"`
+	BaseUrlWeb         string `yaml:"base_url_web"`
+	ReviewMailTemplate string `yaml:"review_mail_template"`
+	HashSalt           string `yaml:"hash_salt"`
+	AESSalt            string `yaml:"aes_salt"`
+	HashExpire         int    `yaml:"hash_expire"`
+	SessionExpiration  int64  `yaml:"session_expire"`
+	CookieDomain       string `yaml:"cookie_domain"`
+	CookieSecure       int    `yaml:"cookie_secure"`
+	Cors               struct {
 		AllowedMethods []string `yaml:"allowed_methods"`
 		AllowedOrigins []string `yaml:"allowed_origins"`
 	} `yaml:"cors"`
-	TemplateDirectory string `yaml:"template_dir"`
-	AssetDirectory    string `yaml:"asset_dir"`
-	Logo              struct {
+	TemplateDirectory     string `yaml:"template_dir"`
+	MailTemplateDirectory string `yaml:"mail_template_dir"`
+	AssetDirectory        string `yaml:"asset_dir"`
+	Logo                  struct {
 		FavIcon string `yaml:"favicon"`
 		Url     string `yaml:"url"`
 		Alt     string `yaml:"alt"`
@@ -70,7 +73,8 @@ type Config struct {
 	} `yaml:"mailer"`
 	CronJobs struct {
 		Blaster struct {
-			Schedule string `yaml:"schedule"`
+			Schedule  string `yaml:"schedule"`
+			BatchRows int    `yaml:"batch_rows"`
 		} `yaml:"blaster"`
 	} `yaml:"cron_jobs"`
 }

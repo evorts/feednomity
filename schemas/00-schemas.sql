@@ -246,6 +246,7 @@ create table links
         constraint links_created_by references users (id),
     updated_by   int
         constraint links_updated_by references users (id),
+    expired_at   timestamp default now(),
     created_at   timestamp,
     updated_at   timestamp,
     disabled_at  timestamp,

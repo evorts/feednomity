@@ -21,6 +21,9 @@ type IManager interface {
 	UpdateObjectRetryCountByIds(ctx context.Context, ids ...int64) error
 	DeleteObjectByIds(ctx context.Context, ids ...int64) error
 
-	InsertQueue(ctx context.Context, items []*Queue) ([]int64, error)
+	FindAllQueues(ctx context.Context, page, limit int) (items []*Queue, total int64, err error)
+	InsertQueues(ctx context.Context, items []*Queue) ([]int64, error)
 	DeleteQueueByIds(ctx context.Context, ids ...int64) error
+
+	InsertLogs(ctx context.Context, items []*Log) error
 }
