@@ -27,14 +27,14 @@ Referer: https://anonymity.evorts.com
 {
   "users": [
     {
-      "username": "steven2",
-      "display_name": "Steven",
+      "username": "nando",
+      "display_name": "Nando",
       "attributes": {
-        "nik": "1243453"
+        "nik": "242532"
       },
-      "email": "steven2@playground.com",
+      "email": "nando@playground.com",
       "phone": "",
-      "password": "testing123",
+      "password": "nando111",
       "pin": "",
       "access_role": "admin-group",
       "job_role": "engineer",
@@ -53,19 +53,19 @@ Referer: https://anonymity.evorts.com
 
 {
   "user": {
-    "id": 3,
-    "username": "steven3",
-    "display_name": "Steven3",
+    "id": 9,
+    "username": "ronald",
+    "display_name": "Ronald",
     "attributes": {
-      "nik": "1243453"
+      "nik": "232424"
     },
-    "email": "steven@playground2.com",
+    "email": "ronald@playground.com",
     "phone": "",
-    "password": "testing123",
+    "password": "ronald111",
     "pin": "",
     "access_role": "admin-group",
-    "job_role": "engineer",
-    "assignment": "bin",
+    "job_role": "Backend Engineer",
+    "assignment": "Business Incubation",
     "group_id": 2,
     "disabled": false
   }

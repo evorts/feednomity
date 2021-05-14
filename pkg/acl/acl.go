@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/evorts/feednomity/domain/users"
+	"github.com/evorts/feednomity/pkg/utils"
+	"regexp"
+	"strings"
 )
 
 type AccessScope string
 
 const (
+	AccessScopeNone   AccessScope = "none"
 	AccessScopeSelf   AccessScope = "self"
 	AccessScopeGroup  AccessScope = "group"
 	AccessScopeOrg    AccessScope = "org"
@@ -21,6 +25,7 @@ type IManager interface {
 }
 
 type access struct {
+	Role             string      `json:"role"`
 	Path             string      `json:"path"`
 	Regex            bool        `json:"regex"`
 	MethodAllowed    []string    `json:"method_allowed"`
@@ -31,18 +36,20 @@ type access struct {
 }
 
 type accessControl struct {
-	UserId     int      `json:"user_id"`
-	Email      string   `json:"email"`
-	GroupId    int      `json:"group_id"`
-	Role       string   `json:"role"`
-	RoleAccess []access `json:"role_access"`
-	UserAccess []access `json:"user_access"`
+	UserId         int64    `json:"user_id"`
+	Username       string   `json:"username"`
+	Email          string   `json:"email"`
+	OrganizationId int64    `json:"organization_id"`
+	GroupId        int64    `json:"group_id"`
+	Role           string   `json:"role"`
+	RoleAccess     []access `json:"role_access"`
+	UserAccess     []access `json:"user_access"`
 }
 
 type manager struct {
 	u  users.IUsers
 	ua users.IUserAccess
-	ac map[string]accessControl // user_ud => accessControl
+	ac map[int64]*accessControl // user_id => accessControl
 }
 
 func NewACLManager(u users.IUsers, ua users.IUserAccess) IManager {
@@ -50,15 +57,70 @@ func NewACLManager(u users.IUsers, ua users.IUserAccess) IManager {
 }
 
 func (m *manager) IsAllowed(userId int64, method, path string) (allowed bool, scope AccessScope) {
-	fmt.Println(userId, method, path)
-	allowed = true
-	scope = AccessScopeGlobal
-	return
+	method = strings.ToLower(method)
+	allowed = false
+	scope = ""
+	defer fmt.Println(userId, method, path, allowed, scope)
+	v, ok := m.ac[userId]
+	if !ok {
+		return false, ""
+	}
+	// check role access
+	for _, ra := range v.RoleAccess {
+		if !ra.Regex {
+			if ra.Path != path {
+				continue
+			}
+		} else {
+			match, err := regexp.MatchString(ra.Path, path)
+			if err != nil || !match {
+				continue
+			}
+		}
+		if utils.InArray(utils.ArrayString(ra.MethodDisallowed).ToArrayInterface(), method) {
+			return false, ""
+		}
+		if !utils.InArray(utils.ArrayString(ra.MethodAllowed).ToArrayInterface(), method) {
+			return false, ""
+		}
+		scope = ra.AccessScope
+		allowed = true
+		break
+	}
+	//check user access
+	for _, ua := range v.UserAccess {
+		if !ua.Regex {
+			if ua.Path != path {
+				continue
+			}
+		} else {
+			match, err := regexp.MatchString(ua.Path, path)
+			if err != nil || !match {
+				continue
+			}
+		}
+		if utils.InArray(utils.ArrayString(ua.MethodDisallowed).ToArrayInterface(), method) {
+			return false, ""
+		}
+		if !utils.InArray(utils.ArrayString(ua.MethodAllowed).ToArrayInterface(), method) {
+			return false, ""
+		}
+		scope = ua.AccessScope
+	}
+	if len(scope) < 1 {
+		scope = AccessScopeNone
+	}
+	return true, scope
 }
 
 func (m *manager) Populate() error {
+	//read groups data
+	g, gErr := m.recursiveFindGroups(context.TODO(), 1, 10)
+	if gErr != nil {
+		return gErr
+	}
 	//read users data
-	u, uErr := m.recursiveFindUsers(context.TODO(), 1, 10)
+	u, uErr := m.recursiveFindUsers(context.TODO(), g, 1, 10)
 	if uErr != nil {
 		return uErr
 	}
@@ -73,19 +135,89 @@ func (m *manager) Populate() error {
 		return uaErr
 	}
 	//populate to access control
-	fmt.Println(u, ur, ua)
+	if m.ac == nil {
+		m.ac = make(map[int64]*accessControl, 0)
+	}
+	for _, uv := range u {
+		if uv.Disabled {
+			continue
+		}
+		m.ac[uv.Id] = &accessControl{
+			UserId:         uv.Id,
+			Username:       uv.Username,
+			Email:          uv.Email,
+			GroupId:        uv.GroupId,
+			OrganizationId: uv.OrganizationId,
+			Role:           uv.AccessRole.String(),
+			RoleAccess:     make([]access, 0),
+			UserAccess:     make([]access, 0),
+		}
+		for _, rav := range ur {
+			if uv.AccessRole != rav.Role || rav.Disabled {
+				continue
+			}
+			m.ac[uv.Id].RoleAccess = append(m.ac[uv.Id].RoleAccess, access{
+				Role:             rav.Role.String(),
+				Path:             rav.Path,
+				Regex:            rav.Regex,
+				MethodAllowed:    users.AccessMethodsToStringArray(rav.AccessAllowed),
+				MethodDisallowed: users.AccessMethodsToStringArray(rav.AccessDisallowed),
+				AccessScope:      AccessScope(rav.AccessScope),
+			})
+		}
+		for _, uav := range ua {
+			if uav.Disabled || uav.Id != uv.Id {
+				continue
+			}
+			m.ac[uv.Id].UserAccess = append(m.ac[uv.Id].UserAccess, access{
+				Role:             uv.AccessRole.String(),
+				Path:             uav.Path,
+				Regex:            uav.Regex,
+				MethodAllowed:    users.AccessMethodsToStringArray(uav.AccessAllowed),
+				MethodDisallowed: users.AccessMethodsToStringArray(uav.AccessDisallowed),
+				AccessScope:      AccessScopeSelf,
+			})
+		}
+	}
 	return nil
 }
 
-func (m *manager) recursiveFindUsers(ctx context.Context, page, limit int) ([]*users.User, error) {
+func (m *manager) recursiveFindGroups(ctx context.Context, page, limit int) (map[int64]*users.Group, error) {
+	rs := make(map[int64]*users.Group, 0)
+	g, gt, gErr := m.u.FindAllGroups(ctx, page, limit)
+	if gErr != nil {
+		return nil, gErr
+	}
+	for _, v := range g {
+		rs[v.Id] = v
+	}
+	if (page-1)*limit > gt {
+		return rs, nil
+	}
+	gg, err := m.recursiveFindGroups(ctx, page+1, limit)
+	if err != nil {
+		return rs, err
+	}
+	for k, v := range gg {
+		rs[k] = v
+	}
+	return rs, nil
+}
+
+func (m *manager) recursiveFindUsers(ctx context.Context, g map[int64]*users.Group, page, limit int) ([]*users.User, error) {
 	u, ut, uErr := m.u.FindAll(ctx, page, limit)
 	if uErr != nil {
 		return nil, uErr
 	}
+	for k, v := range u {
+		if vv, ok := g[v.GroupId]; ok {
+			u[k].OrganizationId = vv.OrgId
+		}
+	}
 	if (page-1)*limit > ut {
 		return u, nil
 	}
-	uu, err := m.recursiveFindUsers(ctx, page+1, limit)
+	uu, err := m.recursiveFindUsers(ctx, g, page+1, limit)
 	if err != nil {
 		return u, err
 	}

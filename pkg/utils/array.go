@@ -33,6 +33,15 @@ func (a ArrayString) Reduce() []string {
 	return rs
 }
 
+func (a ArrayString) ToArrayInterface() []interface{} {
+	rs := make([]interface{}, 0)
+	for _, v := range a {
+		rs = append(rs, v)
+	}
+	return rs
+}
+
+
 func InArray(arr []interface{}, v interface{}) bool  {
 	for _, av := range arr {
 		if av == v {

@@ -94,7 +94,10 @@ func ApiUserUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var u = ui[0]
-	err = utils.MergeStruct(u, payload.User, []string{"Username", "Email", "Phone", "Password", "PIN"})
+	err = utils.MergeStruct(u, payload.User, []string{
+		"Username", "DisplayName", "Attributes",
+		"Email", "Phone", "Password", "PIN",
+	})
 	if err != nil {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,

@@ -1,3 +1,14 @@
+POST {{api_base_url}}/distributions/blast
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "ids": [],
+  "object_ids": []
+}
+
+###
 POST {{api_base_url}}/distributions/list
 X-Authorization: {{auth_token}}
 Content-Type: application/json
@@ -31,10 +42,10 @@ Referer: https://anonymity.evorts.com
 
 {
   "item": {
-    "id": 2,
-    "topic": "360 Review May 2021 (Updated)",
+    "id": 1,
+    "topic": "360 Review (Dec 2020 - May 2021)",
     "range_start": "2021-01-01T00:00:00+07:00",
-    "range_end": "2021-06-30T23:59:59+07:00",
+    "range_end": "2021-05-31T23:59:59+07:00",
     "for_group_id": 2
   }
 }

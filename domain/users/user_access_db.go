@@ -65,7 +65,9 @@ func (m *accessManager) FindAllRoleAccess(ctx context.Context, page, limit int) 
 	rows, err = m.dbm.Query(
 		ctx, fmt.Sprintf(
 			`SELECT 
-						id, role, path, access_allowed, disabled
+						id, role, path, regex, access_allowed, access_disallowed, 
+						access_scope, disabled,
+						created_at, updated_at, disabled_at
 					FROM %s LIMIT %d OFFSET %d`,
 			tableRoleAccess, limit, (page-1)*limit),
 	)
@@ -77,23 +79,29 @@ func (m *accessManager) FindAllRoleAccess(ctx context.Context, page, limit int) 
 	}
 	for rows.Next() {
 		var (
-			ra UserRoleAccess
-			accessAllowed pgtype.EnumArray
+			ra                              UserRoleAccess
+			accessAllowed, accessDisallowed pgtype.EnumArray
 		)
 		err = rows.Scan(
 			&ra.Id,
 			&ra.Role,
 			&ra.Path,
+			&ra.Regex,
 			&accessAllowed,
+			&accessDisallowed,
+			&ra.AccessScope,
 			&ra.Disabled,
+			&ra.CreatedAt,
+			&ra.UpdatedAt,
+			&ra.DisabledAt,
 		)
 		if err != nil {
 			return
 		}
-		ra.AccessAllowed = make([]AccessLevel, 0)
+		ra.AccessAllowed = make([]AccessMethod, 0)
 		if len(accessAllowed.Elements) > 0 {
 			for _, v := range accessAllowed.Elements {
-				ra.AccessAllowed = append(ra.AccessAllowed, AccessLevel(v.String))
+				ra.AccessAllowed = append(ra.AccessAllowed, AccessMethod(v.String))
 			}
 		}
 		access = append(access, &ra)
@@ -115,7 +123,9 @@ func (m *accessManager) FindAllUserAccess(ctx context.Context, page, limit int) 
 	rows, err = m.dbm.Query(
 		ctx, fmt.Sprintf(
 			`SELECT 
-						id, user_id, path, access_allowed, access_disallowed, disabled
+						id, user_id, path, regex, access_allowed, access_disallowed, 
+						access_scope, disabled,
+						created_at, updated_at, disabled_at
 					FROM %s LIMIT %d OFFSET %d`,
 			tableUserAccess, limit, (page-1)*limit),
 	)
@@ -127,30 +137,37 @@ func (m *accessManager) FindAllUserAccess(ctx context.Context, page, limit int) 
 	}
 	for rows.Next() {
 		var (
-			ra UserAccess
+			ra                              UserAccess
 			accessAllowed, accessDisallowed pgtype.EnumArray
+			accessScope sql.NullString
 		)
 		err = rows.Scan(
 			&ra.Id,
 			&ra.UserId,
 			&ra.Path,
+			&ra.Regex,
 			&accessAllowed,
 			&accessDisallowed,
+			&accessScope,
 			&ra.Disabled,
+			&ra.CreatedAt,
+			&ra.UpdatedAt,
+			&ra.DisabledAt,
 		)
+		ra.AccessScope = accessScope.String
 		if err != nil {
 			return
 		}
-		ra.AccessAllowed = make([]AccessLevel, 0)
+		ra.AccessAllowed = make([]AccessMethod, 0)
 		if len(accessAllowed.Elements) > 0 {
 			for _, v := range accessAllowed.Elements {
-				ra.AccessAllowed = append(ra.AccessAllowed, AccessLevel(v.String))
+				ra.AccessAllowed = append(ra.AccessAllowed, AccessMethod(v.String))
 			}
 		}
-		ra.AccessDisallowed = make([]AccessLevel, 0)
+		ra.AccessDisallowed = make([]AccessMethod, 0)
 		if len(accessDisallowed.Elements) > 0 {
 			for _, v := range accessDisallowed.Elements {
-				ra.AccessDisallowed = append(ra.AccessDisallowed, AccessLevel(v.String))
+				ra.AccessDisallowed = append(ra.AccessDisallowed, AccessMethod(v.String))
 			}
 		}
 		access = append(access, &ra)

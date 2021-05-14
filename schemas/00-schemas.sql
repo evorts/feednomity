@@ -111,7 +111,7 @@ create table user_activities
 );
 
 create type access_level as enum ('get', 'post', 'put', 'delete', 'head', 'options');
-create type access_scope as enum ('self', 'group', 'org', 'global');
+create type access_scope as enum ('self', 'group', 'org', 'global', 'none');
 
 /** default role access **/
 create table role_access
@@ -205,8 +205,8 @@ create table distribution_objects
     published_at      timestamp
 );
 
-create
-    unique index idx_distribution_objects_publishing_status on distribution_objects (publishing_status);
+create unique index idx_unique_distribution_item on distribution_objects(distribution_id, recipient_id, respondent_id);
+create index idx_distribution_objects_publishing_status on distribution_objects (publishing_status);
 
 create table distribution_mail_queue
 (

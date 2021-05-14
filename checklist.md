@@ -2,15 +2,13 @@
 
 [x] `/api/login`
 
-[ ] `/api/login`
-
 [x] `/api/users/list`
 
-[ ] `/api/users/create`
+[x] `/api/users/create`
 
-[ ] `/api/users/update`
+[x] `/api/users/update`
 
-[ ] `/api/users/delete`
+[x] `/api/users/delete`
 
 [x] `/api/links/list`
 
@@ -20,13 +18,37 @@
 
 [x] `/api/links/delete`
 
-[ ] `/api/distributions/list`
+[x] `/api/distributions/list`
 
-[ ] `/api/distributions/create`
+[x] `/api/distributions/create`
 
-[ ] `/api/distributions/update`
+[x] `/api/distributions/update`
 
-[ ] `/api/distributions/delete`
+[x] `/api/distributions/delete`
+
+[x] `/api/dist-objects/list`
+
+[x] `/api/dist-objects/create`
+
+[x] `/api/dist-objects/update`
+
+[x] `/api/dist-objects/delete`
+
+[x] `/api/groups/list`
+
+[x] `/api/groups/create`
+
+[x] `/api/groups/update`
+
+[x] `/api/groups/delete`
+
+[x] `/api/organizations/list`
+
+[x] `/api/organizations/create`
+
+[x] `/api/organizations/update`
+
+[x] `/api/organizations/delete`
 
 # Web (Admin)
 

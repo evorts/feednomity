@@ -429,12 +429,18 @@ func (m *manager) Update(ctx context.Context, item User) error {
 	if item.Id < 1 {
 		return fmt.Errorf("please provide the correct user identifier")
 	}
+	var (
+		phone interface{} = nil
+	)
+	if len(item.Phone) > 0 {
+		phone = item.Phone
+	}
 	args := []interface{}{
 		item.Username,
 		item.DisplayName,
 		item.Attributes,
 		item.Email,
-		item.Phone,
+		phone,
 		item.AccessRole,
 		item.JobRole,
 		item.Assignment,
@@ -760,9 +766,9 @@ func (m *manager) DeleteGroupByIds(ctx context.Context, ids ...int64) error {
 
 func (m *manager) FindOrganizationByIds(ctx context.Context, ids ...int64) ([]*Organization, error) {
 	var (
-		err  error
-		rows database.Rows
-		items    = make([]*Organization, 0)
+		err   error
+		rows  database.Rows
+		items = make([]*Organization, 0)
 	)
 	q := m.dbm.Rebind(ctx, fmt.Sprintf(
 		`SELECT 
@@ -826,8 +832,8 @@ func (m *manager) FindAllOrganizations(ctx context.Context, page, limit int) (it
 	}
 	for rows.Next() {
 		var (
-			item Organization
-			phone sql.NullString
+			item     Organization
+			phone    sql.NullString
 			disabled sql.NullBool
 		)
 		err = rows.Scan(
@@ -965,4 +971,3 @@ func (m *manager) DeleteOrganizationByIds(ctx context.Context, ids ...int64) err
 	}
 	return nil
 }
-

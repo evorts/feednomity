@@ -53,9 +53,11 @@ func transformDistributionObjects(createdBy int64, items []*DistributionObject, 
 	for fi, fv := range items {
 		item := &distribution.Object{
 			CreatedBy: createdBy,
-			LinkId:    linksId[fi],
 		}
 		if err := utils.TransformStructWithExcludes(item, fv, excludeFields); err == nil {
+			if fi+1 <= len(linksId) {
+				item.LinkId = linksId[fi]
+			}
 			rs = append(rs, item)
 		}
 	}

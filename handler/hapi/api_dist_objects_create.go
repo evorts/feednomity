@@ -24,6 +24,7 @@ func ApiDistObjectsCreate(w http.ResponseWriter, r *http.Request) {
 	log.Log("distributions_objects_create_api_handler", "request received")
 
 	var payload struct {
+		DisableLinkCreation bool `json:"disable_link_creation"`
 		Items []*DistributionObject `json:"items"`
 	}
 	err := req.UnmarshallBody(&payload)
@@ -68,19 +69,21 @@ func ApiDistObjectsCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	datasource := req.GetContext().Get("db").(database.IManager)
 	//create necessary links first
-	linkDomain := distribution.NewLinksDomain(datasource)
-	links := make([]*distribution.Link, 0)
 	linksId := make([]int64, 0)
-	expireAt := time.Now().Add(time.Duration(cfg.GetConfig().App.HashExpire) * time.Hour)
-	for i := 0; i < len(payload.Items); i++ {
-		links = append(links, &distribution.Link{
-			Hash: ksuid.New().String(),
-			UsageLimit:  1,
-			CreatedBy: req.GetUserData().Id,
-			ExpiredAt: &expireAt,
-		})
+	if !payload.DisableLinkCreation {
+		linkDomain := distribution.NewLinksDomain(datasource)
+		links := make([]*distribution.Link, 0)
+		expireAt := time.Now().Add(time.Duration(cfg.GetConfig().App.HashExpire) * time.Hour)
+		for i := 0; i < len(payload.Items); i++ {
+			links = append(links, &distribution.Link{
+				Hash: ksuid.New().String(),
+				UsageLimit:  1,
+				CreatedBy: req.GetUserData().Id,
+				ExpiredAt: &expireAt,
+			})
+		}
+		linksId, err = linkDomain.InsertMultiple(req.GetContext().Value(), links)
 	}
-	linksId, err = linkDomain.InsertMultiple(req.GetContext().Value(), links)
 	distDomain := distribution.NewDistributionDomain(datasource)
 	if err = distDomain.InsertObjects(
 		req.GetContext().Value(),
