@@ -86,13 +86,13 @@ func populateFields(ctx context.Context, lh string, f feedbacks.IFeedback, facto
 	return strengths, improvements
 }
 
-func Form360(w http.ResponseWriter, r *http.Request) {
+func Review360Form(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	vm := req.GetContext().Get("view").(view.ITemplateManager)
 	datasource := req.GetContext().Get("db").(database.IManager)
 
-	log.Log("forms360_handler", "request received")
+	log.Log("review_360_handler", "request received")
 
 	var (
 		link  distribution.Link
@@ -152,7 +152,7 @@ func Form360(w http.ResponseWriter, r *http.Request) {
 		improvements = make([]string, factors.ImprovementsFieldCount)
 	}
 
-	if err = vm.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "360-review.html", map[string]interface{}{
+	if err = vm.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "member-review-360.html", map[string]interface{}{
 		"PageTitle":    factors.Factors.Title,
 		"RatingsLabel": strings.Join(factors.Ratings.Labels, ","),
 		"Seq": func(i int) int {
@@ -179,7 +179,7 @@ func Form360(w http.ResponseWriter, r *http.Request) {
 			Factors:          factors.Factors,
 		},
 	}); err != nil {
-		log.Log("form360_handler", err.Error())
+		log.Log("review_360_handler", err.Error())
 	}
 }
 

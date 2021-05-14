@@ -124,6 +124,7 @@ func routesApiDistribution(
 						"logger": log,
 						"view":   view,
 						"db":     db,
+						"cfg":    cfg,
 					},
 				),
 			),

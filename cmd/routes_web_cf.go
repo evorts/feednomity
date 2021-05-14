@@ -21,11 +21,41 @@ func routesWebConsumers(
 ) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/page/360/review",
-			Handler: middleware.WithMethodFilter(
-				http.MethodGet,
+			Pattern: "/mbr/login",
+			Handler: middleware.WithSessionProtection(
+				session, view, accessControl,
 				middleware.WithInjection(
-					http.HandlerFunc(hcf.Form360),
+					http.HandlerFunc(hcf.Login),
+					map[string]interface{}{
+						"logger": logger,
+						"view":   view,
+						"sm":     session,
+						"hash":   hash,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/mbr/review/list",
+			Handler: middleware.WithSessionProtection(
+				session, view, accessControl,
+				middleware.WithInjection(
+					http.HandlerFunc(hcf.ReviewListing),
+					map[string]interface{}{
+						"logger": logger,
+						"view":   view,
+						"sm":     session,
+						"hash":   hash,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/mbr/review/form",
+			Handler: middleware.WithSessionProtection(
+				session, view, accessControl,
+				middleware.WithInjection(
+					http.HandlerFunc(hcf.Review360Form),
 					map[string]interface{}{
 						"logger": logger,
 						"view":   view,

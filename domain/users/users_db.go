@@ -787,17 +787,24 @@ func (m *manager) FindOrganizationByIds(ctx context.Context, ids ...int64) ([]*O
 		return nil, err
 	}
 	for rows.Next() {
-		var item Organization
+		var (
+			item           Organization
+			phone, address sql.NullString
+			disabled       sql.NullBool
+		)
 		err = rows.Scan(
 			&item.Id,
 			&item.Name,
-			&item.Address,
-			&item.Phone,
-			&item.Disabled,
+			&address,
+			&phone,
+			&disabled,
 			&item.CreatedAt,
 			&item.UpdatedAt,
 			&item.DisabledAt,
 		)
+		item.Address = address.String
+		item.Phone = phone.String
+		item.Disabled = disabled.Bool
 		if err != nil {
 			return items, err
 		}

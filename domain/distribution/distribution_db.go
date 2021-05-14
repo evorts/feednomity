@@ -15,8 +15,10 @@ type manager struct {
 }
 
 const (
-	tableDistribution = "distributions"
-	tableDistributionObjects = "distribution_objects"
+	tableDistribution          = "distributions"
+	tableDistributionObjects   = "distribution_objects"
+	tableDistributionMailQueue = "distribution_mail_queue"
+	tableDistributionLog       = "distribution_log"
 )
 
 func NewDistributionDomain(dbm database.IManager) IManager {
@@ -27,9 +29,10 @@ func (m *manager) FindByIds(ctx context.Context, ids ...int64) ([]*Distribution,
 	d := make([]*Distribution, 0)
 	q := fmt.Sprintf(`
 		SELECT 
-			id, topic, created_by, range_start, range_end, disabled, archived, distributed, distribution_limit, distribution_count,  
+			id, topic, created_by, range_start, range_end, disabled, archived, 
+			distributed, distribution_limit, distribution_count,  
 			created_at, updated_at, disabled_at, archived_at, distributed_at 
-		FROM %s WHERE id IN (%s)`, tableDistribution, strings.TrimRight(strings.Repeat("?", len(ids)), ","))
+		FROM %s WHERE id IN (%s)`, tableDistribution, strings.TrimRight(strings.Repeat("?,", len(ids)), ","))
 	rows, err := m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), utils.ArrayInt64(ids).ToArrayInterface()...)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -171,8 +174,8 @@ func (m *manager) Update(ctx context.Context, item Distribution) error {
 		item.ForGroupId,
 	}
 	var (
-		disabledAt interface{} = item.DisabledAt
-		archivedAt interface{} = item.ArchivedAt
+		disabledAt    interface{} = item.DisabledAt
+		archivedAt    interface{} = item.ArchivedAt
 		distributedAt interface{} = item.DistributedAt
 	)
 	if item.Disabled {
@@ -217,6 +220,29 @@ func (m *manager) Update(ctx context.Context, item Distribution) error {
 	return fmt.Errorf("no rows updated")
 }
 
+func (m *manager) UpdateStatusAndCountByIds(ctx context.Context, ids ...int64) error {
+	if len(ids) < 1 {
+		return fmt.Errorf("please provide the correct identifier")
+	}
+	q := fmt.Sprintf(`
+		UPDATE %s 
+		SET 
+			distributed = true,
+			distribution_count = distribution_count + 1
+		WHERE id IN (%s)`,
+		tableDistribution, strings.TrimRight(strings.Repeat("?,", len(ids)), ","),
+	)
+	q = m.dbm.Rebind(ctx, q)
+	cmd, err := m.dbm.Exec(ctx, q, utils.ArrayInt64(ids).ToArrayInterface()...)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() > 0 {
+		return nil
+	}
+	return fmt.Errorf("no rows updated")
+}
+
 func (m *manager) DeleteByIds(ctx context.Context, ids ...int64) error {
 	q := m.dbm.Rebind(ctx, fmt.Sprintf(`
 			DELETE FROM %s WHERE id IN (%s)
@@ -236,46 +262,179 @@ func (m *manager) DeleteByIds(ctx context.Context, ids ...int64) error {
 }
 
 func (m *manager) FindObjectByIds(ctx context.Context, ids ...int64) ([]*Object, error) {
-	o := make([]*Object, 0)
+	items := make([]*Object, 0)
 	q := fmt.Sprintf(`
 		SELECT 
-			id, distribution_id, recipient_id, respondent_id, publishing_status, publishing_log, 
-			created_at, updated_at, published_at 
-		FROM %s WHERE id IN (%s)`, tableDistributionObjects, strings.TrimRight(strings.Repeat("?", len(ids)), ","))
+			id, distribution_id, recipient_id, respondent_id, publishing_status, publishing_log, retry_count,
+			created_by, updated_by, link_id, created_at, updated_at, published_at 
+		FROM %s WHERE id IN (%s)`, tableDistributionObjects, strings.TrimRight(strings.Repeat("?,", len(ids)), ","))
 	rows, err := m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), utils.ArrayInt64(ids).ToArrayInterface()...)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return o, nil
+			return items, nil
 		}
 		return nil, err
 	}
 	for rows.Next() {
-		var obj Object
-		err = rows.Scan(
-			&obj.Id,
-			&obj.DistributionId,
-			&obj.RecipientId,
-			&obj.RespondentId,
-			&obj.PublishingStatus,
-			&obj.PublishingLog,
-			&obj.CreatedAt,
-			&obj.UpdatedAt,
-			&obj.PublishedAt,
+		var (
+			item              Object
+			updatedBy, linkId sql.NullInt64
 		)
+		err = rows.Scan(
+			&item.Id,
+			&item.DistributionId,
+			&item.RecipientId,
+			&item.RespondentId,
+			&item.PublishingStatus,
+			&item.PublishingLog,
+			&item.RetryCount,
+			&item.CreatedBy,
+			&updatedBy,
+			&linkId,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+			&item.PublishedAt,
+		)
+		item.UpdatedBy = updatedBy.Int64
+		item.LinkId = linkId.Int64
 		if err != nil {
 			return nil, err
 		}
-		o = append(o, &obj)
+		items = append(items, &item)
 	}
-	return o, nil
+	return items, nil
+}
+
+func (m *manager) FindObjectsByDistributionIds(ctx context.Context, ids ...int64) ([]*Object, error) {
+	items := make([]*Object, 0)
+	q := fmt.Sprintf(`
+		SELECT 
+			id, distribution_id, recipient_id, respondent_id, publishing_status, publishing_log, retry_count,
+			created_by, updated_by, link_id, created_at, updated_at, published_at 
+		FROM %s WHERE distribution_id IN (%s)`, tableDistributionObjects, strings.TrimRight(strings.Repeat("?,", len(ids)), ","))
+	rows, err := m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), utils.ArrayInt64(ids).ToArrayInterface()...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return items, nil
+		}
+		return nil, err
+	}
+	for rows.Next() {
+		var (
+			item              Object
+			updatedBy, linkId sql.NullInt64
+		)
+		err = rows.Scan(
+			&item.Id,
+			&item.DistributionId,
+			&item.RecipientId,
+			&item.RespondentId,
+			&item.PublishingStatus,
+			&item.PublishingLog,
+			&item.RetryCount,
+			&item.CreatedBy,
+			&updatedBy,
+			&linkId,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+			&item.PublishedAt,
+		)
+		item.UpdatedBy = updatedBy.Int64
+		item.LinkId = linkId.Int64
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, &item)
+	}
+	return items, nil
 }
 
 func (m *manager) FindObjectByLinkIds(ctx context.Context, ids ...int64) ([]*Object, error) {
-	panic("implement me")
+	items := make([]*Object, 0)
+	q := fmt.Sprintf(`
+		SELECT 
+			id, distribution_id, recipient_id, respondent_id, publishing_status, publishing_log, retry_count,
+			created_by, updated_by, link_id, created_at, updated_at, published_at 
+		FROM %s WHERE link_id IN (%s)`, tableDistributionObjects, strings.TrimRight(strings.Repeat("?,", len(ids)), ","))
+	rows, err := m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), utils.ArrayInt64(ids).ToArrayInterface()...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return items, nil
+		}
+		return nil, err
+	}
+	for rows.Next() {
+		var (
+			item              Object
+			updatedBy, linkId sql.NullInt64
+		)
+		err = rows.Scan(
+			&item.Id,
+			&item.DistributionId,
+			&item.RecipientId,
+			&item.RespondentId,
+			&item.PublishingStatus,
+			&item.PublishingLog,
+			&item.RetryCount,
+			&item.CreatedBy,
+			&updatedBy,
+			&linkId,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+			&item.PublishedAt,
+		)
+		item.UpdatedBy = updatedBy.Int64
+		item.LinkId = linkId.Int64
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, &item)
+	}
+	return items, nil
 }
 
 func (m *manager) FindObjectByRespondentAndLinkId(ctx context.Context, respondentId, id int64) ([]*Object, error) {
-	panic("implement me")
+	items := make([]*Object, 0)
+	q := fmt.Sprintf(`
+		SELECT 
+			id, distribution_id, recipient_id, respondent_id, publishing_status, publishing_log, retry_count,
+			created_by, updated_by, link_id, created_at, updated_at, published_at 
+		FROM %s WHERE respondent_id = ? AND link_id = ?`, tableDistributionObjects)
+	rows, err := m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), respondentId, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return items, nil
+		}
+		return nil, err
+	}
+	for rows.Next() {
+		var (
+			item              Object
+			updatedBy, linkId sql.NullInt64
+		)
+		err = rows.Scan(
+			&item.Id,
+			&item.DistributionId,
+			&item.RecipientId,
+			&item.RespondentId,
+			&item.PublishingStatus,
+			&item.PublishingLog,
+			&item.RetryCount,
+			&item.CreatedBy,
+			&updatedBy,
+			&linkId,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+			&item.PublishedAt,
+		)
+		item.UpdatedBy = updatedBy.Int64
+		item.LinkId = linkId.Int64
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, &item)
+	}
+	return items, nil
 }
 
 func (m *manager) FindAllObjects(ctx context.Context, page, limit int) (items []*Object, total int, err error) {
@@ -294,6 +453,7 @@ func (m *manager) FindAllObjects(ctx context.Context, page, limit int) (items []
 			`SELECT 
 						id, distribution_id, recipient_id, respondent_id,
 						publishing_status, publishing_log, retry_count, 
+						created_by, updated_by, link_id,
 						created_at, updated_at, published_at
 					FROM %s LIMIT %d OFFSET %d`,
 			tableDistributionObjects, limit, (page-1)*limit),
@@ -307,6 +467,7 @@ func (m *manager) FindAllObjects(ctx context.Context, page, limit int) (items []
 	for rows.Next() {
 		var (
 			item Object
+			updatedBy, linkId sql.NullInt64
 		)
 		err = rows.Scan(
 			&item.Id,
@@ -316,6 +477,9 @@ func (m *manager) FindAllObjects(ctx context.Context, page, limit int) (items []
 			&item.PublishingStatus,
 			&item.PublishingLog,
 			&item.RetryCount,
+			&item.CreatedBy,
+			&updatedBy,
+			&linkId,
 			&item.CreatedAt,
 			&item.UpdatedAt,
 			&item.PublishedAt,
@@ -401,6 +565,56 @@ func (m *manager) UpdateObject(ctx context.Context, item Object) error {
 	return fmt.Errorf("no rows updated")
 }
 
+func (m *manager) UpdateObjectStatusByIds(ctx context.Context, status PublishingStatus, ids ...int64) error {
+	if len(ids) < 1 {
+		return fmt.Errorf("please provide the correct identifier")
+	}
+	var publishedArg = ""
+	if status != PublishingNone {
+		publishedArg = ",published_at = NOW()"
+	}
+	q := fmt.Sprintf(`
+		UPDATE %s 
+		SET 
+			publishing_status = ?,
+			updated_at = NOW()
+			%s
+		WHERE id IN (%s)`,
+		tableDistributionObjects, publishedArg, strings.TrimRight(strings.Repeat("?,", len(ids)), ","),
+	)
+	q = m.dbm.Rebind(ctx, q)
+	cmd, err2 := m.dbm.Exec(ctx, q, status, utils.ArrayInt64(ids).ToArrayInterface())
+	if err2 != nil {
+		return err2
+	}
+	if cmd.RowsAffected() > 0 {
+		return nil
+	}
+	return fmt.Errorf("no rows updated")
+}
+
+func (m *manager) UpdateObjectRetryCountByIds(ctx context.Context, ids ...int64) error {
+	if len(ids) < 1 {
+		return fmt.Errorf("please provide the correct identifier")
+	}
+	q := fmt.Sprintf(`
+		UPDATE %s 
+		SET 
+			retry_count = retry_count + 1
+		WHERE id IN (%s)`,
+		tableDistributionObjects, strings.TrimRight(strings.Repeat("?,", len(ids)), ","),
+	)
+	q = m.dbm.Rebind(ctx, q)
+	cmd, err2 := m.dbm.Exec(ctx, q, ids)
+	if err2 != nil {
+		return err2
+	}
+	if cmd.RowsAffected() > 0 {
+		return nil
+	}
+	return fmt.Errorf("no rows updated")
+}
+
 func (m *manager) DeleteObjectByIds(ctx context.Context, ids ...int64) error {
 	q := m.dbm.Rebind(ctx, fmt.Sprintf(`
 			DELETE FROM %s WHERE id IN (%s)
@@ -419,3 +633,58 @@ func (m *manager) DeleteObjectByIds(ctx context.Context, ids ...int64) error {
 	return nil
 }
 
+func (m *manager) InsertQueue(ctx context.Context, items []*Queue) ([]int64, error) {
+	q := fmt.Sprintf(`
+		INSERT INTO %s (
+			distribution_object_id, recipient_id, respondent_id, 
+			from_email, to_email, subject, template, arguments
+		) VALUES`, tableDistributionMailQueue)
+	placeholders := make([]string, 0)
+	values := make([]interface{}, 0)
+	ids := make([]int64, 0)
+	for _, item := range items {
+		placeholders = append(
+			placeholders,
+			`(?, ?, ?, ?, ?, ?, ?, ?)`,
+		)
+		values = append(
+			values, item.DistributionObjectId, item.RecipientId, item.RespondentId,
+			item.FromEmail, item.ToEmail, item.Subject, item.Template, item.Arguments,
+		)
+	}
+	q = m.dbm.Rebind(ctx, fmt.Sprintf(`%s %s RETURNING id`, q, strings.Join(placeholders, ",")))
+	rows, err := m.dbm.Query(ctx, q, values...)
+	if err != nil {
+		return ids, errors.Wrap(err, "failed saving queue. some errors in constraint or data.")
+	}
+	//get returning ids here
+	for rows.Next() {
+		var id int64
+		if er := rows.Scan(&id); er != nil {
+			continue
+		}
+		ids = append(ids, id)
+	}
+	if len(ids) > 0 {
+		return ids, nil
+	}
+	return ids, fmt.Errorf("no rows created")
+}
+
+func (m *manager) DeleteQueueByIds(ctx context.Context, ids ...int64) error {
+	q := m.dbm.Rebind(ctx, fmt.Sprintf(`
+			DELETE FROM %s WHERE id IN (%s)
+		`, tableDistributionMailQueue, strings.TrimRight(strings.Repeat("?,", len(ids)), ",")))
+	rs, err := m.dbm.Exec(
+		ctx,
+		q,
+		utils.ArrayInt64(ids).ToArrayInterface()...,
+	)
+	if err != nil {
+		return err
+	}
+	if rs.RowsAffected() < 1 {
+		return errors.New("not a single record removed")
+	}
+	return nil
+}

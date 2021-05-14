@@ -46,12 +46,15 @@ type Object struct {
 }
 
 type Queue struct {
-	Id                   int64  `db:"id"`
-	DistributionObjectId int64  `db:"distribution_object_id"`
-	FromEmail            string `db:"from_email"`
-	ToEmail              string `db:"to_email"`
-	Subject              string `db:"subject"`
-	Content              string `db:"content"`
+	Id                   int64                  `db:"id"`
+	DistributionObjectId int64                  `db:"distribution_object_id"`
+	RecipientId          int64                  `db:"recipient_id"`
+	RespondentId         int64                  `db:"respondent_id"`
+	FromEmail            string                 `db:"from_email"`
+	ToEmail              string                 `db:"to_email"`
+	Subject              string                 `db:"subject"`
+	Template             string                 `db:"template"`
+	Arguments            map[string]interface{} `db:"arguments"`
 }
 
 type Log struct {

@@ -205,18 +205,23 @@ create table distribution_objects
     published_at      timestamp
 );
 
-create unique index idx_unique_distribution_item on distribution_objects(distribution_id, recipient_id, respondent_id);
+create unique index idx_unique_distribution_item on distribution_objects (distribution_id, recipient_id, respondent_id);
 create index idx_distribution_objects_publishing_status on distribution_objects (publishing_status);
 
 create table distribution_mail_queue
 (
     id                     bigserial primary key,
     distribution_object_id int,
+    recipient_id           int,
+    respondent_id          int,
     from_email             varchar(100),
     to_email               varchar(100),
     subject                varchar(200),
-    content                text
+    template               varchar(50),
+    arguments              jsonb default '{}'
 );
+
+create unique index idx_unique_distributions_queue on distribution_mail_queue (distribution_object_id, recipient_id, respondent_id);
 
 create table distribution_log
 (

@@ -128,7 +128,7 @@ func (l *linksManager) FindByIds(ctx context.Context, ids ...int64) ([]*Link, er
 			created_by, updated_by, attributes,
 			created_at, updated_at, disabled_at, published_at  
 		FROM %s
-		WHERE id IN (%s)`, tableLinks, strings.TrimRight(strings.Repeat("?", len(ids)), ","))
+		WHERE id IN (%s)`, tableLinks, strings.TrimRight(strings.Repeat("?,", len(ids)), ","))
 	links := make([]*Link, 0)
 	rows, err := l.dbm.Query(ctx, l.dbm.Rebind(ctx, q), utils.ArrayInt64(ids).ToArrayInterface()...)
 	if err != nil {

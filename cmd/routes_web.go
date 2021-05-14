@@ -18,7 +18,7 @@ func routingWeb(
 	o *http.ServeMux,
 	acl acl.IManager,
 	logger logger.IManager,
-	config config.IManager,
+	cfg config.IManager,
 	session session.IManager,
 	aes crypt.ICryptAES,
 	hash crypt.ICryptHash,

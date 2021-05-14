@@ -1,10 +1,11 @@
-POST {{api_base_url}}/distributions/blast
+POST {{api_base_url}}/distributions/publish
 X-Authorization: {{auth_token}}
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
 
 {
-  "ids": [],
+  "force_redistribution": true,
+  "ids": [1,2],
   "object_ids": []
 }
 

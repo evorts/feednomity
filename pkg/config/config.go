@@ -26,6 +26,8 @@ func (m MapMailProvider) Get(key string) MailProvider {
 type App struct {
 	Port              int    `yaml:"port"`
 	PortApi           int    `yaml:"port_api"`
+	BaseUrlWeb        string `yaml:"base_url_web"`
+	ReviewMailTemplate        string `yaml:"review_mail_template"`
 	HashSalt          string `yaml:"hash_salt"`
 	AESSalt           string `yaml:"aes_salt"`
 	HashExpire        int    `yaml:"hash_expire"`
