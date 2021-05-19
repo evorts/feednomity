@@ -83,7 +83,7 @@ create table users
     password     varchar(128) default null,
     pin          varchar(6)   default null,
     access_role  user_role,
-    job_role     varchar(20),
+    job_role     varchar(50),
     assignment   varchar(50),
     group_id     int
         constraint users_group_id references users_group (id),
@@ -155,6 +155,38 @@ create table user_access
 
 create
     unique index idx_user_access_id_path ON user_access (user_id, path);
+
+create table links
+(
+    id           serial primary key,
+    hash         varchar(128),
+    pin          varchar(64),
+    disabled     boolean   default false,
+    published    bool      default false,
+    usage_limit  integer   default 0,
+    attributes   jsonb     default '{}',
+    created_by   int
+        constraint links_created_by references users (id),
+    updated_by   int
+        constraint links_updated_by references users (id),
+    expired_at   timestamp default now(),
+    created_at   timestamp,
+    updated_at   timestamp,
+    disabled_at  timestamp,
+    published_at timestamp
+);
+
+create
+    unique index links_hash_unique on links (hash);
+
+create table link_visits
+(
+    id      serial primary key,
+    link_id integer,
+    at      timestamp,
+    agent   text,
+    ref     jsonb default '{}'
+);
 
 create table distributions
 (
@@ -233,79 +265,49 @@ create table distribution_log
     at          timestamp
 );
 
-create table links
-(
-    id           serial primary key,
-    hash         varchar(128),
-    pin          varchar(64),
-    disabled     boolean default false,
-    published    bool    default false,
-    usage_limit  integer default 0,
-    attributes   jsonb   default '{}',
-    created_by   int
-        constraint links_created_by references users (id),
-    updated_by   int
-        constraint links_updated_by references users (id),
-    expired_at   timestamp default now(),
-    created_at   timestamp,
-    updated_at   timestamp,
-    disabled_at  timestamp,
-    published_at timestamp
-);
-
-create
-    unique index links_hash_unique on links (hash);
-
-create table link_visits
-(
-    id      serial primary key,
-    link_id integer,
-    at      timestamp,
-    agent   text,
-    ref     jsonb default '{}'
-);
-
 /**
   draft => recipient already submit their feedback but still in draft
   final => recipient already finalize their submission -- cannot be change
  */
-create type feedback_status as enum ('draft', 'final');
+create type feedback_status as enum ('not-started','draft', 'final');
 
 create table feedbacks
 (
     id                     serial primary key,
     distribution_id        int,
-    distribution_object_id int,
     distribution_topic     varchar(100),
-    user_group_id          int,
-    user_group_name        varchar(50),
-    user_id                int,
-    user_name              varchar(25),
-    user_display_name      varchar(50),
-    disabled               bool default false,
+    distribution_object_id int,
+    range_start            timestamp,
+    range_end              timestamp,
+    respondent_id          int,
+    respondent_username    varchar(100),
+    respondent_name        varchar(100),
+    respondent_email       varchar(100),
+    respondent_group_id    int,
+    respondent_group_name  varchar(50),
+    respondent_org_id      int,
+    respondent_org_name    varchar(50),
+    respondent_role        varchar(50),
+    respondent_assigment   varchar(50),
+    recipient_id           int,
+    recipient_username     varchar(100),
+    recipient_name         varchar(100),
+    recipient_email        varchar(100),
+    recipient_group_id     int,
+    recipient_group_name   varchar(50),
+    recipient_org_id       int,
+    recipient_org_name     varchar(50),
+    recipient_role         varchar(50),
+    recipient_assignment   varchar(50),
+    link_id                int,
+    hash                   varchar(128),
+    status                 feedback_status,
+    content                jsonb default '{}',
     created_at             timestamp,
-    updated_at             timestamp,
-    disabled_at            timestamp
+    updated_at             timestamp
 );
 
-create table feedback_detail
-(
-    id               bigserial primary key,
-    feedback_id      int
-        constraint feedback_detail_feedbacks_id references feedbacks (id),
-    link_id          int,
-    hash             varchar(128),
-    respondent_id    int,
-    respondent_name  varchar(100),
-    respondent_email varchar(100),
-    recipient_id     int,
-    recipient_name   varchar(100),
-    recipient_email  varchar(100),
-    content          jsonb default '{}',
-    status           feedback_status,
-    created_at       timestamp,
-    updated_at       timestamp
-);
+create unique index idx_unique_feedbacks on feedbacks (distribution_id, distribution_object_id, respondent_id, recipient_id);
 
 create table feedback_log
 (

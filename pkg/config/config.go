@@ -25,10 +25,26 @@ func (m MapMailProvider) Get(key string) MailProvider {
 	return MailProvider{}
 }
 
+type MemoryProvider struct {
+	Address  string `yaml:"address"`
+	Password string `yaml:"password"`
+	Db       int    `yaml:"db"`
+}
+
+type MapMemoryProvider map[string]MemoryProvider
+
+func (m MapMemoryProvider) Get(key string) MemoryProvider {
+	if v, ok := m[key]; ok {
+		return v
+	}
+	return MemoryProvider{}
+}
+
 type App struct {
 	Port               int    `yaml:"port"`
 	PortApi            int    `yaml:"port_api"`
 	BaseUrlWeb         string `yaml:"base_url_web"`
+	BaseUrlApi         string `yaml:"base_url_api"`
 	ReviewMailTemplate string `yaml:"review_mail_template"`
 	HashSalt           string `yaml:"hash_salt"`
 	AESSalt            string `yaml:"aes_salt"`
@@ -67,6 +83,7 @@ type Config struct {
 		MaxIdleConnection     int64  `yaml:"max_idle_connection"`
 		MaxOpenConnection     int64  `yaml:"max_open_connection"`
 	} `yaml:"db"`
+	Memory MapMemoryProvider `yaml:"memory"`
 	Mailer struct {
 		DailyLimit int             `yaml:"daily_limit"`
 		Providers  MapMailProvider `yaml:"providers"`

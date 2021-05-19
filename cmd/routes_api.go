@@ -8,6 +8,7 @@ import (
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/logger"
+	"github.com/evorts/feednomity/pkg/memory"
 	"github.com/evorts/feednomity/pkg/middleware"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/view"
@@ -24,18 +25,16 @@ func routingApi(
 	hash crypt.ICryptHash,
 	aes crypt.ICryptAES,
 	log logger.IManager,
+	mem memory.IManager,
 ) {
 	routes := []reqio.Route{
 		{
 			Pattern: "/ping",
-			Handler: middleware.WithMethodFilter(
-				http.MethodGet,
-				middleware.WithInjection(
-					http.HandlerFunc(hapi.Ping),
-					map[string]interface{}{
-						"view": view,
-					},
-				),
+			Handler: middleware.WithInjection(
+				http.HandlerFunc(hapi.Ping),
+				map[string]interface{}{
+					"view": view,
+				},
 			),
 		},
 		{
@@ -73,14 +72,14 @@ func routingApi(
 			),
 		},
 		{
-			Pattern: "/360/submission",
+			Pattern: "/reviews/submit",
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
 				accessControl, jwx,
 				middleware.WithInjection(
-					http.HandlerFunc(hapi.Api360Submission),
+					http.HandlerFunc(hapi.ApiReviewSubmit),
 					map[string]interface{}{
 						"logger": log,
 						"view":   view,
@@ -282,21 +281,20 @@ func routesApiUsers(
 	return []reqio.Route{
 		{
 			Pattern: "/users/login",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithFiltersForApi(
+				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPost,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiLogin),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-							"jwx":    jwx,
-						},
-					),
+				view,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiLogin),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+						"jwx":    jwx,
+					},
 				),
 			),
 		},
@@ -640,77 +638,73 @@ func routesApiQuestions(
 	return []reqio.Route{
 		{
 			Pattern: "/questions",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithFiltersForApi(
+				http.MethodGet,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodGet,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiQuestions),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-						},
-					),
+				view,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiQuestions),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
 				),
 			),
 		},
 		{
 			Pattern: "/questions/create",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithFiltersForApi(
+				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPost,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiQuestionCreate),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-						},
-					),
+				view,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiQuestionCreate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
 				),
 			),
 		},
 		{
 			Pattern: "/questions/update",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithFiltersForApi(
+				http.MethodPut,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodPut,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiQuestionUpdate),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-						},
-					),
+				view,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiQuestionUpdate),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
 				),
 			),
 		},
 		{
 			Pattern: "/questions/remove",
-			Handler: middleware.WithCorsProtection(
+			Handler: middleware.WithFiltersForApi(
+				http.MethodDelete,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				middleware.WithMethodFilter(
-					http.MethodDelete,
-					middleware.WithInjection(
-						http.HandlerFunc(hapi.ApiQuestionRemove),
-						map[string]interface{}{
-							"logger": log,
-							"view":   view,
-							"hash":   hash,
-							"db":     db,
-						},
-					),
+				view,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiQuestionRemove),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"db":     db,
+					},
 				),
 			),
 		},

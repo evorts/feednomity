@@ -44,7 +44,7 @@ type request struct {
 	clientId        string
 	hash            crypt.ICryptHash
 	session         session.IManager
-	userData        *UserData
+	userData        UserData
 	expireAt        *time.Time
 	userAccessScope acl.AccessScope
 	jwx             jwe.IManager
@@ -64,12 +64,13 @@ type IRequest interface {
 	UnmarshallForm(dst interface{}) error
 	UnmarshallBody(dst interface{}) error
 	GetFormValue(field string) []string
+	GetQueryParam(field string) string
 	GetCsrfToken() string
 	GetToken() string
 	RenewSessionToken() IRequest
 	GetSession() session.IManager
 	GetContext() IContext
-	GetUserData() *UserData
+	GetUserData() UserData
 	GetUserAccessScope() acl.AccessScope
 	GetJweToken() string
 	GetJwx() jwe.IManager
@@ -78,8 +79,8 @@ type IRequest interface {
 
 	getUserAccessScopeFromContext() acl.AccessScope
 	getUserAccessScopeFromSession() acl.AccessScope
-	getUserDataFromSession() *UserData
-	getUserDataFromContext() *UserData
+	getUserDataFromSession() UserData
+	getUserDataFromContext() UserData
 }
 
 func NewRequest(w http.ResponseWriter, r *http.Request) IRequest {
@@ -153,30 +154,35 @@ func (req *request) GetPath() string {
 	return req.url.Path
 }
 
+func (req *request) GetQueryParam(field string) string {
+	return req.url.Query().Get(field)
+}
+
 func (req *request) IsLoggedIn() bool {
-	if req.userData == nil || req.userData.Id < 1 {
+	if req.userData.Id < 1 {
 		return false
 	}
 	return true
 }
 
-func (req *request) GetUserData() *UserData {
+func (req *request) GetUserData() UserData {
 	return req.userData
 }
 
-func (req *request) getUserDataFromSession() *UserData {
-	if req.session.GetJson(req.GetContext().Value(), UserContextKey, req.userData) != nil {
-		return nil
+func (req *request) getUserDataFromSession() UserData {
+	err := req.session.GetJson(req.GetContext().Value(), UserContextKey, &req.userData)
+	if err != nil {
+		return UserData{}
 	}
 	return req.userData
 }
 
-func (req *request) getUserDataFromContext() *UserData {
+func (req *request) getUserDataFromContext() UserData {
 	u := req.GetContext().Get(UserContextKey)
 	if u == nil {
-		return nil
+		return UserData{}
 	}
-	return u.(*UserData)
+	return u.(UserData)
 }
 
 func (req *request) GetJweToken() string {
@@ -194,9 +200,13 @@ func (req *request) GetUserAccessScope() acl.AccessScope {
 func (req *request) getUserAccessScopeFromContext() acl.AccessScope {
 	acc := req.GetContext().Get(UserAccessScopeKey)
 	if acc == nil {
-		return ""
+		return acl.AccessScopeNone
 	}
-	return acc.(acl.AccessScope)
+	v, ok := acc.(string)
+	if ok {
+		return acl.AccessScope(v)
+	}
+	return acl.AccessScopeNone
 }
 
 func (req *request) getUserAccessScopeFromSession() acl.AccessScope {

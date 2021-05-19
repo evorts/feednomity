@@ -7,6 +7,16 @@ services:
       POSTGRES_PASSWORD: psqlpass
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-    - /usr/local/data/postgres:/var/lib/postgresql/data/pgdata
+      - /usr/local/data/postgres:/var/lib/postgresql/data/pgdata
     ports:
-    - 5432:5432
+      - 5432:5432
+  mem:
+    image: bitnami/redis:latest
+    environment:
+      ALLOW_EMPTY_PASSWORD: 1
+      REDIS_DISABLE_COMMANDS: FLUSHDB,FLUSHALL
+      REDIS_PASSWORD: ""
+    ports:
+      - '6379:6379'
+    volumes:
+      - '/usr/local/data/redis:/bitnami/redis/data'

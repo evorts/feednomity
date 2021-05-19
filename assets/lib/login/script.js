@@ -1,4 +1,15 @@
-(function (fc) {
+(function (fc, apiUrl) {
+    const getRedirectUrl = (def) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+        if (!fc.isEmpty(ref)) {
+            return fc.toFullUrl(ref);
+        }
+        if (typeof window['redirectUrl'] !== "undefined" && !fc.isEmpty(window['redirectUrl'])) {
+            return fc.toFullUrl(window['redirectUrl']);
+        }
+        return fc.toFullUrl(def);
+    }
     fc.onDocumentReady(function () {
         const form = document.getElementById('loginForm');
         const warn = function (response) {
@@ -31,12 +42,13 @@
             e.preventDefault();
             const data = fc.getFormData(form);
             fc.call(
-                "login", "POST", "/api/login",
+                "login", "POST", `${apiUrl}/users/login`,
                 JSON.stringify(data),
                 function (res) {
                     $this.removeAttribute('disabled');
                     if (res.status === 200) {
-                        window.location.replace('/adm/dashboard');
+                        fc.setCookie("feednomisess", res.content['token'], 24)
+                        window.location.replace(getRedirectUrl());
                         return;
                     }
                     warn(res);
@@ -50,4 +62,4 @@
             )
         })
     });
-})(fc)
+})(fc, ApiBaseUrl)

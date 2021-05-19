@@ -13,8 +13,16 @@ import (
 type manager struct {
 	dir       string
 	data      map[string]interface{}
+	headers   map[string]string
 	templates map[string]*template.Template
 }
+
+var (
+	defaultHeaders = map[string]string{
+		"Access-Control-Allow-Credentials": "true",
+		"Access-Control-Allow-Headers": "Content-Type,X-Authorization",
+	}
+)
 
 type ITemplateManager interface {
 	LoadTemplates() (ITemplateManager, error)
@@ -23,11 +31,17 @@ type ITemplateManager interface {
 	RenderRaw(w http.ResponseWriter, status int, content interface{}) error
 	AddData(key string, value interface{}) ITemplateManager
 	InjectData(key string, value interface{}) ITemplateManager
+
+	RenderJson(w http.ResponseWriter, status int, value interface{}) error
+	InjectHeader(key string, value string) ITemplateManager
+	ResetHeaders() ITemplateManager
 }
 
 type IManager interface {
 	RenderJson(w http.ResponseWriter, status int, value interface{}) error
 	RenderRaw(w http.ResponseWriter, status int, content interface{}) error
+	InjectHeader(key string, value string) ITemplateManager
+	ResetHeaders() ITemplateManager
 }
 
 func NewJsonManager() IManager {
@@ -39,6 +53,7 @@ func NewTemplateManager(dir string, defaultData map[string]interface{}) ITemplat
 		dir:       dir,
 		data:      defaultData,
 		templates: make(map[string]*template.Template, 0),
+		headers:   defaultHeaders,
 	}
 }
 
@@ -104,13 +119,29 @@ func (t *manager) RenderFlex(w http.ResponseWriter, status int, template string,
 }
 
 func (t *manager) RenderRaw(w http.ResponseWriter, status int, content interface{}) error {
+	t.setHeaders(w)
 	w.WriteHeader(status)
 	_, err := fmt.Fprintln(w, content)
 	return err
 }
 
+func (t *manager) setHeaders(w http.ResponseWriter) {
+	if len(t.headers) < 1 {
+		return
+	}
+	for k, v := range t.headers {
+		w.Header().Set(k, v)
+	}
+}
+
+func (t *manager) ResetHeaders() ITemplateManager {
+	t.headers = defaultHeaders
+	return t
+}
+
 func (t *manager) RenderJson(w http.ResponseWriter, status int, value interface{}) error {
 	v, err := json.Marshal(value)
+	t.setHeaders(w)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err == nil {
@@ -137,6 +168,11 @@ func (t *manager) AddData(key string, value interface{}) ITemplateManager {
 
 func (t *manager) InjectData(key string, value interface{}) ITemplateManager {
 	t.data[key] = value
+	return t
+}
+
+func (t *manager) InjectHeader(key string, value string) ITemplateManager {
+	t.headers[key] = value
 	return t
 }
 

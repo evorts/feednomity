@@ -3,7 +3,6 @@ package hcf
 import (
 	"context"
 	"github.com/evorts/feednomity/domain/distribution"
-	"github.com/evorts/feednomity/domain/objects"
 	"github.com/evorts/feednomity/domain/users"
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/pkg/errors"
@@ -19,8 +18,8 @@ func QueryAndValidate(
 	linkUsageCount int,
 	dist *distribution.Distribution,
 	distObject *distribution.Object,
-	recipient *objects.Object,
-	respondent *objects.Object,
+	recipient *users.User,
+	respondent *users.User,
 	group *users.Group,
 	user *users.User,
 	errs map[string]error,
@@ -29,7 +28,6 @@ func QueryAndValidate(
 		err error
 		d   []*distribution.Distribution
 		do  []*distribution.Object
-		o   []*objects.Object
 		g   []*users.Group
 		u   []*users.User
 	)
@@ -53,16 +51,15 @@ func QueryAndValidate(
 		return
 	}
 	dist = d[0]
-	objectDomain := objects.NewObjectDomain(ds)
-	o, err = objectDomain.FindByIds(ctx, distObject.RecipientId, distObject.RespondentId)
-	if err != nil || len(o) < 2 {
+	usersDomain := users.NewUserDomain(ds)
+	u, err = usersDomain.FindByIds(ctx, distObject.RecipientId, distObject.RespondentId)
+	if err != nil || len(u) < 2 {
 		errs["SUB:ERR:OBJ4"] = errors.New("Could not find respective information on objects!")
 		return
 	}
-	recipient = o[0]
-	respondent = o[1]
-	usersDomain := users.NewUserDomain(ds)
-	g, err = usersDomain.FindGroupByIds(ctx, recipient.UserGroupId)
+	recipient = u[0]
+	respondent = u[1]
+	g, err = usersDomain.FindGroupByIds(ctx, recipient.GroupId)
 	if err != nil || len(g) < 1 {
 		errs["SUB:ERR:USG4"] = errors.New("Could not find respective group of objects!")
 		return

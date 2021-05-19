@@ -19,9 +19,13 @@ const (
 	AccessScopeGlobal AccessScope = "global"
 )
 
+func (as AccessScope) String() string {
+	return string(as)
+}
+
 type IManager interface {
 	Populate() error
-	IsAllowed(userId int64, method, path string) (allowed bool, scope AccessScope)
+	IsAllowed(userId int64, method, path string) (allowed bool, scope string)
 }
 
 type access struct {
@@ -56,7 +60,7 @@ func NewACLManager(u users.IUsers, ua users.IUserAccess) IManager {
 	return &manager{u: u, ua: ua}
 }
 
-func (m *manager) IsAllowed(userId int64, method, path string) (allowed bool, scope AccessScope) {
+func (m *manager) IsAllowed(userId int64, method, path string) (allowed bool, scope string) {
 	method = strings.ToLower(method)
 	allowed = false
 	scope = ""
@@ -83,7 +87,7 @@ func (m *manager) IsAllowed(userId int64, method, path string) (allowed bool, sc
 		if !utils.InArray(utils.ArrayString(ra.MethodAllowed).ToArrayInterface(), method) {
 			return false, ""
 		}
-		scope = ra.AccessScope
+		scope = ra.AccessScope.String()
 		allowed = true
 		break
 	}
@@ -105,10 +109,10 @@ func (m *manager) IsAllowed(userId int64, method, path string) (allowed bool, sc
 		if !utils.InArray(utils.ArrayString(ua.MethodAllowed).ToArrayInterface(), method) {
 			return false, ""
 		}
-		scope = ua.AccessScope
+		scope = ua.AccessScope.String()
 	}
 	if len(scope) < 1 {
-		scope = AccessScopeNone
+		scope = AccessScopeNone.String()
 	}
 	return true, scope
 }

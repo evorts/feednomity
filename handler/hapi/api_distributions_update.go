@@ -50,7 +50,7 @@ func ApiDistributionsUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	// check eligibility of the users to update data
 	if len(errs) < 1 && !eligible(
-		*user,
+		user,
 		req.GetUserAccessScope(),
 		user.Id, payload.Item.ForGroupId,
 	) {

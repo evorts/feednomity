@@ -49,7 +49,7 @@ func ApiFeedbackSubmission(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	// validate request
+	// Validate request
 	errs := make(map[string]string, 0)
 	if validate.IsEmpty(payload.FeedbackHash) {
 		errs["username"] = "Not a valid session!"

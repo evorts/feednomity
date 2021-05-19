@@ -10,6 +10,7 @@ import (
 	"github.com/evorts/feednomity/pkg/session"
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
+	"net/url"
 	"path"
 	"time"
 )
@@ -23,10 +24,6 @@ func Link(w http.ResponseWriter, r *http.Request) {
 
 	log.Log("member_link_handler", "request received")
 
-	if req.IsLoggedIn() {
-		http.Redirect(w, r, "/mbr/review/form/", http.StatusTemporaryRedirect)
-		return
-	}
 	if len(req.GetPath()) < 1 {
 		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
 			"PageTitle": "Page Not Found",
@@ -56,6 +53,30 @@ func Link(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+
+	var (
+		objects []*distribution.Object
+		obj *distribution.Object
+	)
+
+	distDomain := distribution.NewDistributionDomain(ds)
+	objects, err = distDomain.FindObjectByLinkIds(req.GetContext().Value(), link.Id)
+
+	if err != nil || len(objects) < 1 {
+		log.Log("cf_link_objects_error", fmt.Sprintf("link objects not found. error: %v", err))
+		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
+			"PageTitle": "Page Not Found",
+		})
+		return
+	}
+
+	obj = objects[0]
+
+	if req.IsLoggedIn() {
+		http.Redirect(w, r, fmt.Sprintf("/mbr/review/form/%d", obj.Id), http.StatusTemporaryRedirect)
+		return
+	}
+
 	now := time.Now()
 	if link.ExpiredAt != nil && link.ExpiredAt.After(now) {
 		log.Log("cf_link_expired", fmt.Sprintf("link hash %s has expired", linkHash))
@@ -64,19 +85,10 @@ func Link(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	var objects []*distribution.Object
-	distDomain := distribution.NewDistributionDomain(ds)
-	objects, err = distDomain.FindObjectByLinkIds(req.GetContext().Value(), link.Id)
-	if err != nil || len(objects) < 1 {
-		log.Log("cf_link_objects_error", fmt.Sprintf("link objects not found. error: %v", err))
-		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
-			"PageTitle": "Page Not Found",
-		})
-		return
-	}
+
 	var usersData []*users.User
 	usersDomain := users.NewUserDomain(ds)
-	usersData, err = usersDomain.FindByIds(req.GetContext().Value(), objects[0].RespondentId)
+	usersData, err = usersDomain.FindByIds(req.GetContext().Value(), obj.RespondentId)
 	if err != nil || len(usersData) < 1 {
 		log.Log("cf_link_users_error", fmt.Sprintf("link users respondent not found. error: %v", err))
 		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
@@ -93,7 +105,8 @@ func Link(w http.ResponseWriter, r *http.Request) {
 	}
 	//render login page if necessary
 	if len(usersData[0].Password) > 0 {
-
+		http.Redirect(w, r, fmt.Sprintf("/mbr/login?ref=%s", url.PathEscape(req.GetPath())), http.StatusTemporaryRedirect)
+		return
 	}
 	// render login page
 	renderData := map[string]interface{}{

@@ -17,6 +17,9 @@
         <link href="/assets/lib/main/style.css" rel="stylesheet">
 
         {{ block "styles" . }} {{ end }}
+        <script type="text/javascript">
+            const ApiBaseUrl = '{{ .ApiBaseUrl }}';
+        </script>
         {{ block "scripts" . }} {{ end }}
     </head>
     <body>

@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/alexedwards/scs/v2 v2.4.0
+	github.com/go-redis/redis/v8 v8.8.2 // indirect
 	github.com/jackc/pgconn v1.8.0
 	github.com/jackc/pgproto3/v2 v2.0.7 // indirect
 	github.com/jackc/pgtype v1.6.2

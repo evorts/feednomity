@@ -11,6 +11,7 @@ import (
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/logger"
+	"github.com/evorts/feednomity/pkg/memory"
 	"github.com/evorts/feednomity/pkg/session"
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
@@ -32,6 +33,11 @@ var Web = &cli.Command{
 			logging.Fatal("error initialize cryptic modules")
 			return
 		}
+		mem := memory.NewRedisStorage(
+			cfg.GetConfig().Memory.Get("redis").Address,
+			cfg.GetConfig().Memory.Get("redis").Password,
+			cfg.GetConfig().Memory.Get("redis").Db,
+		)
 		ds := database.NewDB(
 			cfg.GetConfig().DB.Dsn,
 			cfg.GetConfig().DB.MaxConnectionLifetime,
@@ -55,11 +61,11 @@ var Web = &cli.Command{
 			session.Cookie{
 				Name:     "feednomid",
 				Domain:   cfg.GetConfig().App.CookieDomain,
-				HttpOnly: false,
+				HttpOnly: true,
 				Path:     "/",
-				Persist:  false,
-				SameSite: http.SameSiteLaxMode,
-				Secure:   false,
+				Persist:  true,
+				SameSite: http.SameSiteStrictMode,
+				Secure:   cfg.GetConfig().App.CookieSecure == 1,
 			},
 		)
 		key := jwe.Key{Value: cfg.GetConfig().Jwe.Key}
@@ -75,14 +81,16 @@ var Web = &cli.Command{
 			"FavIcon":       cfg.GetConfig().App.Logo.FavIcon,
 			"LogoUrl":       cfg.GetConfig().App.Logo.Url,
 			"LogoAlt":       cfg.GetConfig().App.Logo.Alt,
+			"ApiBaseUrl":    cfg.GetConfig().App.BaseUrlApi,
 		}).LoadTemplates()
 		o := http.NewServeMux()
 		routingWeb(
-			o, accessControl, logging, cfg, sm, aesCryptic, crypt.NewHashEncryption(cfg.GetConfig().App.HashSalt),
-			tm, jwx,
+			o, accessControl, logging, cfg, sm,
+			aesCryptic, crypt.NewHashEncryption(cfg.GetConfig().App.HashSalt),
+			tm, jwx, mem, ds,
 		)
 		logging.Log("started", "Web Application Started.")
-		if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.GetConfig().App.Port), sm.LoadAndSave(o)); err != nil {
+		if err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.GetConfig().App.Port), sm.LoadAndSave(o)); err != nil {
 			logging.Fatal(err)
 		}
 	},

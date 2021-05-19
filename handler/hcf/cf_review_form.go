@@ -1,10 +1,8 @@
 package hcf
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/evorts/feednomity/domain/assessments"
-	"github.com/evorts/feednomity/domain/distribution"
 	"github.com/evorts/feednomity/domain/feedbacks"
 	"github.com/evorts/feednomity/handler/hapi"
 	"github.com/evorts/feednomity/pkg/database"
@@ -12,19 +10,18 @@ import (
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
+	"path"
+	"strconv"
 	"strings"
 )
 
-func populateFields(ctx context.Context, lh string, f feedbacks.IFeedback, factors *assessments.Factor) (strengths []string, improvements []string) {
-	fd, err := f.FindDetailByHash(ctx, lh)
-	if err != nil {
-		return
-	}
+func populateFields(data map[string]interface{}, factors *assessments.Factor) (strengths []string, improvements []string) {
 	var (
 		content hapi.FeedbackPayload
 		cb      []byte
+		err     error
 	)
-	cb, err = json.Marshal(fd.Content)
+	cb, err = json.Marshal(data)
 	if err != nil {
 		return
 	}
@@ -86,65 +83,45 @@ func populateFields(ctx context.Context, lh string, f feedbacks.IFeedback, facto
 	return strengths, improvements
 }
 
-func Review360Form(w http.ResponseWriter, r *http.Request) {
+func ReviewForm(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	vm := req.GetContext().Get("view").(view.ITemplateManager)
-	datasource := req.GetContext().Get("db").(database.IManager)
+	ds := req.GetContext().Get("db").(database.IManager)
 
-	log.Log("review_360_handler", "request received")
+	log.Log("web_review_form_handler", "request received")
 
 	var (
-		link  distribution.Link
-		err   error
-		query = r.URL.Query()
+		err error
+		fid int
 	)
-	// link hash
-	lh := query.Get("hash")
-
-	if len(lh) < 1 {
+	// get the form if from path
+	fidPath := path.Base(req.GetPath())
+	fid, err = strconv.Atoi(fidPath)
+	if err != nil {
 		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
 			"PageTitle": "Page Not Found",
 		})
 		return
 	}
-	// trace back from hash to respondent data
-	link, linkDomain, usageCount, dist, _, recipient, respondent, group, _, er := hapi.QueryAndValidate(req.GetContext().Value(), datasource, req.GetUserData().Id, lh)
-	if er != nil {
+	var (
+		feeds []*feedbacks.Feedback
+		feed  *feedbacks.Feedback
+	)
+	feedDomain := feedbacks.NewFeedbackDomain(ds)
+	feeds, err = feedDomain.FindByIds(req.GetContext().Value(), int64(fid))
+	if err != nil || len(feeds) < 1 {
 		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
 			"PageTitle": "Page Not Found",
 		})
 		return
 	}
+	feed = feeds[0]
 
-	//detect if the link has reached maximum visits
-	if link.UsageLimit > 0 {
-		if usageCount >= link.UsageLimit {
-			_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
-				"PageTitle": "Page Not Found",
-			})
-			return
-		}
-	}
-	req.GetSession().Put(r.Context(), "link_hash", lh)
-	req.GetSession().Put(r.Context(), "token", req.GetToken())
-
-	_ = linkDomain.RecordLinkVisitor(
-		req.GetContext().Value(),
-		link,
-		respondent.Id,
-		respondent.Name,
-		r.Header.Get("User-Agent"),
-		map[string]interface{}{
-			"referer":    r.Referer(),
-			"ip":         r.RemoteAddr,
-			"respondent": respondent.Name,
-		},
-	)
-	assessmentsDomain := assessments.NewAssessmentDomain(datasource)
+	assessmentsDomain := assessments.NewAssessmentDomain(ds)
 	factors, _ := assessmentsDomain.FindTemplateDataByKey(req.GetContext().Value(), "review360")
 
-	strengths, improvements := populateFields(req.GetContext().Value(), lh, feedbacks.NewFeedbackDomain(datasource), factors.Factors)
+	strengths, improvements := populateFields(feed.Content, factors.Factors)
 	if strengths == nil {
 		strengths = make([]string, factors.StrengthsFieldCount)
 	}
@@ -152,7 +129,7 @@ func Review360Form(w http.ResponseWriter, r *http.Request) {
 		improvements = make([]string, factors.ImprovementsFieldCount)
 	}
 
-	if err = vm.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "member-review-360.html", map[string]interface{}{
+	if err = vm.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "member-review.html", map[string]interface{}{
 		"PageTitle":    factors.Factors.Title,
 		"RatingsLabel": strings.Join(factors.Ratings.Labels, ","),
 		"Seq": func(i int) int {
@@ -160,18 +137,18 @@ func Review360Form(w http.ResponseWriter, r *http.Request) {
 		},
 		"Assessments": assessments.Item{
 			Recipient: assessments.Client{
-				Name:         recipient.Name,
-				Organization: group.Name,
-				Role:         recipient.Role,
-				Assignment:   recipient.Assignment,
+				Name:         feed.RecipientName,
+				Organization: feed.RecipientOrgName,
+				Role:         feed.RecipientRole,
+				Assignment:   feed.RecipientAssignment,
 			},
 			Respondent: assessments.Client{
-				Name:       respondent.Name,
-				Role:       respondent.Role,
-				Assignment: respondent.Assignment,
+				Name:       feed.RespondentName,
+				Role:       feed.RespondentRole,
+				Assignment: feed.RespondentAssignment,
 			},
-			PeriodSince:      dist.RangeStart,
-			PeriodUntil:      dist.RangeEnd,
+			PeriodSince:      feed.RangeStart,
+			PeriodUntil:      feed.RangeEnd,
 			Strengths:        strengths,
 			NeedImprovements: improvements,
 			Ratings:          factors.Ratings.Values,
@@ -179,56 +156,6 @@ func Review360Form(w http.ResponseWriter, r *http.Request) {
 			Factors:          factors.Factors,
 		},
 	}); err != nil {
-		log.Log("review_360_handler", err.Error())
+		log.Log("web_review_form_handler", err.Error())
 	}
 }
-
-/*func Forms(w http.ResponseWriter, r *http.Request) {
-	req := reqio.NewRequest(w, r).Prepare()
-	log := req.GetContext().Get("logger").(logger.IManager)
-	vm := req.GetContext().Get("view").(view.ITemplateManager)
-	datasource := req.GetContext().Get("db").(database.IManager)
-
-	log.Log("forms_handler", "request received")
-
-	var (
-		link      distribution.Link
-		questions []feedbacks.Question
-		err       error
-		query     = r.URL.Query()
-		linkHash  string
-	)
-
-	linkHash = query.Get("hash")
-	if len(linkHash) < 1 {
-		//todo display page error
-		return
-	}
-
-	linkDomain := distribution.NewLinksDomain(datasource)
-	link, err = linkDomain.FindByHash(req.GetContext().Value(), linkHash)
-	if err != nil {
-		//todo display page error
-		return
-	}
-	substanceDomain := feedbacks.NewSubstanceDomain(datasource)
-	questions, err = substanceDomain.FindQuestionsByGroupId(req.GetContext().Value(), int64(link.DistributionObjectId))
-	if err != nil {
-		//todo display page error
-		return
-	}
-	_ = linkDomain.RecordLinkVisitor(
-		req.GetContext().Value(),
-		link, r.Header.Get("User-Agent"),
-		map[string]interface{}{
-			"referer": r.Referer(),
-			"ip":      r.RemoteAddr,
-		},
-	)
-	if err = vm.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "forms.html", map[string]interface{}{
-		"PageTitle": "Anonymous Feedback Submission Page",
-		"Data":      questions,
-	}); err != nil {
-		log.Log("forms_handler", err.Error())
-	}
-}*/

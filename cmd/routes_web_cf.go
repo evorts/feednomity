@@ -3,7 +3,10 @@ package cmd
 import (
 	"github.com/evorts/feednomity/handler/hcf"
 	"github.com/evorts/feednomity/pkg/acl"
+	"github.com/evorts/feednomity/pkg/config"
 	"github.com/evorts/feednomity/pkg/crypt"
+	"github.com/evorts/feednomity/pkg/database"
+	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/middleware"
 	"github.com/evorts/feednomity/pkg/reqio"
@@ -18,11 +21,14 @@ func routesWebConsumers(
 	session session.IManager,
 	hash crypt.ICryptHash,
 	view view.ITemplateManager,
+	jwx jwe.IManager,
+	ds database.IManager,
+	cfg config.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
 			Pattern: "/mbr/login",
-			Handler: middleware.WithMethodFilter(
+			Handler: middleware.WithWebMethodFilter(
 				http.MethodGet,
 				middleware.WithInjection(
 					http.HandlerFunc(hcf.Login),
@@ -36,8 +42,21 @@ func routesWebConsumers(
 			),
 		},
 		{
+			Pattern: "/mbr/logout",
+			Handler: middleware.WithWebMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					http.HandlerFunc(hcf.Logout),
+					map[string]interface{}{
+						"logger": logger,
+						"sm":     session,
+					},
+				),
+			),
+		},
+		{
 			Pattern: "/mbr/link/",
-			Handler: middleware.WithMethodFilter(
+			Handler: middleware.WithWebMethodFilter(
 				http.MethodGet,
 				middleware.WithInjection(
 					http.HandlerFunc(hcf.Link),
@@ -54,7 +73,7 @@ func routesWebConsumers(
 		{
 			Pattern: "/mbr/review/list",
 			Handler: middleware.WithSessionProtection(
-				session, view, accessControl,
+				session, view, accessControl, jwx, cfg,
 				middleware.WithInjection(
 					http.HandlerFunc(hcf.ReviewListing),
 					map[string]interface{}{
@@ -62,16 +81,17 @@ func routesWebConsumers(
 						"view":   view,
 						"sm":     session,
 						"hash":   hash,
+						"db":     ds,
 					},
 				),
 			),
 		},
 		{
-			Pattern: "/mbr/review/form/",
+			Pattern: "/mbr/review/form/view/",
 			Handler: middleware.WithSessionProtection(
-				session, view, accessControl,
+				session, view, accessControl, jwx, cfg,
 				middleware.WithInjection(
-					http.HandlerFunc(hcf.Review360Form),
+					http.HandlerFunc(hcf.ReviewForm),
 					map[string]interface{}{
 						"logger": logger,
 						"view":   view,

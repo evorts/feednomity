@@ -1,4 +1,48 @@
 const fc = (function () {
+    const getCookieDomain = () => {
+        const hName = location.hostname;
+        if (hName.indexOf(".") < 0) {
+            return hName;
+        }
+        const hArr = hName.split('.');
+        if (hArr.length < 2) {
+            return hName;
+        }
+        return `${hArr[hArr.length - 2]}.${hArr[hArr.length - 1]}`;
+    }
+
+    const setCookie = (key, value, hours) => {
+        let expires = '';
+        const secure = location.protocol.indexOf('https') > -1 ? 'Secure;' : '';
+        value = value || '';
+        if (hours) {
+            const date = new Date();
+            date.setTime(date.getTime() + (hours * 60 * 60 * 1000));
+            expires = `; expires=${date.toUTCString()}`;
+        }
+        console.log(getCookieDomain());
+        document.cookie = `${key}=${value}${expires}; SameSite=Strict; path=/;${secure} domain=${getCookieDomain()}`;
+    }
+
+    const getCookie = (key) => {
+        const eq = `${key}=`;
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') {
+                c = c.substring(1, c.length);
+            }
+            if (c.indexOf(eq) === 0) {
+                return c.substring(eq.length, c.length);
+            }
+        }
+        return null;
+    }
+
+    const removeCookie = (key) => {
+        document.cookie = `${key}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+    }
+
     const onDocumentReady = (fn) => {
         if (document.readyState === "complete" || document.readyState === "interactive") {
             setTimeout(fn, 1);
@@ -17,6 +61,20 @@ const fc = (function () {
         elem.scrollTop = 0;
     }
 
+    const toFullUrl = (v, base) => {
+        v = v || '';
+        if (/http?s:.*/.test(v)) {
+            return v;
+        }
+        if (fc.isEmpty(base)) {
+            base = `${location.protocol}//${location.hostname}`;
+            if (!fc.isEmpty(location.port)) {
+                base = `${base}:${location.port}`
+            }
+        }
+        return `${base}/${v}`;
+    }
+
     const elementExist = (element) => {
         return element != null && typeof element != "undefined";
     }
@@ -31,6 +89,10 @@ const fc = (function () {
 
     const isObject = (v) => {
         return (v && typeof v === 'object' && !Array.isArray(v));
+    }
+
+    const isEmpty = (v) => {
+        return typeof v === "undefined" || v === null || v === 0 || v === "";
     }
 
     const deepMerge = (dst, ...src) => {
@@ -286,12 +348,17 @@ const fc = (function () {
         keyExist,
         isFunc,
         isObject,
+        isEmpty,
         deepMerge,
         call,
         dialog,
         toast,
         addClass,
         removeClass,
-        overrideEvents
+        overrideEvents,
+        toFullUrl,
+        setCookie,
+        getCookie,
+        removeCookie,
     };
 })();

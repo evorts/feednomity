@@ -54,7 +54,7 @@ func ApiUserUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	// check eligibility of the users to update data
 	if len(errs) < 1 && !eligible(
-		*user,
+		user,
 		req.GetUserAccessScope(),
 		payload.User.Id, payload.User.GroupId,
 	) {

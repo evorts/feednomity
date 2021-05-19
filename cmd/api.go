@@ -11,6 +11,7 @@ import (
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/logger"
+	"github.com/evorts/feednomity/pkg/memory"
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 )
@@ -29,6 +30,12 @@ var Api = &cli.Command{
 			logging.Fatal("error initialize cryptic modules")
 			return
 		}
+		mem := memory.NewRedisStorage(
+			cfg.GetConfig().Memory.Get("redis").Address,
+			cfg.GetConfig().Memory.Get("redis").Password,
+			cfg.GetConfig().Memory.Get("redis").Db,
+		)
+		mem.MustConnect(context.Background())
 		ds := database.NewDB(
 			cfg.GetConfig().DB.Dsn,
 			cfg.GetConfig().DB.MaxConnectionLifetime,
@@ -57,10 +64,11 @@ var Api = &cli.Command{
 		o := http.NewServeMux()
 		routingApi(
 			o, cfg, view.NewJsonManager(), ds, accessControl, jwx,
-			crypt.NewHashEncryption(cfg.GetConfig().App.HashSalt), aesCryptic, logging,
+			crypt.NewHashEncryption(cfg.GetConfig().App.HashSalt),
+			aesCryptic, logging, mem,
 		)
 		logging.Log("started", "API Started.")
-		if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.GetConfig().App.PortApi), o); err != nil {
+		if err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.GetConfig().App.PortApi), o); err != nil {
 			logging.Fatal(err)
 		}
 	},

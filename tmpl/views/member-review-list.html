@@ -1,0 +1,62 @@
+{{ template "layout_member" . }}
+{{ define "title" }} {{ .PageTitle }} {{ end }}
+{{ define "styles" }}
+    <link href="/assets/lib/review/style.css" rel="stylesheet">
+    <style>
+        html, body {
+            background: #b8b5b8 none;
+        }
+        .panel.is-primary .panel-heading, .button.is-primary {
+            background-color: #1f68b8;
+        }
+    </style>
+{{ end }}
+{{ define "body_scripts" }}
+    <script type="module" src="/assets/lib/review/script.js"></script>
+{{ end }}
+{{ define "header"}}
+    <nav class="navbar is-white" role="navigation">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <img src="/assets/images/onelabs-logo@2x.png" alt="Onelabs" style="max-height: 2.5rem;">
+            </a>
+        </div>
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <span class="title is-6">Welcome,&nbsp;{{ .Assessments.Respondent.Name }}!</span>
+            </div>
+        </div>
+    </nav>
+    <div class="container pt-2">
+        <div class="notification is-primary is-light has-text-centered" style="padding: 0.5rem;">
+            <span class="subtitle is-6">Hi <strong>{{ .Assessments.Respondent.Name }}</strong>, Please kindly give your <u>honest</u> and <u>objective</u> review for the person below!</span>
+        </div>
+    </div>
+{{ end }}
+{{ define "content" }}
+    <div class="columns" style="min-height: 550px;">
+        <div class="column"></div>
+        <div class="column is-7">
+            <div class="panel is-primary">
+                <div class="panel-heading">
+                    <h3>Requested Review List</h3>
+                </div>
+                <div class="panel-block p-5" style="background: white">
+                    <div class="container" style="width: 100%">
+                        <div class="columns mt-1">
+                            <div class="column is-full" style="background: #00e7eb">
+                                Review1
+                            </div>
+                        </div>
+                        <div class="columns mt-1">
+                            <div class="column is-full" style="background: #00e7eb">
+                                Review2
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="column"></div>
+    </div>
+{{ end }}

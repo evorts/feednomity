@@ -42,7 +42,7 @@ func ApiDistributionsCreate(w http.ResponseWriter, r *http.Request) {
 		if len(v.Topic) < 1 {
 			errs[fmt.Sprintf("%d_group_name", k)] = "not a valid topic"
 		}
-		if v.ForGroupId < 1 || !eligible(*req.GetUserData(), req.GetUserAccessScope(), 0, v.ForGroupId){
+		if v.ForGroupId < 1 || !eligible(req.GetUserData(), req.GetUserAccessScope(), 0, v.ForGroupId){
 			errs[fmt.Sprintf("%d_group_id", k)] = "not a valid group"
 		}
 	}

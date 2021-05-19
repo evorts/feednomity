@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"github.com/evorts/feednomity/handler"
+	"github.com/evorts/feednomity/handler/hcf"
 	"github.com/evorts/feednomity/pkg/acl"
 	"github.com/evorts/feednomity/pkg/config"
 	"github.com/evorts/feednomity/pkg/crypt"
+	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/logger"
+	"github.com/evorts/feednomity/pkg/memory"
 	"github.com/evorts/feednomity/pkg/middleware"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/session"
@@ -23,7 +26,9 @@ func routingWeb(
 	aes crypt.ICryptAES,
 	hash crypt.ICryptHash,
 	view view.ITemplateManager,
-	jwe jwe.IManager,
+	jwx jwe.IManager,
+	mem memory.IManager,
+	ds database.IManager,
 ) {
 	// serving assets
 	fs := http.FileServer(http.Dir(cfg.GetConfig().App.AssetDirectory))
@@ -32,7 +37,7 @@ func routingWeb(
 	routes := []reqio.Route{
 		{
 			Pattern: "/ping",
-			Handler: middleware.WithMethodFilter(
+			Handler: middleware.WithWebMethodFilter(
 				http.MethodGet,
 				middleware.WithInjection(
 					http.HandlerFunc(handler.Ping),
@@ -42,8 +47,18 @@ func routingWeb(
 				),
 			),
 		},
+		{
+			Pattern: "/",
+			Handler: middleware.WithInjection(
+				http.HandlerFunc(hcf.Home),
+				map[string]interface{}{
+					"view": view,
+					"sm":   session,
+				},
+			),
+		},
 	}
-	routes = append(routes, routesWebDashboard(acl, logger, session, hash, view)...)
-	routes = append(routes, routesWebConsumers(acl, logger, session, hash, view)...)
+	routes = append(routes, routesWebDashboard(acl, logger, session, hash, view, jwx, cfg)...)
+	routes = append(routes, routesWebConsumers(acl, logger, session, hash, view, jwx, ds, cfg)...)
 	reqio.NewRoutes(routes).ExecRoutes(o)
 }

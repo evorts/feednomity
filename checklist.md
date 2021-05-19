@@ -64,9 +64,9 @@
 
 [ ] `/mbr/review/360`
 
-[ ] `/mbr/login`
+[x] `/mbr/login`
 
-[ ] `/mbr/logout`
+[x] `/mbr/logout`
 
 # Web (Admin)
 
