@@ -1,0 +1,29 @@
+POST {{api_base_url}}/reviews/list
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{}
+
+###
+GET {{api_base_url}}/reviews/detail/7
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+###
+POST {{api_base_url}}/reviews/submit
+X-Authorization: {{auth_token}}
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+
+{
+  "item": {
+    "id": 1,
+    "recipient_id": 2,
+    "respondent_id": 7,
+    "link_id": 3,
+    "publishing_status": "failed"
+  }
+}
+

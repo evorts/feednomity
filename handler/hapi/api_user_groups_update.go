@@ -19,7 +19,7 @@ func ApiGroupUpdate(w http.ResponseWriter, r *http.Request) {
 	log.Log("groups_update_api_handler", "request received")
 
 	var payload struct {
-		Group *UserGroup `json:"group"`
+		Group *UserGroupRequest `json:"group"`
 	}
 
 	err := req.UnmarshallBody(&payload)

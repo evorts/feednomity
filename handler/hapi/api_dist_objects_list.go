@@ -60,7 +60,7 @@ func ApiDistObjectsList(w http.ResponseWriter, r *http.Request) {
 		Status: http.StatusOK,
 		Content: map[string]interface{}{
 			"total": total,
-			"items": items,
+			"items": transformDistributionObjectsReverse(items),
 		},
 	})
 }

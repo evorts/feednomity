@@ -39,10 +39,10 @@ func ApiUsersList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var (
-		ui    []*users.User
+		items []*users.User
 		total int
 	)
-	ui, total, err = users.NewUserDomain(datasource).FindAll(req.GetContext().Value(), payload.Page, payload.Limit)
+	items, total, err = users.NewUserDomain(datasource).FindAll(req.GetContext().Value(), payload.Page, payload.Limit)
 	if err != nil {
 		_ = vm.RenderJson(w, http.StatusExpectationFailed,
 			api.NewResponse(
@@ -59,7 +59,7 @@ func ApiUsersList(w http.ResponseWriter, r *http.Request) {
 		Status: http.StatusOK,
 		Content: map[string]interface{}{
 			"total": total,
-			"users": ui,
+			"items": transformUsersReverse(items),
 		},
 	})
 }

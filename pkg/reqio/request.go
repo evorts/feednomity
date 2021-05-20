@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 )
@@ -76,6 +77,7 @@ type IRequest interface {
 	GetJwx() jwe.IManager
 	GetClientId() string
 	GetPath() string
+	GetPathLastValue() string
 
 	getUserAccessScopeFromContext() acl.AccessScope
 	getUserAccessScopeFromSession() acl.AccessScope
@@ -152,6 +154,10 @@ func (req *request) Prepare() IRequest {
 
 func (req *request) GetPath() string {
 	return req.url.Path
+}
+
+func (req *request) GetPathLastValue() string {
+	return path.Base(req.GetPath())
 }
 
 func (req *request) GetQueryParam(field string) string {

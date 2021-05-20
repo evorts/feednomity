@@ -14,46 +14,7 @@ import (
 	"strings"
 )
 
-type ItemValue struct {
-	Rating int    `json:"rating"`
-	Note   string `json:"note"`
-}
-
-type FeedbackPayload struct {
-	Id             int64            `json:"id"`
-	SubmissionType feedbacks.Status `json:"submission_type"`
-
-	Productivity  ItemValue `json:"productivity"`
-	Quality       ItemValue `json:"quality"`
-	Dependability struct {
-		Leadership struct {
-			Adaptability   ItemValue `json:"adaptability"`
-			DetailSolving  ItemValue `json:"detail_solving"`
-			Independent    ItemValue `json:"independent"`
-			Ownership      ItemValue `json:"ownership"`
-			Prioritization ItemValue `json:"prioritization"`
-		} `json:"leadership"`
-		Collaboration struct {
-			Communication ItemValue `json:"communication"`
-			Inspiring     ItemValue `json:"inspiring"`
-		} `json:"collaboration"`
-		Responsibility struct {
-			ExtraMile ItemValue `json:"extra_mile"`
-			Integrity ItemValue `json:"integrity"`
-			Openness  ItemValue `json:"openness"`
-		} `json:"responsibility"`
-	} `json:"dependability"`
-	Strengths        []string `json:"strengths"`
-	NeedImprovements []string `json:"improves"`
-}
-
-type Error struct {
-	Code    string
-	Message string
-	Err     error
-}
-
-func (d *FeedbackPayload) Validate() map[string]string {
+func (d *FeedbackRequest) Validate() map[string]string {
 	errs := make(map[string]string, 0)
 	if d == nil {
 		errs["payload"] = "There's no valid payload submitted!"
@@ -92,7 +53,7 @@ func (d *FeedbackPayload) Validate() map[string]string {
 	return errs
 }
 
-func (d *FeedbackPayload) FilterFieldsAndTransform(value interface{}, rs map[string]interface{}) {
+func (d *FeedbackRequest) FilterFieldsAndTransform(value interface{}, rs map[string]interface{}) {
 	var v reflect.Value
 	if value == nil {
 		v = reflect.ValueOf(*d)
@@ -122,7 +83,7 @@ func ApiReviewSubmit(w http.ResponseWriter, r *http.Request) {
 
 	log.Log("api_review_submit_handler", "request received")
 
-	var payload *FeedbackPayload
+	var payload *FeedbackRequest
 
 	err := req.UnmarshallBody(&payload)
 	if err != nil || payload == nil {

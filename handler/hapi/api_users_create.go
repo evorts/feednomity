@@ -20,8 +20,8 @@ func ApiUserCreate(w http.ResponseWriter, r *http.Request) {
 	log.Log("Users_create_api_handler", "request received")
 
 	var payload struct {
-		Csrf  string  `json:"csrf"`
-		Users []*User `json:"users"`
+		Csrf  string         `json:"csrf"`
+		Users []*UserRequest `json:"users"`
 	}
 	err := req.UnmarshallBody(&payload)
 	if err != nil || len(payload.Users) < 1 {

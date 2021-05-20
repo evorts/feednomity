@@ -19,7 +19,7 @@ func ApiUserUpdate(w http.ResponseWriter, r *http.Request) {
 	log.Log("users_update_api_handler", "request received")
 
 	var payload struct {
-		User *User `json:"user"`
+		User *UserRequest `json:"user"`
 	}
 
 	err := req.UnmarshallBody(&payload)

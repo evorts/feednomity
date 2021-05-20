@@ -17,7 +17,7 @@ import (
 
 func populateFields(data map[string]interface{}, factors *assessments.Factor) (strengths []string, improvements []string) {
 	var (
-		content hapi.FeedbackPayload
+		content hapi.FeedbackRequest
 		cb      []byte
 		err     error
 	)

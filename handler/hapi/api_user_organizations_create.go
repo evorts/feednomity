@@ -20,7 +20,7 @@ func ApiOrganizationsCreate(w http.ResponseWriter, r *http.Request) {
 	log.Log("organizations_create_api_handler", "request received")
 
 	var payload struct {
-		Orgs []*UserOrg `json:"orgs"`
+		Orgs []*OrganizationRequest `json:"orgs"`
 	}
 	err := req.UnmarshallBody(&payload)
 	if err != nil || len(payload.Orgs) < 1 {

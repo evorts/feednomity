@@ -20,7 +20,7 @@ func ApiDistributionsCreate(w http.ResponseWriter, r *http.Request) {
 	log.Log("distributions_create_api_handler", "request received")
 
 	var payload struct {
-		Items []*Distribution `json:"items"`
+		Items []*DistributionRequest `json:"items"`
 	}
 	err := req.UnmarshallBody(&payload)
 	if err != nil || len(payload.Items) < 1 {

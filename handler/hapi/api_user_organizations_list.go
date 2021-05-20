@@ -10,13 +10,13 @@ import (
 	"net/http"
 )
 
-func ApiGroupsList(w http.ResponseWriter, r *http.Request) {
+func ApiOrganizationsList(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	vm := req.GetContext().Get("view").(view.IManager)
 	datasource := req.GetContext().Get("db").(database.IManager)
 
-	log.Log("groups_list_api_handler", "request received")
+	log.Log("organizations_list_api_handler", "request received")
 
 	var payload struct {
 		Page  int    `json:"page"`
@@ -38,10 +38,10 @@ func ApiGroupsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var (
-		items []*users.Group
+		items []*users.Organization
 		total int
 	)
-	items, total, err = users.NewUserDomain(datasource).FindAllGroups(req.GetContext().Value(), payload.Page, payload.Limit)
+	items, total, err = users.NewUserDomain(datasource).FindAllOrganizations(req.GetContext().Value(), payload.Page, payload.Limit)
 	if err != nil {
 		_ = vm.RenderJson(w, http.StatusExpectationFailed,
 			api.NewResponse(
@@ -58,7 +58,7 @@ func ApiGroupsList(w http.ResponseWriter, r *http.Request) {
 		Status: http.StatusOK,
 		Content: map[string]interface{}{
 			"total": total,
-			"items": items,
+			"items": transformOrganizationsReverse(items),
 		},
 	})
 }

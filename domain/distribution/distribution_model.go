@@ -37,7 +37,7 @@ type Object struct {
 	LinkId           int64                    `db:"link_id"`
 	PublishingStatus PublishingStatus         `db:"publishing_status"`
 	PublishingLog    []map[string]interface{} `db:"publishing_log"`
-	RetryCount       int                      `db:"retry_count"`
+	RetryCount       int64                      `db:"retry_count"`
 	CreatedBy        int64                    `db:"created_by"`
 	UpdatedBy        int64                    `db:"updated_by"`
 	CreatedAt        *time.Time               `db:"created_at"`

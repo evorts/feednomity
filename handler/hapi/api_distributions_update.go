@@ -19,7 +19,7 @@ func ApiDistributionsUpdate(w http.ResponseWriter, r *http.Request) {
 	log.Log("distribution_update_api_handler", "request received")
 
 	var payload struct {
-		Item *Distribution `json:"item"`
+		Item *DistributionRequest `json:"item"`
 	}
 
 	err := req.UnmarshallBody(&payload)

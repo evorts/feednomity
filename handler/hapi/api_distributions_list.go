@@ -19,8 +19,8 @@ func ApiDistributionsList(w http.ResponseWriter, r *http.Request) {
 	log.Log("distributions_list_api_handler", "request received")
 
 	var payload struct {
-		Page  int    `json:"page"`
-		Limit int    `json:"limit"`
+		Page  int `json:"page"`
+		Limit int `json:"limit"`
 	}
 	payload.Page = 1
 	payload.Limit = 10
@@ -58,7 +58,7 @@ func ApiDistributionsList(w http.ResponseWriter, r *http.Request) {
 		Status: http.StatusOK,
 		Content: map[string]interface{}{
 			"total": total,
-			"items":  items,
+			"items": transformDistributionReverse(items),
 		},
 	})
 }

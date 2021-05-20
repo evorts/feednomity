@@ -77,7 +77,7 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
 				Code:    "LOG:ERR:USR",
-				Message: "Bad Request! User not found.",
+				Message: "Bad Request! UserRequest not found.",
 				Reasons: map[string]string{"err": err.Error()},
 				Details: make([]interface{}, 0),
 			},

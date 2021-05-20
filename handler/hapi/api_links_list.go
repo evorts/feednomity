@@ -21,7 +21,6 @@ func ApiLinksList(w http.ResponseWriter, r *http.Request) {
 		Page  Page  `json:"page"`
 		Limit Limit `json:"limit"`
 	}
-
 	_ = req.UnmarshallBody(&payload)
 
 	datasource := req.GetContext().Get("db").(database.IManager)

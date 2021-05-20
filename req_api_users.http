@@ -5,7 +5,7 @@ X-Client-Id: web
 
 {
   "username": "root",
-  "password": "ttest11"
+  "password": "feeDNom!ty@$$70"
 }
 
 > {% client.global.set("auth_token", response.body.content.token); %}

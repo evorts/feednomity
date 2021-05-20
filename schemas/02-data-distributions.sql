@@ -6,13 +6,13 @@ delete from distributions;
 -- noinspection SqlWithoutWhere
 delete from links;
 
-insert into links(id, hash, published, usage_limit, created_at)
+insert into links(id, hash, published, usage_limit, created_by, created_at)
 values
-(1, crypt(concat_ws('data:',1, now()), gen_salt('des')), true, 10, now()),
-(2, crypt(concat_ws('data:',2, now()), gen_salt('des')), true, 10, now()),
-(3, crypt(concat_ws('data:',3, now()), gen_salt('des')), true, 10, now()),
-(4, crypt(concat_ws('data:',4, now()), gen_salt('des')), true, 10, now()),
-(5, crypt(concat_ws('data:',5, now()), gen_salt('des')), true, 10, now())
+(1, crypt(concat_ws('data:',1, now()), gen_salt('des')), true, 10, 1, now()),
+(2, crypt(concat_ws('data:',2, now()), gen_salt('des')), true, 10, 1, now()),
+(3, crypt(concat_ws('data:',3, now()), gen_salt('des')), true, 10, 1, now()),
+(4, crypt(concat_ws('data:',4, now()), gen_salt('des')), true, 10, 1, now()),
+(5, crypt(concat_ws('data:',5, now()), gen_salt('des')), true, 10, 1, now())
 ;
 
 insert into distributions(id, topic, distribution_limit, distribution_count, range_start, range_end, created_by, for_group_id, created_at)

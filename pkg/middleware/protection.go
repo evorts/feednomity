@@ -160,7 +160,7 @@ func WithTokenProtection(
 			)
 			return
 		}
-		ctx = context.WithValue(ctx, "user", &userData)
+		ctx = context.WithValue(ctx, "user", userData)
 		ctx = context.WithValue(ctx, "access_scope", accessScope)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

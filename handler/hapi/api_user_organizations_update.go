@@ -19,7 +19,7 @@ func ApiOrganizationUpdate(w http.ResponseWriter, r *http.Request) {
 	log.Log("organization_update_api_handler", "request received")
 
 	var payload struct {
-		Org *UserOrg `json:"org"`
+		Org *OrganizationRequest `json:"org"`
 	}
 
 	err := req.UnmarshallBody(&payload)

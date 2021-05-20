@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type User struct {
+type UserRequest struct {
 	Id          int64                  `json:"id"`
 	Username    string                 `json:"username"`
 	DisplayName string                 `json:"display_name"`
@@ -22,7 +22,25 @@ type User struct {
 	Disabled    bool                   `json:"disabled"`
 }
 
-func transformUsers(f []*User) (t []*users.User) {
+type UserResponse struct {
+	Id             int64                  `json:"id"`
+	Username       string                 `json:"username"`
+	DisplayName    string                 `json:"display_name"`
+	Attributes     map[string]interface{} `json:"attributes"`
+	Email          string                 `json:"email"`
+	Phone          string                 `json:"phone"`
+	AccessRole     users.UserRole         `json:"access_role"`
+	JobRole        string                 `json:"job_role"`
+	Assignment     string                 `json:"assignment"`
+	GroupId        int64                  `json:"group_id"`
+	OrganizationId int64                  `json:"-"`
+	Disabled       bool                   `json:"disabled"`
+	CreatedAt      *time.Time             `json:"created_at"`
+	UpdatedAt      *time.Time             `json:"updated_at"`
+	DisabledAt     *time.Time             `json:"disabled_at"`
+}
+
+func transformUsers(f []*UserRequest) (t []*users.User) {
 	t = make([]*users.User, 0)
 	for _, fv := range f {
 		u := &users.User{}
@@ -33,42 +51,10 @@ func transformUsers(f []*User) (t []*users.User) {
 	return
 }
 
-type UserGroup struct {
-	Id         int64      `json:"id"`
-	Name       string     `json:"name"`
-	OrgId      int64      `json:"org_id"`
-	Disabled   bool       `json:"disabled"`
-	CreatedAt  *time.Time `json:"created_at"`
-	UpdatedAt  *time.Time `json:"updated_at"`
-	DisabledAt *time.Time `json:"disabled_at"`
-}
-
-func transformGroups(f []*UserGroup) (t []*users.Group) {
-	t = make([]*users.Group, 0)
+func transformUsersReverse(f []*users.User) (t []*UserResponse) {
+	t = make([]*UserResponse, 0)
 	for _, fv := range f {
-		u := &users.Group{}
-		if err := utils.TransformStruct(u, fv); err == nil {
-			t = append(t, u)
-		}
-	}
-	return
-}
-
-type UserOrg struct {
-	Id         int64      `json:"id"`
-	Name       string     `json:"name"`
-	Address    string     `json:"address"`
-	Phone      string     `json:"phone"`
-	Disabled   bool       `json:"disabled"`
-	CreatedAt  *time.Time `json:"created_at"`
-	UpdatedAt  *time.Time `json:"updated_at"`
-	DisabledAt *time.Time `json:"disabled_at"`
-}
-
-func transformOrganizations(f []*UserOrg) (t []*users.Organization) {
-	t = make([]*users.Organization, 0)
-	for _, fv := range f {
-		u := &users.Organization{}
+		u := &UserResponse{}
 		if err := utils.TransformStruct(u, fv); err == nil {
 			t = append(t, u)
 		}

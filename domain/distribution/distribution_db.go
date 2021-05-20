@@ -322,7 +322,7 @@ func (m *manager) FindObjectsByDistributionIds(ctx context.Context, ids ...int64
 	for rows.Next() {
 		var (
 			item              Object
-			updatedBy, linkId sql.NullInt64
+			retryCount, updatedBy, linkId sql.NullInt64
 		)
 		err = rows.Scan(
 			&item.Id,
@@ -331,7 +331,7 @@ func (m *manager) FindObjectsByDistributionIds(ctx context.Context, ids ...int64
 			&item.RespondentId,
 			&item.PublishingStatus,
 			&item.PublishingLog,
-			&item.RetryCount,
+			&retryCount,
 			&item.CreatedBy,
 			&updatedBy,
 			&linkId,
@@ -339,11 +339,12 @@ func (m *manager) FindObjectsByDistributionIds(ctx context.Context, ids ...int64
 			&item.UpdatedAt,
 			&item.PublishedAt,
 		)
-		item.UpdatedBy = updatedBy.Int64
-		item.LinkId = linkId.Int64
 		if err != nil {
 			return nil, err
 		}
+		item.RetryCount = retryCount.Int64
+		item.UpdatedBy = updatedBy.Int64
+		item.LinkId = linkId.Int64
 		items = append(items, &item)
 	}
 	return items, nil

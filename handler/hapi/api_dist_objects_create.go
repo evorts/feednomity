@@ -24,8 +24,8 @@ func ApiDistObjectsCreate(w http.ResponseWriter, r *http.Request) {
 	log.Log("distributions_objects_create_api_handler", "request received")
 
 	var payload struct {
-		DisableLinkCreation bool `json:"disable_link_creation"`
-		Items []*DistributionObject `json:"items"`
+		DisableLinkCreation bool           `json:"disable_link_creation"`
+		Items []*DistributionObjectRequest `json:"items"`
 	}
 	err := req.UnmarshallBody(&payload)
 	if err != nil || len(payload.Items) < 1 {

@@ -22,7 +22,7 @@ func ApiDistributionBlast(w http.ResponseWriter, r *http.Request) {
 	vm := req.GetContext().Get("view").(view.IManager)
 	cfg := req.GetContext().Get("cfg").(config.IManager)
 
-	log.Log("links_blast_api_handler", "request received")
+	log.Log("api_links_blast_handler", "request received")
 
 	var (
 		err     error
@@ -289,7 +289,7 @@ usersLoop:
 			}
 		}
 		recipientName := utils.IIf(len(recipient.DisplayName) < 1, strings.Title(recipient.Username), recipient.DisplayName)
-		subject := fmt.Sprintf("Request Feedback: %s - For: %s", d.Topic, recipientName)
+		subject := fmt.Sprintf("Request FeedbackResponse: %s - For: %s", d.Topic, recipientName)
 		feeds = append(feeds, &feedbacks.Feedback{
 			DistributionId:       obj.DistributionId,
 			DistributionTopic:    distributionsMap[obj.DistributionId].Topic,
@@ -352,10 +352,41 @@ usersLoop:
 		})
 		return
 	}
-	// put into feeds
-
+	feedDomain := feedbacks.NewFeedbackDomain(datasource)
+	successItems, err2 := feedDomain.UpsertMultiple(req.GetContext().Value(), feeds)
+	if err2 != nil {
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "DIST:ERR:QUEUE",
+				Message: "Bad Request! Some problems occurred when searching the data.",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	queueItemsProceed := make([]*distribution.Queue, 0)
+	// filter out only success item will be put into queue
+	for _, qItem := range queueItems {
+		for _, sItem := range successItems {
+			// successItems format [ [feedbackId, distributionId, distObjectId, respondentId, recipientId] ]
+			if qItem.DistributionObjectId != sItem[2] {
+				continue
+			}
+			if qItem.RespondentId != sItem[3] {
+				continue
+			}
+			if qItem.RecipientId != sItem[4] {
+				continue
+			}
+			queueItemsProceed = append(queueItemsProceed, qItem)
+			break
+		}
+	}
 	// put into queues
-	_, err = distDomain.InsertQueues(req.GetContext().Value(), queueItems)
+	_, err = distDomain.InsertQueues(req.GetContext().Value(), queueItemsProceed)
 	if err != nil {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,

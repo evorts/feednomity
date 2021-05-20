@@ -27,46 +27,54 @@ func routingApi(
 	log logger.IManager,
 	mem memory.IManager,
 ) {
-	routes := []reqio.Route{
+	routes := make([]reqio.Route, 0)
+	routes = append(routes, routesApiMaintenance(cfg, view, db, accessControl, jwx, log)...)
+	routes = append(routes, routesApiFeedbacks(cfg, view, db, accessControl, jwx, aes, log)...)
+	routes = append(routes, routesApiDistribution(cfg, view, db, accessControl, jwx, aes, log)...)
+	routes = append(routes, routesApiUsers(cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiLink(cfg, view, db, accessControl, jwx, hash, aes, log)...)
+	routes = append(routes, routesApiGroups(cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiOrganizations(cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiQuestions(cfg, view, db, accessControl, jwx, hash, log)...)
+	reqio.NewRoutes(routes).ExecRoutes(o)
+}
+
+func routesApiFeedbacks(
+	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
+	jwx jwe.IManager, aes crypt.ICryptAES, log logger.IManager,
+) []reqio.Route {
+	return []reqio.Route{
 		{
-			Pattern: "/ping",
-			Handler: middleware.WithInjection(
-				http.HandlerFunc(hapi.Ping),
-				map[string]interface{}{
-					"view": view,
-				},
-			),
-		},
-		{
-			Pattern: "/reload",
+			Pattern: "/reviews/list",
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
 				accessControl, jwx,
 				middleware.WithInjection(
-					http.HandlerFunc(hapi.ApiReload),
+					http.HandlerFunc(hapi.ApiReviewList),
 					map[string]interface{}{
-						"view":   view,
 						"logger": log,
+						"view":   view,
+						"db":     db,
 					},
 				),
 			),
 		},
 		{
-			Pattern: "/feedbacks",
+			Pattern: "/reviews/detail/",
 			Handler: middleware.WithTokenProtection(
-				http.MethodPost,
+				http.MethodGet,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
 				accessControl, jwx,
 				middleware.WithInjection(
-					http.HandlerFunc(hapi.ApiFeedbackSubmission),
+					http.HandlerFunc(hapi.ApiReviewDetail),
 					map[string]interface{}{
 						"logger": log,
 						"view":   view,
-						"hash":   hash,
 						"db":     db,
+						"aes":    aes,
 					},
 				),
 			),
@@ -84,30 +92,17 @@ func routingApi(
 						"logger": log,
 						"view":   view,
 						"db":     db,
-						"hash":   hash,
+						"aes":    aes,
 					},
 				),
 			),
 		},
 	}
-	routes = append(routes, routesApiDistribution(cfg, view, db, accessControl, jwx, aes, log)...)
-	routes = append(routes, routesApiUsers(cfg, view, db, accessControl, jwx, hash, log)...)
-	routes = append(routes, routesApiLink(cfg, view, db, accessControl, jwx, hash, aes, log)...)
-	routes = append(routes, routesApiGroups(cfg, view, db, accessControl, jwx, hash, log)...)
-	routes = append(routes, routesApiOrganizations(cfg, view, db, accessControl, jwx, hash, log)...)
-	routes = append(routes, routesApiQuestions(cfg, view, db, accessControl, jwx, hash, log)...)
-
-	reqio.NewRoutes(routes).ExecRoutes(o)
 }
 
 func routesApiDistribution(
-	cfg config.IManager,
-	view view.IManager,
-	db database.IManager,
-	accessControl acl.IManager,
-	jwx jwe.IManager,
-	aes crypt.ICryptAES,
-	log logger.IManager,
+	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
+	jwx jwe.IManager, aes crypt.ICryptAES, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
@@ -270,13 +265,8 @@ func routesApiDistribution(
 }
 
 func routesApiUsers(
-	cfg config.IManager,
-	view view.IManager,
-	db database.IManager,
-	accessControl acl.IManager,
-	jwx jwe.IManager,
-	hash crypt.ICryptHash,
-	log logger.IManager,
+	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
+	jwx jwe.IManager, hash crypt.ICryptHash, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
@@ -370,14 +360,8 @@ func routesApiUsers(
 }
 
 func routesApiLink(
-	cfg config.IManager,
-	view view.IManager,
-	db database.IManager,
-	accessControl acl.IManager,
-	jwx jwe.IManager,
-	hash crypt.ICryptHash,
-	aes crypt.ICryptAES,
-	log logger.IManager,
+	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
+	jwx jwe.IManager, hash crypt.ICryptHash, aes crypt.ICryptAES, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
@@ -457,13 +441,8 @@ func routesApiLink(
 }
 
 func routesApiGroups(
-	cfg config.IManager,
-	view view.IManager,
-	db database.IManager,
-	accessControl acl.IManager,
-	jwx jwe.IManager,
-	hash crypt.ICryptHash,
-	log logger.IManager,
+	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
+	jwx jwe.IManager, hash crypt.ICryptHash, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
@@ -542,13 +521,8 @@ func routesApiGroups(
 }
 
 func routesApiOrganizations(
-	cfg config.IManager,
-	view view.IManager,
-	db database.IManager,
-	accessControl acl.IManager,
-	jwx jwe.IManager,
-	hash crypt.ICryptHash,
-	log logger.IManager,
+	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
+	jwx jwe.IManager, hash crypt.ICryptHash, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
@@ -626,14 +600,42 @@ func routesApiOrganizations(
 	}
 }
 
+func routesApiMaintenance(
+	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
+	jwx jwe.IManager, log logger.IManager,
+) []reqio.Route {
+	return []reqio.Route{
+		{
+			Pattern: "/ping",
+			Handler: middleware.WithInjection(
+				http.HandlerFunc(hapi.Ping),
+				map[string]interface{}{
+					"view": view,
+				},
+			),
+		},
+		{
+			Pattern: "/reload",
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiReload),
+					map[string]interface{}{
+						"view":   view,
+						"logger": log,
+					},
+				),
+			),
+		},
+	}
+}
+
 func routesApiQuestions(
-	cfg config.IManager,
-	view view.IManager,
-	db database.IManager,
-	accessControl acl.IManager,
-	jwx jwe.IManager,
-	hash crypt.ICryptHash,
-	log logger.IManager,
+	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
+	jwx jwe.IManager, hash crypt.ICryptHash, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{

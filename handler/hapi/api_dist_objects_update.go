@@ -19,7 +19,7 @@ func ApiDistObjectsUpdate(w http.ResponseWriter, r *http.Request) {
 	log.Log("distribution_object_update_api_handler", "request received")
 
 	var payload struct {
-		Item *DistributionObject `json:"item"`
+		Item *DistributionObjectRequest `json:"item"`
 	}
 
 	err := req.UnmarshallBody(&payload)

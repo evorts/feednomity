@@ -20,7 +20,7 @@ func ApiGroupsCreate(w http.ResponseWriter, r *http.Request) {
 	log.Log("groups_create_api_handler", "request received")
 
 	var payload struct {
-		Groups []*UserGroup `json:"groups"`
+		Groups []*UserGroupRequest `json:"groups"`
 	}
 	err := req.UnmarshallBody(&payload)
 	if err != nil || len(payload.Groups) < 1 {
