@@ -166,6 +166,9 @@
         const form360Element = document.getElementById('form360');
         const submitReview = document.getElementById('submit-review');
         const submitDraft = document.getElementById('save-draft');
+        if (!fc.elementExist(submitReview) || !fc.elementExist(submitDraft)) {
+            return;
+        }
         const enableButton = (v) => {
             if (v) {
                 submitReview.disabled = false;
@@ -187,7 +190,7 @@
                     if (res.status === 200) {
                         fc.toast('Your review has been submitted successfully!', 'is-success');
                     } else {
-                        fc.toast(res.error.message, 'is-danger');
+                        fc.toast(res.message, 'is-danger');
                     }
                     enableButton(true);
                 }, function (fail) {

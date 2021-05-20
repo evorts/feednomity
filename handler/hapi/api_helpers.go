@@ -24,7 +24,7 @@ func (l Limit) Value() int {
 	return int(l)
 }
 
-func eligible(u reqio.UserData, as acl.AccessScope, uid, gid int64) bool {
+func Eligible(u reqio.UserData, as acl.AccessScope, uid, gid int64) bool {
 	switch as {
 	case acl.AccessScopeSelf:
 		if uid != u.Id {

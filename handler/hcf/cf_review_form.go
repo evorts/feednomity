@@ -2,15 +2,16 @@ package hcf
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/evorts/feednomity/domain/assessments"
 	"github.com/evorts/feednomity/domain/feedbacks"
 	"github.com/evorts/feednomity/handler/hapi"
+	"github.com/evorts/feednomity/pkg/config"
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
-	"path"
 	"strconv"
 	"strings"
 )
@@ -83,21 +84,17 @@ func populateFields(data map[string]interface{}, factors *assessments.Factor) (s
 	return strengths, improvements
 }
 
-func ReviewForm(w http.ResponseWriter, r *http.Request) {
+func ReviewDetail(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	vm := req.GetContext().Get("view").(view.ITemplateManager)
 	ds := req.GetContext().Get("db").(database.IManager)
+	cfg := req.GetContext().Get("cfg").(config.IManager)
 
 	log.Log("web_review_form_handler", "request received")
 
-	var (
-		err error
-		fid int
-	)
 	// get the form if from path
-	fidPath := path.Base(req.GetPath())
-	fid, err = strconv.Atoi(fidPath)
+	fid, err := strconv.Atoi(req.GetPathLastValue())
 	if err != nil {
 		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
 			"PageTitle": "Page Not Found",
@@ -117,24 +114,34 @@ func ReviewForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	feed = feeds[0]
-
+	if !hapi.Eligible(req.GetUserData(), req.GetUserAccessScope(), feed.RespondentId, feed.RespondentGroupId) {
+		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
+			"PageTitle": "Page Not Found",
+		})
+		return
+	}
 	assessmentsDomain := assessments.NewAssessmentDomain(ds)
 	factors, _ := assessmentsDomain.FindTemplateDataByKey(req.GetContext().Value(), "review360")
-
-	strengths, improvements := populateFields(feed.Content, factors.Factors)
+	content := make(map[string]interface{})
+	if v, ok := feed.Content["raw"]; ok {
+		content = v.(map[string]interface{})
+	}
+	strengths, improvements := populateFields(content, factors.Factors)
 	if strengths == nil {
 		strengths = make([]string, factors.StrengthsFieldCount)
 	}
 	if improvements == nil {
 		improvements = make([]string, factors.ImprovementsFieldCount)
 	}
-
-	if err = vm.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "member-review.html", map[string]interface{}{
+	if err = vm.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "member-review-detail.html", map[string]interface{}{
 		"PageTitle":    factors.Factors.Title,
 		"RatingsLabel": strings.Join(factors.Ratings.Labels, ","),
 		"Seq": func(i int) int {
 			return i + 1
 		},
+		"ShowButton": feed.Status != feedbacks.StatusFinal,
+		"Id": feed.Id,
+		"ApiReviewSubmitUrl": fmt.Sprintf("%s/v1/reviews/submit", cfg.GetConfig().App.BaseUrlApi),
 		"Assessments": assessments.Item{
 			Recipient: assessments.Client{
 				Name:         feed.RecipientName,

@@ -47,12 +47,12 @@ func ApiOrganizationUpdate(w http.ResponseWriter, r *http.Request) {
 		errs["name"] = "not a valid name"
 	}
 	// check eligibility of the users to update data
-	if len(errs) < 1 && !eligible(
+	if len(errs) < 1 && !Eligible(
 		user,
 		req.GetUserAccessScope(),
 		user.Id, payload.Org.Id,
 	) {
-		errs["eligibility"] = "Not eligible to make this request."
+		errs["eligibility"] = "Not Eligible to make this request."
 	}
 	if len(errs) > 0 {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{

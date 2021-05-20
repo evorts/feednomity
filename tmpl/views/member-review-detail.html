@@ -1,7 +1,7 @@
 {{ template "layout_member" . }}
 {{ define "title" }} {{ .PageTitle }} {{ end }}
 {{ define "styles" }}
-    <link href="/assets/lib/360/style.css" rel="stylesheet">
+    <link href="/assets/lib/review/detail.css" rel="stylesheet">
 {{ end }}
 {{ define "scripts" }}
     {{ with $r := . }}
@@ -11,7 +11,7 @@
     {{ end }}
 {{ end }}
 {{ define "body_scripts" }}
-    <script type="module" src="/assets/lib/360/script.js"></script>
+    <script type="module" src="/assets/lib/review/detail.js"></script>
 {{ end }}
 {{ define "header"}}
     <nav class="navbar is-white" role="navigation">
@@ -41,7 +41,7 @@
     </div>
     <div class="tab-contents">
         <section class="tab-content form-section">
-            <form name="form360" id="form360" method="post" action="/api/360/submission">
+            <form name="form360" id="form360" method="post" action="{{ .ApiReviewSubmitUrl }}">
                 <div class="container box is-widescreen">
                     <div class="columns">
                         <div class="column">
@@ -246,11 +246,13 @@
                         </div>
                     </div>
                 </div>
+                {{ if .ShowButton }}
                 <div class="container box is-widescreen mt-5">
                     <div class="columns">
                         <div class="columns">
                             <div class="column">
                                 <input type="hidden" name="csrf" class="form-input" value="{{ .Csrf }}">
+                                <input type="hidden" name="id" class="form-input" value="{{ .Id }}">
                                 <div class="field is-grouped">
                                     <div class="control">
                                         <button id="submit-review" name="submit-review" type="submit" class="button is-link">Submit Review</button>
@@ -263,6 +265,7 @@
                         </div>
                     </div>
                 </div>
+                {{ end }}
             </form>
         </section>
         <section class="tab-content guideline-section">

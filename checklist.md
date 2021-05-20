@@ -52,6 +52,12 @@
 
 [x] `/api/organizations/delete`
 
+[x] `/api/reviews/list`
+
+[x] `/api/reviews/{id}`
+
+[x] `/api/reviews/submit`
+
 # Cron Jobs
 
 [x] `mail blast queue`
@@ -60,9 +66,9 @@
 
 [ ] `/mbr/link/:hash`
 
-[ ] `/mbr/review/list`
+[x] `/mbr/review/list`
 
-[ ] `/mbr/review/360`
+[x] `/mbr/review/{id}`
 
 [x] `/mbr/login`
 

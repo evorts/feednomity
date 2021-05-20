@@ -51,7 +51,7 @@ func ApiReviewDetail(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	if !eligible(req.GetUserData(), req.GetUserAccessScope(), feeds[0].RespondentId, feeds[0].RespondentGroupId) {
+	if !Eligible(req.GetUserData(), req.GetUserAccessScope(), feeds[0].RespondentId, feeds[0].RespondentGroupId) {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),

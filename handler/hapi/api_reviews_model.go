@@ -18,7 +18,7 @@ type Error struct {
 }
 
 type FeedbackRequest struct {
-	Id             int64            `json:"id"`
+	Id             string            `json:"id"`
 	SubmissionType feedbacks.Status `json:"submission_type"`
 
 	Productivity  ItemValue `json:"productivity"`

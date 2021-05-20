@@ -53,12 +53,12 @@ func ApiUserUpdate(w http.ResponseWriter, r *http.Request) {
 		errs["pwd"] = users.PASSWORD(payload.User.Password).Rule()
 	}
 	// check eligibility of the users to update data
-	if len(errs) < 1 && !eligible(
+	if len(errs) < 1 && !Eligible(
 		user,
 		req.GetUserAccessScope(),
 		payload.User.Id, payload.User.GroupId,
 	) {
-		errs["eligibility"] = "Not eligible to make this request."
+		errs["eligibility"] = "Not Eligible to make this request."
 	}
 	if len(errs) > 0 {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{

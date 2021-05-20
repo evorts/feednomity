@@ -91,13 +91,14 @@ func routesWebConsumers(
 			Handler: middleware.WithSessionProtection(
 				session, view, accessControl, jwx, cfg,
 				middleware.WithInjection(
-					http.HandlerFunc(hcf.ReviewForm),
+					http.HandlerFunc(hcf.ReviewDetail),
 					map[string]interface{}{
 						"logger": logger,
 						"view":   view,
 						"sm":     session,
 						"hash":   hash,
 						"db":     ds,
+						"cfg":    cfg,
 					},
 				),
 			),

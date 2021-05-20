@@ -11,6 +11,7 @@ import (
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -66,7 +67,7 @@ func (d *FeedbackRequest) FilterFieldsAndTransform(value interface{}, rs map[str
 		if tag == "" || strings.Contains(tag, "\"-\"") {
 			continue
 		}
-		if typeOfs.Field(i).Type.String() != "handler.ItemValue" && v.Field(i).Kind() == reflect.Struct {
+		if typeOfs.Field(i).Type.String() != "hapi.ItemValue" && v.Field(i).Kind() == reflect.Struct {
 			d.FilterFieldsAndTransform(v.Field(i).Interface(), rs)
 			continue
 		}
@@ -83,7 +84,10 @@ func ApiReviewSubmit(w http.ResponseWriter, r *http.Request) {
 
 	log.Log("api_review_submit_handler", "request received")
 
-	var payload *FeedbackRequest
+	var (
+		payload *FeedbackRequest
+		feedId int
+	)
 
 	err := req.UnmarshallBody(&payload)
 	if err != nil || payload == nil {
@@ -99,7 +103,19 @@ func ApiReviewSubmit(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
+	feedId, err = strconv.Atoi(payload.Id)
+	if err != nil || feedId < 1 {
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "FEED:ERR:ID",
+				Message: "Bad Request! bad identifier.",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+	}
 	errs := payload.Validate()
 
 	if len(errs) > 0 {
@@ -121,14 +137,15 @@ func ApiReviewSubmit(w http.ResponseWriter, r *http.Request) {
 	)
 
 	feedDomain := feedbacks.NewFeedbackDomain(ds)
-	feeds, err = feedDomain.FindByIds(req.GetContext().Value(), payload.Id)
+	feeds, err = feedDomain.FindByIds(req.GetContext().Value(), int64(feedId))
+
 	if err != nil || len(feeds) < 1 || feeds[0].Status == feedbacks.StatusFinal {
 		_ = vm.RenderJson(w, http.StatusBadRequest,
 			api.NewResponse(
 				http.StatusBadRequest, nil,
 				api.NewResponseError(
 					"SUB:ERR:FED",
-					"Information not found or no longer eligible to be modified!", nil, nil,
+					"Information not found or no longer Eligible to be modified!", nil, nil,
 				),
 			),
 		)
