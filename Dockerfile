@@ -20,6 +20,7 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /go/bin/app /go/bin/app
 COPY --from=builder /apps/tmpl /go/bin/tmpl
+COPY --from=builder /apps/tmpl_mail /go/bin/tmpl_mail
 COPY --from=builder /apps/assets /go/bin/assets
 COPY --from=builder /apps/config.docker.yml /go/bin/config.yml
 

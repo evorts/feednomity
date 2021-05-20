@@ -68,7 +68,7 @@
 
 [x] `/mbr/review/list`
 
-[x] `/mbr/review/{id}`
+[x] `/mbr/reviews/{id}`
 
 [x] `/mbr/login`
 
