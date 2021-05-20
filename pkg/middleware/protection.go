@@ -101,39 +101,27 @@ func WithSessionProtection(sm session.IManager, vm view.ITemplateManager, acc ac
 
 //WithTokenProtection when using jwe, e.g. API
 func WithTokenProtection(
-	method string, allowedMethods, allowedOrigins []string, acc acl.IManager, jw jwe.IManager, next http.Handler,
+	method string, allowedMethods, allowedOrigins []string, acc acl.IManager, jw jwe.IManager, vm view.IManager, next http.Handler,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.ToUpper(r.Method) != method {
-			renderJson(
-				http.StatusMethodNotAllowed,
-				api.NewResponseError("FIL:MTD:NA", "Not allowed!", nil, nil),
-				w, nil,
-			)
+		status, err, origin := evalFilters(r, method, allowedMethods, allowedOrigins)
+		vm.ResetHeaders()
+		vm.InjectHeader("Access-Control-Allow-Methods", r.Method)
+		vm.InjectHeader("Access-Control-Allow-Origin", origin)
+		if err != nil {
+			_ = vm.RenderJson(w, status, map[string]interface{}{"error": err.Error()})
 			return
 		}
-		var (
-			status int
-			errRs  *api.ResponseError
-		)
+		if status != http.StatusContinue {
+			_ = vm.RenderJson(w, status, make([]string, 0))
+			return
+		}
 		ctx := r.Context()
-		if len(allowedMethods) > 0 && len(allowedOrigins) > 0 {
-			status, errRs, _ = evalCors(r, allowedMethods, allowedOrigins)
-		}
-		if errRs != nil {
-			renderJson(status, errRs, w, nil)
-			return
-		}
-		var (
-			userData reqio.UserData
-		)
+		userData := reqio.UserData{}
 		jweToken := strings.Trim(r.Header.Get("X-Authorization"), " ")
 		status, code, message, _, pri := parseToken(jw, jweToken)
 		if len(message) > 0 {
-			renderJson(
-				status, api.NewResponseError(code, message, nil, nil),
-				w, nil,
-			)
+			_ = vm.RenderJson(w, status, api.NewResponseError(code, message, nil, nil))
 			return
 		}
 		userData = reqio.UserData{
@@ -154,10 +142,7 @@ func WithTokenProtection(
 		//render template when violate permission
 		allowed, accessScope := acc.IsAllowed(userData.Id, method, r.URL.Path)
 		if !allowed {
-			renderJson(
-				http.StatusForbidden, api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil),
-				w, nil,
-			)
+			_ = vm.RenderJson(w, http.StatusForbidden, api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil))
 			return
 		}
 		ctx = context.WithValue(ctx, "user", userData)

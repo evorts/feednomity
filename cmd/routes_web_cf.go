@@ -87,7 +87,7 @@ func routesWebConsumers(
 			),
 		},
 		{
-			Pattern: "/mbr/review/form/view/",
+			Pattern: "/mbr/reviews/",
 			Handler: middleware.WithSessionProtection(
 				session, view, accessControl, jwx, cfg,
 				middleware.WithInjection(
@@ -97,6 +97,7 @@ func routesWebConsumers(
 						"view":   view,
 						"sm":     session,
 						"hash":   hash,
+						"db":     ds,
 					},
 				),
 			),

@@ -1,4 +1,6 @@
 const fc = (function () {
+    const sessionKey = "feednomisess";
+
     const getCookieDomain = () => {
         const hName = location.hostname;
         if (hName.indexOf(".") < 0) {
@@ -41,6 +43,12 @@ const fc = (function () {
 
     const removeCookie = (key) => {
         document.cookie = `${key}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+    }
+
+    const getRequestHeaders = () => {
+        return [
+            ['X-Authorization', getCookie(sessionKey)]
+        ];
     }
 
     const onDocumentReady = (fn) => {
@@ -165,6 +173,12 @@ const fc = (function () {
         });
         ajax[key].open(method, endpoint);
         ajax[key].setRequestHeader('Content-Type', 'application/json');
+        const headers = getRequestHeaders();
+        if (Array.isArray(headers) && headers.length > 0) {
+            headers.forEach(function (item) {
+                ajax[key].setRequestHeader(item[0], item[1]);
+            })
+        }
         ajax[key].send(data);
     }
 
@@ -360,5 +374,6 @@ const fc = (function () {
         setCookie,
         getCookie,
         removeCookie,
+        sessionKey,
     };
 })();

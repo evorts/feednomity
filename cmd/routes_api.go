@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+	"github.com/evorts/feednomity/handler"
 	"github.com/evorts/feednomity/handler/hapi"
 	"github.com/evorts/feednomity/pkg/acl"
 	"github.com/evorts/feednomity/pkg/config"
@@ -15,6 +17,9 @@ import (
 	"net/http"
 )
 
+const apiPrefix = "/api"
+const apiVersionPrefix = "/v1"
+
 func routingApi(
 	o *http.ServeMux,
 	cfg config.IManager,
@@ -28,29 +33,31 @@ func routingApi(
 	mem memory.IManager,
 ) {
 	routes := make([]reqio.Route, 0)
-	routes = append(routes, routesApiMaintenance(cfg, view, db, accessControl, jwx, log)...)
-	routes = append(routes, routesApiFeedbacks(cfg, view, db, accessControl, jwx, aes, log)...)
-	routes = append(routes, routesApiDistribution(cfg, view, db, accessControl, jwx, aes, log)...)
-	routes = append(routes, routesApiUsers(cfg, view, db, accessControl, jwx, hash, log)...)
-	routes = append(routes, routesApiLink(cfg, view, db, accessControl, jwx, hash, aes, log)...)
-	routes = append(routes, routesApiGroups(cfg, view, db, accessControl, jwx, hash, log)...)
-	routes = append(routes, routesApiOrganizations(cfg, view, db, accessControl, jwx, hash, log)...)
-	routes = append(routes, routesApiQuestions(cfg, view, db, accessControl, jwx, hash, log)...)
+	prefix := fmt.Sprintf("%s%s", apiPrefix, apiVersionPrefix)
+	routes = append(routes, routesApiMaintenance(apiPrefix, cfg, view, db, accessControl, jwx, log)...)
+	routes = append(routes, routesApiFeedbacks(prefix, cfg, view, db, accessControl, jwx, aes, log)...)
+	routes = append(routes, routesApiDistribution(prefix, cfg, view, db, accessControl, jwx, aes, log)...)
+	routes = append(routes, routesApiUsers(prefix, cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiLink(prefix, cfg, view, db, accessControl, jwx, hash, aes, log)...)
+	routes = append(routes, routesApiGroups(prefix, cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiOrganizations(prefix, cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiQuestions(prefix, cfg, view, db, accessControl, jwx, hash, log)...)
 	reqio.NewRoutes(routes).ExecRoutes(o)
 }
 
 func routesApiFeedbacks(
+	pathPrefix string,
 	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
 	jwx jwe.IManager, aes crypt.ICryptAES, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/reviews/list",
+			Pattern: fmt.Sprintf("%s/reviews/list", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiReviewList),
 					map[string]interface{}{
@@ -62,12 +69,12 @@ func routesApiFeedbacks(
 			),
 		},
 		{
-			Pattern: "/reviews/detail/",
+			Pattern: fmt.Sprintf("%s/reviews/detail/", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodGet,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiReviewDetail),
 					map[string]interface{}{
@@ -80,12 +87,12 @@ func routesApiFeedbacks(
 			),
 		},
 		{
-			Pattern: "/reviews/submit",
+			Pattern: fmt.Sprintf("%s/reviews/submit", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiReviewSubmit),
 					map[string]interface{}{
@@ -101,17 +108,18 @@ func routesApiFeedbacks(
 }
 
 func routesApiDistribution(
+	pathPrefix string,
 	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
 	jwx jwe.IManager, aes crypt.ICryptAES, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/distributions/publish",
+			Pattern: fmt.Sprintf("%s/distributions/publish", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiDistributionBlast),
 					map[string]interface{}{
@@ -124,12 +132,12 @@ func routesApiDistribution(
 			),
 		},
 		{
-			Pattern: "/distributions/list",
+			Pattern: fmt.Sprintf("%s/distributions/list", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiDistributionsList),
 					map[string]interface{}{
@@ -141,12 +149,12 @@ func routesApiDistribution(
 			),
 		},
 		{
-			Pattern: "/distributions/create",
+			Pattern: fmt.Sprintf("%s/distributions/create", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiDistributionsCreate),
 					map[string]interface{}{
@@ -158,12 +166,12 @@ func routesApiDistribution(
 			),
 		},
 		{
-			Pattern: "/distributions/update",
+			Pattern: fmt.Sprintf("%s/distributions/update", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPut,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiDistributionsUpdate),
 					map[string]interface{}{
@@ -175,12 +183,12 @@ func routesApiDistribution(
 			),
 		},
 		{
-			Pattern: "/distributions/delete",
+			Pattern: fmt.Sprintf("%s/distributions/delete", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodDelete,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiDistributionsDelete),
 					map[string]interface{}{
@@ -192,12 +200,12 @@ func routesApiDistribution(
 			),
 		},
 		{
-			Pattern: "/dist-objects/list",
+			Pattern: fmt.Sprintf("%s/dist-objects/list", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiDistObjectsList),
 					map[string]interface{}{
@@ -209,12 +217,12 @@ func routesApiDistribution(
 			),
 		},
 		{
-			Pattern: "/dist-objects/create",
+			Pattern: fmt.Sprintf("%s/dist-objects/create", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiDistObjectsCreate),
 					map[string]interface{}{
@@ -228,12 +236,12 @@ func routesApiDistribution(
 			),
 		},
 		{
-			Pattern: "/dist-objects/update",
+			Pattern: fmt.Sprintf("%s/dist-objects/update", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPut,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiDistObjectsUpdate),
 					map[string]interface{}{
@@ -245,12 +253,12 @@ func routesApiDistribution(
 			),
 		},
 		{
-			Pattern: "/dist-objects/delete",
+			Pattern: fmt.Sprintf("%s/dist-objects/delete", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodDelete,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiDistObjectsDelete),
 					map[string]interface{}{
@@ -265,12 +273,13 @@ func routesApiDistribution(
 }
 
 func routesApiUsers(
+	pathPrefix string,
 	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
 	jwx jwe.IManager, hash crypt.ICryptHash, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/users/login",
+			Pattern: fmt.Sprintf("%s/users/login", pathPrefix),
 			Handler: middleware.WithFiltersForApi(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
@@ -289,12 +298,12 @@ func routesApiUsers(
 			),
 		},
 		{
-			Pattern: "/users/list",
+			Pattern: fmt.Sprintf("%s/users/list", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiUsersList),
 					map[string]interface{}{
@@ -306,12 +315,12 @@ func routesApiUsers(
 			),
 		},
 		{
-			Pattern: "/users/create",
+			Pattern: fmt.Sprintf("%s/users/create", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiUserCreate),
 					map[string]interface{}{
@@ -323,12 +332,12 @@ func routesApiUsers(
 			),
 		},
 		{
-			Pattern: "/users/update",
+			Pattern: fmt.Sprintf("%s/users/update", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPut,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiUserUpdate),
 					map[string]interface{}{
@@ -340,12 +349,12 @@ func routesApiUsers(
 			),
 		},
 		{
-			Pattern: "/users/delete",
+			Pattern: fmt.Sprintf("%s/users/delete", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodDelete,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiUsersDelete),
 					map[string]interface{}{
@@ -360,17 +369,18 @@ func routesApiUsers(
 }
 
 func routesApiLink(
+	pathPrefix string,
 	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
 	jwx jwe.IManager, hash crypt.ICryptHash, aes crypt.ICryptAES, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/links/list",
+			Pattern: fmt.Sprintf("%s/links/list", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiLinksList),
 					map[string]interface{}{
@@ -382,12 +392,12 @@ func routesApiLink(
 			),
 		},
 		{
-			Pattern: "/links/create",
+			Pattern: fmt.Sprintf("%s/links/create", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiLinksCreate),
 					map[string]interface{}{
@@ -401,12 +411,12 @@ func routesApiLink(
 			),
 		},
 		{
-			Pattern: "/links/update",
+			Pattern: fmt.Sprintf("%s/links/update", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPut,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiLinkUpdate),
 					map[string]interface{}{
@@ -421,12 +431,12 @@ func routesApiLink(
 			),
 		},
 		{
-			Pattern: "/links/delete",
+			Pattern: fmt.Sprintf("%s/links/delete", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodDelete,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiLinksDelete),
 					map[string]interface{}{
@@ -441,17 +451,18 @@ func routesApiLink(
 }
 
 func routesApiGroups(
+	pathPrefix string,
 	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
 	jwx jwe.IManager, hash crypt.ICryptHash, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/groups/list",
+			Pattern: fmt.Sprintf("%s/groups/list", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiGroupsList),
 					map[string]interface{}{
@@ -464,12 +475,12 @@ func routesApiGroups(
 			),
 		},
 		{
-			Pattern: "/groups/create",
+			Pattern: fmt.Sprintf("%s/groups/create", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiGroupsCreate),
 					map[string]interface{}{
@@ -482,12 +493,12 @@ func routesApiGroups(
 			),
 		},
 		{
-			Pattern: "/groups/update",
+			Pattern: fmt.Sprintf("%s/groups/update", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPut,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiGroupUpdate),
 					map[string]interface{}{
@@ -500,12 +511,12 @@ func routesApiGroups(
 			),
 		},
 		{
-			Pattern: "/groups/delete",
+			Pattern: fmt.Sprintf("%s/groups/delete", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodDelete,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiGroupsDelete),
 					map[string]interface{}{
@@ -521,17 +532,18 @@ func routesApiGroups(
 }
 
 func routesApiOrganizations(
+	pathPrefix string,
 	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
 	jwx jwe.IManager, hash crypt.ICryptHash, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/organizations/list",
+			Pattern: fmt.Sprintf("%s/organizations/list", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiOrganizationsList),
 					map[string]interface{}{
@@ -544,12 +556,12 @@ func routesApiOrganizations(
 			),
 		},
 		{
-			Pattern: "/organizations/create",
+			Pattern: fmt.Sprintf("%s/organizations/create", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiOrganizationsCreate),
 					map[string]interface{}{
@@ -562,12 +574,12 @@ func routesApiOrganizations(
 			),
 		},
 		{
-			Pattern: "/organizations/update",
+			Pattern: fmt.Sprintf("%s/organizations/update", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPut,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiOrganizationUpdate),
 					map[string]interface{}{
@@ -580,12 +592,12 @@ func routesApiOrganizations(
 			),
 		},
 		{
-			Pattern: "/organizations/delete",
+			Pattern: fmt.Sprintf("%s/organizations/delete", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodDelete,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiOrganizationsDelete),
 					map[string]interface{}{
@@ -601,26 +613,27 @@ func routesApiOrganizations(
 }
 
 func routesApiMaintenance(
+	pathPrefix string,
 	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
 	jwx jwe.IManager, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/ping",
+			Pattern: fmt.Sprintf("%s/ping", pathPrefix),
 			Handler: middleware.WithInjection(
-				http.HandlerFunc(hapi.Ping),
+				http.HandlerFunc(handler.Ping),
 				map[string]interface{}{
 					"view": view,
 				},
 			),
 		},
 		{
-			Pattern: "/reload",
+			Pattern: fmt.Sprintf("%s/reload", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
 				cfg.GetConfig().App.Cors.AllowedOrigins,
-				accessControl, jwx,
+				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiReload),
 					map[string]interface{}{
@@ -634,12 +647,13 @@ func routesApiMaintenance(
 }
 
 func routesApiQuestions(
+	pathPrefix string,
 	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
 	jwx jwe.IManager, hash crypt.ICryptHash, log logger.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
-			Pattern: "/questions",
+			Pattern: fmt.Sprintf("%s/questions", pathPrefix),
 			Handler: middleware.WithFiltersForApi(
 				http.MethodGet,
 				cfg.GetConfig().App.Cors.AllowedMethods,
@@ -657,7 +671,7 @@ func routesApiQuestions(
 			),
 		},
 		{
-			Pattern: "/questions/create",
+			Pattern: fmt.Sprintf("%s/questions/create", pathPrefix),
 			Handler: middleware.WithFiltersForApi(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
@@ -675,7 +689,7 @@ func routesApiQuestions(
 			),
 		},
 		{
-			Pattern: "/questions/update",
+			Pattern: fmt.Sprintf("%s/questions/update", pathPrefix),
 			Handler: middleware.WithFiltersForApi(
 				http.MethodPut,
 				cfg.GetConfig().App.Cors.AllowedMethods,
@@ -693,7 +707,7 @@ func routesApiQuestions(
 			),
 		},
 		{
-			Pattern: "/questions/remove",
+			Pattern: fmt.Sprintf("%s/questions/remove", pathPrefix),
 			Handler: middleware.WithFiltersForApi(
 				http.MethodDelete,
 				cfg.GetConfig().App.Cors.AllowedMethods,

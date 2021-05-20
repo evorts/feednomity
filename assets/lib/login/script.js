@@ -42,12 +42,12 @@
             e.preventDefault();
             const data = fc.getFormData(form);
             fc.call(
-                "login", "POST", `${apiUrl}/users/login`,
+                "login", "POST", `${apiUrl}/v1/users/login`,
                 JSON.stringify(data),
                 function (res) {
                     $this.removeAttribute('disabled');
                     if (res.status === 200) {
-                        fc.setCookie("feednomisess", res.content['token'], 24)
+                        fc.setCookie(fc.sessionKey, res.content['token'], 24)
                         window.location.replace(getRedirectUrl());
                         return;
                     }

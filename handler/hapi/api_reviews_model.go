@@ -84,7 +84,7 @@ func transformFeedbacksReverse(f []*feedbacks.Feedback) (t []*FeedbackResponse) 
 	t = make([]*FeedbackResponse, 0)
 	for _, fv := range f {
 		u := &FeedbackResponse{}
-		if err := utils.TransformStruct(u, fv); err == nil {
+		if err := utils.TransformStructWithExcludes(u, fv, []string{"content"}); err == nil {
 			t = append(t, u)
 		}
 	}
