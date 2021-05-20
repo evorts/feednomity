@@ -189,6 +189,7 @@
                 function (res) {
                     if (res.status === 200) {
                         fc.toast('Your review has been submitted successfully!', 'is-success');
+                        location.replace('/mbr/review/list');
                     } else {
                         fc.toast(res.message, 'is-danger');
                     }
