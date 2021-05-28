@@ -57,12 +57,12 @@ func instantiateLib() {
 	)
 	ds.MustConnect(context.Background())
 	m = mailer.NewSendInBlue(
-		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").ApiUrl,
-		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").ApiKey,
+		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").Get("api_url"),
+		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").Get("api_key"),
 	)
 	m.SetSender(
-		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").SenderName,
-		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").SenderEmail,
+		cfg.GetConfig().Mailer.SenderName,
+		cfg.GetConfig().Mailer.SenderEmail,
 	)
 }
 
@@ -143,7 +143,6 @@ func runCronBlaster() {
 		)
 		objectIds = append(objectIds, item.Id)
 	}
-	todayLimit -= cfg.GetConfig().CronJobs.Blaster.BatchRows
 	if len(objectIds) > 0 {
 		err = distDomain.UpdateObjectRetryCountByIds(context.Background(), objectIds...)
 		if err != nil {
@@ -155,5 +154,6 @@ func runCronBlaster() {
 			l.Log("cron_queue_deletion_error", err)
 		}
 	}
+	todayLimit -= len(objectIds)
 	l.Log("cron_mail_daily_limit_left", fmt.Sprintf("daily limit left: %d", todayLimit))
 }

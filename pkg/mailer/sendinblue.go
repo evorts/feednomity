@@ -62,14 +62,14 @@ func (s *sibManager) SendHtml(ctx context.Context, to []Target, subject, html st
 		Subject:     subject,
 		HtmlContent: bindDataToTemplate(data, html),
 	}
-	if args, err := json.Marshal(payload); err == nil {
-		body, err2 := s.call(args)
+	if p, err := json.Marshal(payload); err == nil {
+		body, err2 := s.call(p, nil)
 		return body, err2
 	}
 	return nil, errors.New("serializing payload failed")
 }
 
-func (s *sibManager) call(payload []byte) ([]byte, error) {
+func (s *sibManager) call(payload []byte, args map[string]interface{}) ([]byte, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest(http.MethodPost, s.apiUrl, bytes.NewBuffer(payload))
 	if err != nil {

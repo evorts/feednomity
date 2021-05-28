@@ -9,11 +9,13 @@ import (
 	"path"
 )
 
-type MailProvider struct {
-	ApiKey      string `yaml:"api_key"`
-	ApiUrl      string `yaml:"api_url"`
-	SenderName  string `yaml:"sender_name"`
-	SenderEmail string `yaml:"sender_email"`
+type MailProvider map[string] string
+
+func (m MailProvider) Get(key string) string {
+	if v, ok := m[key]; ok {
+		return v
+	}
+	return ""
 }
 
 type MapMailProvider map[string]MailProvider
@@ -85,8 +87,10 @@ type Config struct {
 	} `yaml:"db"`
 	Memory MapMemoryProvider `yaml:"memory"`
 	Mailer struct {
-		DailyLimit int             `yaml:"daily_limit"`
-		Providers  MapMailProvider `yaml:"providers"`
+		DailyLimit  int             `yaml:"daily_limit"`
+		SenderName  string          `yaml:"sender_name"`
+		SenderEmail string          `yaml:"sender_email"`
+		Providers   MapMailProvider `yaml:"providers"`
 	} `yaml:"mailer"`
 	CronJobs struct {
 		Blaster struct {

@@ -1,5 +1,5 @@
 html, body {
-    background: #6d6d6d none;
+    background: #b8b5b8 none;
     height: 100%;
 }
 
@@ -18,9 +18,4 @@ html, body {
 
 .panel.is-primary .panel-heading, .button.is-primary {
     background-color: #1f68b8;
-}
-
-.forgot {
-    position: relative;
-    float: right;
 }

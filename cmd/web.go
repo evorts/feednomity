@@ -38,6 +38,7 @@ var Web = &cli.Command{
 			cfg.GetConfig().Memory.Get("redis").Password,
 			cfg.GetConfig().Memory.Get("redis").Db,
 		)
+		mem.MustConnect(context.Background())
 		ds := database.NewDB(
 			cfg.GetConfig().DB.Dsn,
 			cfg.GetConfig().DB.MaxConnectionLifetime,

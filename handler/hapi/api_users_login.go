@@ -49,8 +49,8 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	// Validate request
 	errs := make(map[string]string, 0)
-	if !validate.ValidUsername(payload.Username) {
-		errs["username"] = "Not a valid username!"
+	if !validate.ValidUsername(payload.Username) || !validate.ValidEmail(payload.Username) {
+		errs["username"] = "Not a valid username or email!"
 	}
 	if !validate.ValidPassword(payload.Password) {
 		errs["password"] = "Not a valid password!"
@@ -70,20 +70,42 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	var user *users.User
 	usersDomain := users.NewUserDomain(datasource)
-	user, err = usersDomain.FindByUsername(req.GetContext().Value(), payload.Username)
+
+	if validate.ValidEmail(payload.Username) {
+		user, err = usersDomain.FindByUserEmail(req.GetContext().Value(), payload.Username)
+	} else {
+		user, err = usersDomain.FindByUsername(req.GetContext().Value(), payload.Username)
+	}
+
 	if err != nil {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
 				Code:    "LOG:ERR:USR",
-				Message: "Bad Request! UserRequest not found.",
+				Message: "Bad Request! User not found.",
 				Reasons: map[string]string{"err": err.Error()},
 				Details: make([]interface{}, 0),
 			},
 		})
 		return
 	}
+	// ensure the user and password are correct
+	passCrypt := hash.RenewHash().HashWithoutSalt(payload.Password)
+	if strings.ToLower(passCrypt) != strings.ToLower(strings.TrimLeft(user.Password, "\\x")) {
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LOG:ERR:ATH",
+				Message: "Bad Request! authentication failed.",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+
 	// find out the organizations
 	var (
 		g        []*users.Group
@@ -119,21 +141,7 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	// ensure the user and password are correct
-	passCrypt := hash.RenewHash().HashWithoutSalt(payload.Password)
-	if strings.ToLower(passCrypt) != strings.ToLower(strings.TrimLeft(user.Password, "\\x")) {
-		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
-			Status:  http.StatusBadRequest,
-			Content: make(map[string]interface{}, 0),
-			Error: &api.ResponseError{
-				Code:    "LOG:ERR:ATH",
-				Message: "Bad Request! authentication failed.",
-				Reasons: make(map[string]string, 0),
-				Details: make([]interface{}, 0),
-			},
-		})
-		return
-	}
+
 	//by default expiration only in 6 hour
 	expiration := 6 * time.Hour
 	if len(payload.Remember) > 0 {

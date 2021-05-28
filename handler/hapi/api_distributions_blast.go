@@ -289,7 +289,7 @@ usersLoop:
 			}
 		}
 		recipientName := utils.IIf(len(recipient.DisplayName) < 1, strings.Title(recipient.Username), recipient.DisplayName)
-		subject := fmt.Sprintf("Request FeedbackResponse: %s - For: %s", d.Topic, recipientName)
+		subject := fmt.Sprintf("Req. Review for: %s | %s", recipientName, d.Topic)
 		feeds = append(feeds, &feedbacks.Feedback{
 			DistributionId:       obj.DistributionId,
 			DistributionTopic:    distributionsMap[obj.DistributionId].Topic,
@@ -360,7 +360,7 @@ usersLoop:
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
 				Code:    "DIST:ERR:QUEUE",
-				Message: "Bad Request! Some problems occurred when searching the data.",
+				Message: "Bad Request! Some problems occurred when saving the data.",
 				Reasons: make(map[string]string, 0),
 				Details: make([]interface{}, 0),
 			},

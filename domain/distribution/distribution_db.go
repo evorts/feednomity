@@ -278,7 +278,7 @@ func (m *manager) FindObjectByIds(ctx context.Context, ids ...int64) ([]*Object,
 	for rows.Next() {
 		var (
 			item              Object
-			updatedBy, linkId sql.NullInt64
+			updatedBy, linkId, retryCount sql.NullInt64
 		)
 		err = rows.Scan(
 			&item.Id,
@@ -287,7 +287,7 @@ func (m *manager) FindObjectByIds(ctx context.Context, ids ...int64) ([]*Object,
 			&item.RespondentId,
 			&item.PublishingStatus,
 			&item.PublishingLog,
-			&item.RetryCount,
+			&retryCount,
 			&item.CreatedBy,
 			&updatedBy,
 			&linkId,
@@ -297,6 +297,7 @@ func (m *manager) FindObjectByIds(ctx context.Context, ids ...int64) ([]*Object,
 		)
 		item.UpdatedBy = updatedBy.Int64
 		item.LinkId = linkId.Int64
+		item.RetryCount = retryCount.Int64
 		if err != nil {
 			return nil, err
 		}
@@ -367,7 +368,7 @@ func (m *manager) FindObjectByLinkIds(ctx context.Context, ids ...int64) ([]*Obj
 	for rows.Next() {
 		var (
 			item              Object
-			updatedBy, linkId sql.NullInt64
+			updatedBy, linkId, retryCount sql.NullInt64
 		)
 		err = rows.Scan(
 			&item.Id,
@@ -376,7 +377,7 @@ func (m *manager) FindObjectByLinkIds(ctx context.Context, ids ...int64) ([]*Obj
 			&item.RespondentId,
 			&item.PublishingStatus,
 			&item.PublishingLog,
-			&item.RetryCount,
+			&retryCount,
 			&item.CreatedBy,
 			&updatedBy,
 			&linkId,
@@ -386,6 +387,7 @@ func (m *manager) FindObjectByLinkIds(ctx context.Context, ids ...int64) ([]*Obj
 		)
 		item.UpdatedBy = updatedBy.Int64
 		item.LinkId = linkId.Int64
+		item.RetryCount = retryCount.Int64
 		if err != nil {
 			return nil, err
 		}
@@ -411,7 +413,7 @@ func (m *manager) FindObjectByRespondentAndLinkId(ctx context.Context, responden
 	for rows.Next() {
 		var (
 			item              Object
-			updatedBy, linkId sql.NullInt64
+			updatedBy, linkId, retryCount sql.NullInt64
 		)
 		err = rows.Scan(
 			&item.Id,
@@ -420,7 +422,7 @@ func (m *manager) FindObjectByRespondentAndLinkId(ctx context.Context, responden
 			&item.RespondentId,
 			&item.PublishingStatus,
 			&item.PublishingLog,
-			&item.RetryCount,
+			&retryCount,
 			&item.CreatedBy,
 			&updatedBy,
 			&linkId,
@@ -430,6 +432,7 @@ func (m *manager) FindObjectByRespondentAndLinkId(ctx context.Context, responden
 		)
 		item.UpdatedBy = updatedBy.Int64
 		item.LinkId = linkId.Int64
+		item.RetryCount = retryCount.Int64
 		if err != nil {
 			return nil, err
 		}
@@ -468,7 +471,7 @@ func (m *manager) FindAllObjects(ctx context.Context, page, limit int) (items []
 	for rows.Next() {
 		var (
 			item Object
-			updatedBy, linkId sql.NullInt64
+			updatedBy, linkId, retryCount sql.NullInt64
 		)
 		err = rows.Scan(
 			&item.Id,
@@ -477,7 +480,7 @@ func (m *manager) FindAllObjects(ctx context.Context, page, limit int) (items []
 			&item.RespondentId,
 			&item.PublishingStatus,
 			&item.PublishingLog,
-			&item.RetryCount,
+			&retryCount,
 			&item.CreatedBy,
 			&updatedBy,
 			&linkId,
@@ -485,6 +488,9 @@ func (m *manager) FindAllObjects(ctx context.Context, page, limit int) (items []
 			&item.UpdatedAt,
 			&item.PublishedAt,
 		)
+		item.UpdatedBy = updatedBy.Int64
+		item.LinkId = linkId.Int64
+		item.RetryCount = retryCount.Int64
 		if err != nil {
 			return
 		}

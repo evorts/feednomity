@@ -19,5 +19,5 @@ type IMailer interface {
 	SetSender(name, email string) IMailer
 	SetReplyTo(name, email string) IMailer
 	SendHtml(ctx context.Context, to []Target, subject, html string, data map[string]string) ([]byte, error)
-	call(payload []byte) ([]byte, error)
+	call(payload []byte, args map[string]interface{}) ([]byte, error)
 }

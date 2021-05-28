@@ -11,6 +11,7 @@ import (
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/logger"
+	"github.com/evorts/feednomity/pkg/mailer"
 	"github.com/evorts/feednomity/pkg/memory"
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
@@ -61,11 +62,20 @@ var Api = &cli.Command{
 			return
 		}
 		jwx := jwe.NewJWE(pk, cfg.GetConfig().Jwe.Expire)
+		m = mailer.NewGmail(
+			cfg.GetConfig().Mailer.Providers.Get("gmail").Get("user"),
+			cfg.GetConfig().Mailer.Providers.Get("gmail").Get("pass"),
+			cfg.GetConfig().Mailer.Providers.Get("gmail").Get("address"),
+		)
+		m.SetSender(
+			cfg.GetConfig().Mailer.SenderName,
+			cfg.GetConfig().Mailer.SenderEmail,
+		)
 		o := http.NewServeMux()
 		routingApi(
 			o, cfg, view.NewJsonManager(), ds, accessControl, jwx,
 			crypt.NewHashEncryption(cfg.GetConfig().App.HashSalt),
-			aesCryptic, logging, mem,
+			aesCryptic, logging, mem, m,
 		)
 		logging.Log("started", "API Started.")
 		if err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.GetConfig().App.PortApi), o); err != nil {

@@ -6,11 +6,10 @@ import (
 	"github.com/evorts/feednomity/domain/users"
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
+	"github.com/evorts/feednomity/pkg/memory"
 	"github.com/evorts/feednomity/pkg/reqio"
-	"github.com/evorts/feednomity/pkg/session"
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
-	"net/url"
 	"path"
 	"time"
 )
@@ -19,7 +18,7 @@ func Link(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	vm := req.GetContext().Get("view").(view.ITemplateManager)
-	sm := req.GetContext().Get("sm").(session.IManager)
+	mem := req.GetContext().Get("mem").(memory.IManager)
 	ds := req.GetContext().Get("db").(database.IManager)
 
 	log.Log("member_link_handler", "request received")
@@ -56,7 +55,7 @@ func Link(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		objects []*distribution.Object
-		obj *distribution.Object
+		obj     *distribution.Object
 	)
 
 	distDomain := distribution.NewDistributionDomain(ds)
@@ -105,15 +104,16 @@ func Link(w http.ResponseWriter, r *http.Request) {
 	}
 	//render login page if necessary
 	if len(usersData[0].Password) > 0 {
-		http.Redirect(w, r, fmt.Sprintf("/mbr/login?ref=%s", url.PathEscape(req.GetPath())), http.StatusTemporaryRedirect)
+		http.Redirect(
+			w, r,
+			fmt.Sprintf("/mbr/login?user=%s", usersData[0].Email),
+			http.StatusTemporaryRedirect,
+		)
 		return
 	}
-	// render login page
-	renderData := map[string]interface{}{
-		"PageTitle": "Login Page",
-	}
-	sm.Put(r.Context(), "csrf", req.GetCsrfToken())
-	if err = vm.InjectData("Csrf", req.GetToken()).Render(w, http.StatusOK, "member-login.html", renderData); err != nil {
-		log.Log("member_login_handler", err.Error())
-	}
+	// @todo: change below logic to api call, for now the fastest way approach
+	hash := fmt.Sprintf("fp_%s", linkHash)
+	_ = mem.Set(req.GetContext().Value(), hash, usersData[0].Id, 5*60)
+	http.Redirect(w, r, fmt.Sprintf("/crp/%s?user=%s", linkHash, usersData[0].Email), http.StatusTemporaryRedirect)
+	return
 }

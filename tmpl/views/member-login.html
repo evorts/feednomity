@@ -2,18 +2,10 @@
 {{ define "title" }} {{ .PageTitle }} {{ end }}
 {{ define "styles" }}
     <link href="/assets/lib/login/style.css" rel="stylesheet">
-    <style>
-        html, body {
-            background: #b8b5b8 none;
-        }
-        .panel.is-primary .panel-heading, .button.is-primary {
-            background-color: #1f68b8;
-        }
-    </style>
 {{ end }}
 {{ define "scripts" }}
     <script type="text/javascript">
-        window.redirectUrl = '{{ .RedirectUrl }}';
+        const RedirectUrl = '{{ .RedirectUrl }}';
     </script>
 {{ end }}
 {{ define "body_scripts" }}
@@ -36,10 +28,11 @@
                 <div class="panel-block">
                     <form id="loginForm" name="loginForm" method="post" style="width: 100%">
                         <div class="field mt-2">
-                            <label class="label">Username</label>
+                            <label class="label">Username/Email</label>
                             <div class="control is-expanded has-icons-left">
                                 <input name="username" class="input form-input" type="text"
-                                       placeholder="Input your username here...">
+                                       value="{{ .UserID }}"
+                                       placeholder="Input your username/email here...">
                                 <span class="icon is-small is-left"><i class="fas fa-user"></i></span>
                             </div>
                         </div>
@@ -58,7 +51,9 @@
                                 <input name="remember" class="form-input" type="checkbox"> <span
                                         style="position: absolute">Remember Me</span>
                             </label>
+                            <a class="btn-link forgot" href="/forgot-password" target="_self">forgot password?</a>
                         </div>
+
                         <div class="field is-grouped is-grouped-right">
                             <input name="csrf" class="form-input" type="hidden" value="{{ .Csrf }}">
                             <div class="control">

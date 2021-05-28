@@ -84,6 +84,48 @@ func (m *manager) FindByIds(ctx context.Context, ids ...int64) ([]*User, error) 
 	return u, nil
 }
 
+func (m *manager) FindByUserEmail(ctx context.Context, value string) (*User, error) {
+	var item User
+	var displayName, phone, pwd, pin, jobRole, assignment sql.NullString
+	err := m.dbm.QueryRow(ctx, fmt.Sprintf(`
+		SELECT 
+			id, username, display_name, attributes, 
+			email, phone, password, pin, 
+			access_role, job_role, assignment, group_id,
+			disabled, created_at, updated_at, disabled_at
+		FROM %s WHERE email = $1
+	`, tableUsers), value).Scan(
+		&item.Id,
+		&item.Username,
+		&displayName,
+		&item.Attributes,
+		&item.Email,
+		&phone,
+		&pwd,
+		&pin,
+		&item.AccessRole,
+		&jobRole,
+		&assignment,
+		&item.GroupId,
+		&item.Disabled,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+		&item.DisabledAt,
+	)
+	if err != nil {
+		return nil, errors.WithMessage(err, "fail to query user")
+	}
+
+	item.DisplayName = displayName.String
+	item.Phone = phone.String
+	item.Password = pwd.String
+	item.PIN = pin.String
+	item.JobRole = jobRole.String
+	item.Assignment = assignment.String
+
+	return &item, nil
+}
+
 func (m *manager) FindByUsername(ctx context.Context, username string) (*User, error) {
 	var ui User
 	var displayName, phone, pwd, pin, jobRole, assignment sql.NullString
@@ -483,6 +525,18 @@ func (m *manager) Update(ctx context.Context, item User) error {
 	cmd, err2 := m.dbm.Exec(ctx, q, args...)
 	if err2 != nil {
 		return err2
+	}
+	if cmd.RowsAffected() > 0 {
+		return nil
+	}
+	return fmt.Errorf("no rows updated")
+}
+
+func (m *manager) UpdatePasswordById(ctx context.Context, id int64, pass string) error {
+	q := m.dbm.Rebind(ctx, fmt.Sprintf(`UPDATE %s SET password = digest(?, 'sha1') WHERE id = ?`, tableUsers))
+	cmd, err := m.dbm.Exec(ctx, q, pass, id)
+	if err != nil {
+		return err
 	}
 	if cmd.RowsAffected() > 0 {
 		return nil

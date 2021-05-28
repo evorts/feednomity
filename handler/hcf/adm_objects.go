@@ -1,4 +1,4 @@
-package hadm
+package hcf
 
 import (
 	"github.com/evorts/feednomity/pkg/logger"
@@ -7,12 +7,12 @@ import (
 	"net/http"
 )
 
-func Dashboard(w http.ResponseWriter, r *http.Request) {
+func Objects(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).Prepare()
 	log := req.GetContext().Get("logger").(logger.IManager)
 	vm := req.GetContext().Get("view").(view.ITemplateManager)
 
-	log.Log("dashboard_handler", "request received")
+	log.Log("objects_handler", "request received")
 
 	if !req.IsLoggedIn() {
 		//http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
@@ -20,9 +20,9 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// render dashboard page
-	if err := vm.Render(w, http.StatusOK, "admin-dashboard.html", map[string]interface{}{
-		"PageTitle": "Admin Dashboard Page",
+	if err := vm.Render(w, http.StatusOK, "admin-objects.html", map[string]interface{}{
+		"PageTitle": "Admin Object Management Page",
 	}); err != nil {
-		log.Log("dashboard_handler", err.Error())
+		log.Log("objects_handler", err.Error())
 	}
 }

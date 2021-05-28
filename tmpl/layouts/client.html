@@ -11,18 +11,30 @@
         <link rel="shortcut icon" href="{{ .FavIcon }}">
 
         <link rel="stylesheet" href="/assets/styles/fgo.css">
-        <!--Fontawesome -->
         <link rel="stylesheet" href="/assets/styles/fa5.min.css">
-        <!-- Bulma UI Framework -->
         <link rel="stylesheet" href="/assets/styles/bulma/bulma.min.css">
-        <!-- CSS only -->
         <link href="/assets/lib/main/style.css" rel="stylesheet">
+
         {{ block "styles" . }} {{ end }}
+        <script type="text/javascript">
+            const ApiBaseUrl = '{{ .ApiBaseUrl }}';
+        </script>
         {{ block "scripts" . }} {{ end }}
     </head>
     <body>
     <header>
-        {{ template "header" . }}
+        <nav class="navbar is-white has-shadow is-fixed-top" role="navigation" aria-label="navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="/mbr">
+                    <img src="/assets/images/onelabs-logo@2x.png" alt="Onelabs" style="max-height: 2.5rem;">
+                </a>
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+        </nav>
     </header>
     <section class="pt-4" id="content" style="margin-bottom: 100px">
         {{template "content" . }}

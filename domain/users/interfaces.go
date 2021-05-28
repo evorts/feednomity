@@ -5,6 +5,7 @@ import "context"
 type IUsers interface {
 	FindByIds(ctx context.Context, ids ...int64) ([]*User, error)
 	FindByUsername(ctx context.Context, username string) (*User, error)
+	FindByUserEmail(ctx context.Context, value string) (*User, error)
 	FindByNameAndGroupId(ctx context.Context, name string, groupId int) ([]*User, error)
 	FindByNameAndOrgId(ctx context.Context, name string, orgId int) ([]*User, error)
 	FindByName(ctx context.Context, name string) ([]*User, error)
@@ -13,6 +14,7 @@ type IUsers interface {
 	Insert(ctx context.Context, item User) error
 	InsertMultiple(ctx context.Context, items []*User) error
 	Update(ctx context.Context, item User) error
+	UpdatePasswordById(ctx context.Context, id int64, pass string) error
 	DeleteByIds(ctx context.Context, id []int64) error
 	DisableByIds(ctx context.Context, id []int64) error
 

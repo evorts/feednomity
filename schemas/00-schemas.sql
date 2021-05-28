@@ -88,6 +88,7 @@ create table users
     group_id     int
         constraint users_group_id references users_group (id),
     disabled     bool         default false,
+    verified     bool         default false,
     created_at   timestamp,
     updated_at   timestamp,
     disabled_at  timestamp

@@ -10,6 +10,7 @@ var (
 	emailPattern = regexp.MustCompile("\\w+@\\w+.[a-zA-Z]{2,3}")
 	phonePattern = regexp.MustCompile("(\\+\\d{2}|0)([1-9]+\\d{5,10})")
 	passwordPattern = regexp.MustCompile("[\\w\\d@$%&^!~()]+")
+	hashPattern = regexp.MustCompile("[\\w\\d@$%&^!~()]{10,128}")
 )
 
 func ValidUsername(value string) bool {
@@ -26,6 +27,10 @@ func ValidPhone(value string) bool {
 
 func ValidPassword(value string) bool {
 	return passwordPattern.MatchString(value)
+}
+
+func ValidHash(value string) bool {
+	return hashPattern.MatchString(value)
 }
 
 func IsEmpty(value string) bool {

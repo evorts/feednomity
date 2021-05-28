@@ -10,6 +10,7 @@ import (
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/logger"
+	"github.com/evorts/feednomity/pkg/mailer"
 	"github.com/evorts/feednomity/pkg/memory"
 	"github.com/evorts/feednomity/pkg/middleware"
 	"github.com/evorts/feednomity/pkg/reqio"
@@ -31,13 +32,14 @@ func routingApi(
 	aes crypt.ICryptAES,
 	log logger.IManager,
 	mem memory.IManager,
+	mail mailer.IMailer,
 ) {
 	routes := make([]reqio.Route, 0)
 	prefix := fmt.Sprintf("%s%s", apiPrefix, apiVersionPrefix)
 	routes = append(routes, routesApiMaintenance(apiPrefix, cfg, view, db, accessControl, jwx, log)...)
 	routes = append(routes, routesApiFeedbacks(prefix, cfg, view, db, accessControl, jwx, aes, log)...)
 	routes = append(routes, routesApiDistribution(prefix, cfg, view, db, accessControl, jwx, aes, log)...)
-	routes = append(routes, routesApiUsers(prefix, cfg, view, db, accessControl, jwx, hash, log)...)
+	routes = append(routes, routesApiUsers(prefix, cfg, view, db, accessControl, jwx, hash, log, mail, mem)...)
 	routes = append(routes, routesApiLink(prefix, cfg, view, db, accessControl, jwx, hash, aes, log)...)
 	routes = append(routes, routesApiGroups(prefix, cfg, view, db, accessControl, jwx, hash, log)...)
 	routes = append(routes, routesApiOrganizations(prefix, cfg, view, db, accessControl, jwx, hash, log)...)
@@ -275,9 +277,66 @@ func routesApiDistribution(
 func routesApiUsers(
 	pathPrefix string,
 	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
-	jwx jwe.IManager, hash crypt.ICryptHash, log logger.IManager,
+	jwx jwe.IManager, hash crypt.ICryptHash, log logger.IManager, mail mailer.IMailer, mem memory.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
+		{
+			Pattern: fmt.Sprintf("%s/users/forgot-password", pathPrefix),
+			Handler: middleware.WithFiltersForApi(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				view,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiForgotPassword),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"hash":   hash,
+						"cfg":    cfg,
+						"mail":   mail,
+						"mem":    mem,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: fmt.Sprintf("%s/users/change-password", pathPrefix),
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx, view,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiChangePassword),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+						"hash":   hash,
+					},
+				),
+			),
+		},
+		{
+			Pattern: fmt.Sprintf("%s/users/create-password", pathPrefix),
+			Handler: middleware.WithFiltersForApi(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				view,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiCreatePassword),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+						"mem":    mem,
+					},
+				),
+			),
+		},
 		{
 			Pattern: fmt.Sprintf("%s/users/login", pathPrefix),
 			Handler: middleware.WithFiltersForApi(

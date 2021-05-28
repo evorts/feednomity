@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/evorts/feednomity/handler/hadm"
+	"github.com/evorts/feednomity/handler/hcf"
 	"github.com/evorts/feednomity/pkg/acl"
 	"github.com/evorts/feednomity/pkg/config"
 	"github.com/evorts/feednomity/pkg/crypt"
@@ -30,7 +30,7 @@ func routesWebDashboard(
 			Handler: middleware.WithWebMethodFilter(
 				http.MethodGet,
 				middleware.WithInjection(
-					http.HandlerFunc(hadm.AdminGate),
+					http.HandlerFunc(hcf.AdminGate),
 					map[string]interface{}{
 						"logger": logger,
 						"sm":     session,
@@ -43,7 +43,7 @@ func routesWebDashboard(
 			Handler: middleware.WithSessionProtection(
 				session, view, accessControl, jwx, cfg,
 				middleware.WithInjection(
-					http.HandlerFunc(hadm.Dashboard),
+					http.HandlerFunc(hcf.Dashboard),
 					map[string]interface{}{
 						"logger": logger,
 						"view":   view,
@@ -57,7 +57,7 @@ func routesWebDashboard(
 			Handler: middleware.WithSessionProtection(
 				session, view, accessControl, jwx, cfg,
 				middleware.WithInjection(
-					http.HandlerFunc(hadm.Users),
+					http.HandlerFunc(hcf.Users),
 					map[string]interface{}{
 						"logger": logger,
 						"view":   view,
@@ -71,7 +71,7 @@ func routesWebDashboard(
 			Handler: middleware.WithSessionProtection(
 				session, view, accessControl, jwx, cfg,
 				middleware.WithInjection(
-					http.HandlerFunc(hadm.Objects),
+					http.HandlerFunc(hcf.Objects),
 					map[string]interface{}{
 						"logger": logger,
 						"view":   view,
@@ -85,24 +85,12 @@ func routesWebDashboard(
 			Handler: middleware.WithWebMethodFilter(
 				http.MethodGet,
 				middleware.WithInjection(
-					http.HandlerFunc(hadm.Login),
+					http.HandlerFunc(hcf.Login),
 					map[string]interface{}{
 						"logger": logger,
 						"view":   view,
 						"sm":     session,
 						"hash":   hash,
-					},
-				),
-			),
-		},
-		{
-			Pattern: "/adm/logout",
-			Handler: middleware.WithWebMethodFilter(
-				http.MethodGet,
-				middleware.WithInjection(
-					http.HandlerFunc(hadm.Logout),
-					map[string]interface{}{
-						"sm": session,
 					},
 				),
 			),

@@ -8,6 +8,7 @@ import (
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/jwe"
 	"github.com/evorts/feednomity/pkg/logger"
+	"github.com/evorts/feednomity/pkg/memory"
 	"github.com/evorts/feednomity/pkg/middleware"
 	"github.com/evorts/feednomity/pkg/reqio"
 	"github.com/evorts/feednomity/pkg/session"
@@ -24,6 +25,7 @@ func routesWebConsumers(
 	jwx jwe.IManager,
 	ds database.IManager,
 	cfg config.IManager,
+	mem memory.IManager,
 ) []reqio.Route {
 	return []reqio.Route{
 		{
@@ -42,19 +44,6 @@ func routesWebConsumers(
 			),
 		},
 		{
-			Pattern: "/mbr/logout",
-			Handler: middleware.WithWebMethodFilter(
-				http.MethodGet,
-				middleware.WithInjection(
-					http.HandlerFunc(hcf.Logout),
-					map[string]interface{}{
-						"logger": logger,
-						"sm":     session,
-					},
-				),
-			),
-		},
-		{
 			Pattern: "/mbr/link/",
 			Handler: middleware.WithWebMethodFilter(
 				http.MethodGet,
@@ -66,6 +55,7 @@ func routesWebConsumers(
 						"sm":     session,
 						"hash":   hash,
 						"db":     ds,
+						"mem": mem,
 					},
 				),
 			),

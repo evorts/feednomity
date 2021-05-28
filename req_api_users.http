@@ -1,14 +1,50 @@
+POST {{api_base_url}}/users/forgot-password
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+X-Client-Id: web
+X-Authorization: Token adnsdfknslgksdngooiniosdvnsldkgnsdg
+
+{
+  "user": "test.account1@mailinator.com"
+}
+
+###
+POST {{api_base_url}}/users/create-password
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+X-Client-Id: web
+X-Authorization: Token adnsdfknslgksdngooiniosdvnsldkgnsdg
+
+{
+  "pass": "test@22",
+  "confirm": "test@33"
+}
+
+###
 POST {{api_base_url}}/users/login
 Content-Type: application/json
 Referer: https://anonymity.evorts.com
 X-Client-Id: web
 
 {
-  "username": "root",
+  "username": "dev@evorts.com",
   "password": "feeDNom!ty@$$70"
 }
 
 > {% client.global.set("auth_token", response.body.content.token); %}
+
+###
+POST {{api_base_url}}/users/change-password
+Content-Type: application/json
+Referer: https://anonymity.evorts.com
+X-Client-Id: web
+X-Authorization: {{auth_token}}
+
+{
+  "old_pass": "test@11",
+  "new_pass": "test@22",
+  "confirm": "test@22"
+}
 
 ### list
 POST {{api_base_url}}/users/list

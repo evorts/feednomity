@@ -74,6 +74,7 @@ type IRequest interface {
 	GetUserData() UserData
 	GetUserAccessScope() acl.AccessScope
 	GetJweToken() string
+	GetAuthToken(key string) string
 	GetJwx() jwe.IManager
 	GetClientId() string
 	GetPath() string
@@ -142,13 +143,13 @@ func (req *request) PrepareRestful() IRequest {
 }
 
 func (req *request) Prepare() IRequest {
+	req.userData = req.getUserDataFromSession()
+	req.userAccessScope = req.getUserAccessScopeFromSession()
+	req.url = req.r.URL
 	if req.hash == nil {
 		return req
 	}
 	req.csrfToken = req.hash.HashWithSalt(time.Now().String())
-	req.userData = req.getUserDataFromSession()
-	req.userAccessScope = req.getUserAccessScopeFromSession()
-	req.url = req.r.URL
 	return req
 }
 
@@ -161,7 +162,11 @@ func (req *request) GetPathLastValue() string {
 }
 
 func (req *request) GetQueryParam(field string) string {
-	return req.url.Query().Get(field)
+	q := req.url.Query()
+	if len(q) < 1 {
+		return ""
+	}
+	return q.Get(field)
 }
 
 func (req *request) IsLoggedIn() bool {
@@ -201,6 +206,14 @@ func (req *request) GetClientId() string {
 
 func (req *request) GetUserAccessScope() acl.AccessScope {
 	return req.userAccessScope
+}
+
+func (req *request) GetAuthToken(key string) string {
+	h := req.r.Header.Get(HeaderAuth)
+	if len(key) > 0 && !strings.HasPrefix(h, key) {
+		return ""
+	}
+	return strings.Trim(strings.TrimLeft(h, key), " ")
 }
 
 func (req *request) getUserAccessScopeFromContext() acl.AccessScope {

@@ -1,4 +1,4 @@
-package hadm
+package hcf
 
 import (
 	"github.com/evorts/feednomity/pkg/logger"

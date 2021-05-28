@@ -2,6 +2,12 @@
 
 [x] `/api/users/login`
 
+[x] `/api/users/forgot-password`
+
+[x] `/api/users/create-password`
+
+[x] `/api/users/change-password`
+
 [x] `/api/users/list`
 
 [x] `/api/users/create`
@@ -62,9 +68,17 @@
 
 [x] `mail blast queue`
 
+# Web (Common)
+
+[x] `/forgot-password`
+
+[x] `/crp/{hash}` -> create password
+
+[x] `/chp/{hash}` -> change password
+
 # Web (Member)
 
-[ ] `/mbr/link/:hash`
+[x] `/mbr/link/:hash`
 
 [x] `/mbr/review/list`
 

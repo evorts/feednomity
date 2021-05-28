@@ -1,22 +1,21 @@
 (function (fc, apiUrl, RedirectUrl) {
     fc.onDocumentReady(function () {
-        const form = document.getElementById('loginForm');
-        const btnLogin = document.getElementById('submitLogin');
+        const form = document.getElementById('fpForm');
+        const btnLogin = document.getElementById('submitForgot');
         btnLogin.addEventListener('click', function (e) {
             const $this = this;
             $this.setAttribute('disabled', "disabled");
             e.preventDefault();
             const data = fc.getFormData(form);
             fc.call(
-                "login", "POST", `${apiUrl}/v1/users/login`,
+                "fp", "POST", `${apiUrl}/v1/users/forgot-password`,
                 JSON.stringify(data),
                 function (res) {
                     $this.removeAttribute('disabled');
                     if (res.status === 200) {
-                        fc.setCookie(fc.sessionKey, res.content['token'], 24);
-                        fc.toast('Login success! Redirecting...', 'is-success');
+                        fc.toast('Request forgot password sent! Check your email.', 'is-success');
                         setTimeout(function () {
-                            window.location.replace(RedirectUrl);
+                            // window.location.replace(RedirectUrl);
                         }, 700);
                         return;
                     }

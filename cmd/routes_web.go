@@ -57,8 +57,67 @@ func routingWeb(
 				},
 			),
 		},
+		{
+			Pattern: "/forgot-password",
+			Handler: middleware.WithWebMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					http.HandlerFunc(hcf.ForgotPassword),
+					map[string]interface{}{
+						"logger": logger,
+						"sm":     session,
+						"vm":     view,
+						"hash":   hash,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/crp/",
+			Handler: middleware.WithWebMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					http.HandlerFunc(hcf.CreatePassword),
+					map[string]interface{}{
+						"logger": logger,
+						"sm":     session,
+						"vm":     view,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/chp/",
+			Handler: middleware.WithSessionProtection(
+				session, view, acl, jwx, cfg,
+				middleware.WithInjection(
+					http.HandlerFunc(hcf.ChangePassword),
+					map[string]interface{}{
+						"logger": logger,
+						"view":   view,
+						"sm":     session,
+						"hash":   hash,
+						"db":     ds,
+					},
+				),
+			),
+		},
+		{
+			Pattern: "/logout",
+			Handler: middleware.WithWebMethodFilter(
+				http.MethodGet,
+				middleware.WithInjection(
+					http.HandlerFunc(hcf.Logout),
+					map[string]interface{}{
+						"logger": logger,
+						"cfg":    cfg,
+						"sm":     session,
+					},
+				),
+			),
+		},
 	}
 	routes = append(routes, routesWebDashboard(acl, logger, session, hash, view, jwx, cfg)...)
-	routes = append(routes, routesWebConsumers(acl, logger, session, hash, view, jwx, ds, cfg)...)
+	routes = append(routes, routesWebConsumers(acl, logger, session, hash, view, jwx, ds, cfg, mem)...)
 	reqio.NewRoutes(routes).ExecRoutes(o)
 }
