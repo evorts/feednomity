@@ -183,9 +183,13 @@ func (m *manager) FindByGroupId(ctx context.Context, id int64, page, limit int) 
 			recipient_id, recipient_username, recipient_name, recipient_email, 
 			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
 			link_id, hash, status, content, created_at, updated_at 
-		FROM %s WHERE recipient_group_id = ? LIMIT %d OFFSET %d`, tableFeedback, limit, (page-1)*limit,
+		FROM %s 
+		JOIN (VALUES ('%s'::feedback_status, 1), ('%s'::feedback_status, 2), ('%s'::feedback_status, 3)) AS x(value, order_number) on %s.status = x.value
+		WHERE recipient_group_id = ? 
+		ORDER BY distribution_id desc, x.order_number, recipient_name asc, created_at, updated_at desc
+		LIMIT %d OFFSET %d`, tableFeedback, StatusDraft, StatusNotStarted, StatusFinal, tableFeedback, limit, (page-1)*limit,
 	)
-	rows, err = m.dbm.Query( ctx, m.dbm.Rebind(ctx, q), id)
+	rows, err = m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return items, total, nil
@@ -252,9 +256,13 @@ func (m *manager) FindByOrgId(ctx context.Context, id int64, page, limit int) (i
 			recipient_id, recipient_username, recipient_name, recipient_email, 
 			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
 			link_id, hash, status, content, created_at, updated_at 
-		FROM %s WHERE recipient_org_id = ? LIMIT %d OFFSET %d`, tableFeedback, limit, (page-1)*limit,
+		FROM %s
+		JOIN (VALUES ('%s'::feedback_status, 1), ('%s'::feedback_status, 2), ('%s'::feedback_status, 3)) AS x(value, order_number) on %s.status = x.value
+		WHERE recipient_org_id = ? 
+		ORDER BY distribution_id desc, x.order_number, recipient_name asc, created_at, updated_at desc
+		LIMIT %d OFFSET %d`, tableFeedback, StatusDraft, StatusNotStarted, StatusFinal, tableFeedback, limit, (page-1)*limit,
 	)
-	rows, err = m.dbm.Query( ctx, m.dbm.Rebind(ctx, q), id)
+	rows, err = m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return items, total, nil
@@ -321,9 +329,14 @@ func (m *manager) FindByRespondentId(ctx context.Context, id int64, page, limit 
 			recipient_id, recipient_username, recipient_name, recipient_email, 
 			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
 			link_id, hash, status, content, created_at, updated_at 
-		FROM %s WHERE respondent_id = ? LIMIT %d OFFSET %d`, tableFeedback, limit, (page-1)*limit,
+		FROM %s
+		JOIN (VALUES ('%s'::feedback_status, 1), ('%s'::feedback_status, 2), ('%s'::feedback_status, 3)) AS x(value, order_number) on %s.status = x.value
+		WHERE respondent_id = ?
+		ORDER BY distribution_id desc, x.order_number, recipient_name asc, created_at, updated_at desc 
+		LIMIT %d OFFSET %d
+		`, tableFeedback, StatusDraft, StatusNotStarted, StatusFinal, tableFeedback, limit, (page-1)*limit,
 	)
-	rows, err = m.dbm.Query( ctx, m.dbm.Rebind(ctx, q), id)
+	rows, err = m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return items, total, nil
@@ -445,8 +458,12 @@ func (m *manager) FindAll(ctx context.Context, page, limit int) (items []*Feedba
 						recipient_id, recipient_username, recipient_name, recipient_email, 
 						recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
 						link_id, hash, status, content, created_at, updated_at
-					FROM %s LIMIT %d OFFSET %d`,
-			tableFeedback, limit, (page-1)*limit),
+					FROM %s
+					JOIN (VALUES ('%s'::feedback_status, 1), ('%s'::feedback_status, 2), ('%s'::feedback_status, 3)) AS x(value, order_number) on %s.status = x.value
+					ORDER BY distribution_id desc, x.order_number, recipient_name asc, created_at, updated_at desc
+					LIMIT %d OFFSET %d
+			`,
+			tableFeedback, StatusDraft, StatusNotStarted, StatusFinal, tableFeedback, limit, (page-1)*limit),
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {

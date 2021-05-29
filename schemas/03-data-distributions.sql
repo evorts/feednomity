@@ -24,6 +24,7 @@ values
         (nextval('dist_object_id_seq'), 1, 6, 30, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 6, 16, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 6, 29, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 6, 37, nextval('links_helper_seq'), 1, now()),
 
         /* iman: julius, yeka, ian, rianita, tiolie, didi, ferdy, ervina, safandhi, silvia  */
         (nextval('dist_object_id_seq'), 1, 7, 65, nextval('links_helper_seq'), 1, now()),
@@ -36,6 +37,7 @@ values
         (nextval('dist_object_id_seq'), 1, 7, 19, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 7, 34, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 7, 36, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 7, 37, nextval('links_helper_seq'), 1, now()),
 
         /* aldo: fenny, denza, haris, wibi, diana, alan  */
         (nextval('dist_object_id_seq'), 1, 9, 63, nextval('links_helper_seq'), 1, now()),
@@ -44,6 +46,7 @@ values
         (nextval('dist_object_id_seq'), 1, 9, 39, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 9, 15, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 9, 57, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 9, 37, nextval('links_helper_seq'), 1, now()),
 
         /* irul: yvonne, yuni, nicko, ervina, ferdy, tiolie  */
         (nextval('dist_object_id_seq'), 1, 10, 70, nextval('links_helper_seq'), 1, now()),
@@ -52,6 +55,7 @@ values
         (nextval('dist_object_id_seq'), 1, 10, 19, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 10, 27, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 10, 38, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 10, 37, nextval('links_helper_seq'), 1, now()),
 
         /* angga: lucy, kipli, calista, ozi, samuel  */
         (nextval('dist_object_id_seq'), 1, 11, 67, nextval('links_helper_seq'), 1, now()),
@@ -59,6 +63,7 @@ values
         (nextval('dist_object_id_seq'), 1, 11, 13, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 11, 31, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 11, 35, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 11, 37, nextval('links_helper_seq'), 1, now()),
 
         /* bistok: resky, lucy, jhoni, samuel, edwin, ruminta, kipli  */
         (nextval('dist_object_id_seq'), 1, 12, 71, nextval('links_helper_seq'), 1, now()),
@@ -68,6 +73,7 @@ values
         (nextval('dist_object_id_seq'), 1, 12, 18, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 12, 33, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 12, 29, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 12, 37, nextval('links_helper_seq'), 1, now()),
 
         /* calista: lucy, samuel, ozi, denza, angga, bistok, santi */
         (nextval('dist_object_id_seq'), 1, 13, 67, nextval('links_helper_seq'), 1, now()),
@@ -77,6 +83,7 @@ values
         (nextval('dist_object_id_seq'), 1, 13, 11, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 13, 12, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 13, 44, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 13, 37, nextval('links_helper_seq'), 1, now()),
 
         /* dede: resky, lucy, edwin, ozi, novita, santi */
         (nextval('dist_object_id_seq'), 1, 14, 71, nextval('links_helper_seq'), 1, now()),
@@ -85,6 +92,7 @@ values
         (nextval('dist_object_id_seq'), 1, 14, 31, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 14, 28, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 14, 44, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 14, 37, nextval('links_helper_seq'), 1, now()),
 
         /* diana: fenny, wibi, alan, aldo, haris, ozi */
         (nextval('dist_object_id_seq'), 1, 15, 63, nextval('links_helper_seq'), 1, now()),
@@ -93,6 +101,7 @@ values
         (nextval('dist_object_id_seq'), 1, 15, 9, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 15, 20, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 15, 31, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 15, 37, nextval('links_helper_seq'), 1, now()),
 
         /* didi: purwandi, coktra, bistok, edwin, tiolie, nicko, kipli, bowo, iman, wibi */
         (nextval('dist_object_id_seq'), 1, 16, 52, nextval('links_helper_seq'), 1, now()),
@@ -105,6 +114,7 @@ values
         (nextval('dist_object_id_seq'), 1, 16, 54, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 16, 7, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 16, 39, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 16, 37, nextval('links_helper_seq'), 1, now()),
 
         /* echo: fenny, wibi, diana, alan, bowo */
         (nextval('dist_object_id_seq'), 1, 17, 63, nextval('links_helper_seq'), 1, now()),
@@ -112,6 +122,7 @@ values
         (nextval('dist_object_id_seq'), 1, 17, 15, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 17, 57, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 17, 54, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 17, 37, nextval('links_helper_seq'), 1, now()),
 
         /* edwin: resky, lucy, samuel, bistok, dede, kipli, novita */
         (nextval('dist_object_id_seq'), 1, 18, 71, nextval('links_helper_seq'), 1, now()),
@@ -121,6 +132,7 @@ values
         (nextval('dist_object_id_seq'), 1, 18, 14, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 18, 29, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 18, 28, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 18, 37, nextval('links_helper_seq'), 1, now()),
 
         /* ervina: yvonne, iman, irul, ade, ozi, ferdy, yuni */
         (nextval('dist_object_id_seq'), 1, 19, 70, nextval('links_helper_seq'), 1, now()),
@@ -130,6 +142,7 @@ values
         (nextval('dist_object_id_seq'), 1, 19, 31, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 19, 27, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 19, 41, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 19, 37, nextval('links_helper_seq'), 1, now()),
 
         /* haris: fenny, alan, wibi, kipli, diana, denza */
         (nextval('dist_object_id_seq'), 1, 20, 63, nextval('links_helper_seq'), 1, now()),
@@ -138,12 +151,14 @@ values
         (nextval('dist_object_id_seq'), 1, 20, 29, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 20, 15, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 20, 53, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 20, 37, nextval('links_helper_seq'), 1, now()),
 
         /* ian: julius, iman, rianita, bowo */
         (nextval('dist_object_id_seq'), 1, 21, 65, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 21, 7, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 21, 32, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 21, 54, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 21, 37, nextval('links_helper_seq'), 1, now()),
 
         /* melinda: ? */
 
@@ -151,9 +166,11 @@ values
         (nextval('dist_object_id_seq'), 1, 24, 47, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 24, 52, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 24, 73, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 24, 37, nextval('links_helper_seq'), 1, now()),
 
         /* rifqi: ghozy */
         (nextval('dist_object_id_seq'), 1, 25, 24, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 25, 37, nextval('links_helper_seq'), 1, now()),
 
         /* ferdy: yvonne, silvia, ervina, iman, safandhi */
         (nextval('dist_object_id_seq'), 1, 27, 70, nextval('links_helper_seq'), 1, now()),
@@ -161,6 +178,7 @@ values
         (nextval('dist_object_id_seq'), 1, 27, 19, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 27, 7, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 27, 34, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 27, 37, nextval('links_helper_seq'), 1, now()),
 
         /* novita: lucy, ozi, samuel, bowo, calista */
         (nextval('dist_object_id_seq'), 1, 28, 67, nextval('links_helper_seq'), 1, now()),
@@ -168,6 +186,7 @@ values
         (nextval('dist_object_id_seq'), 1, 28, 35, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 28, 54, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 28, 13, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 28, 37, nextval('links_helper_seq'), 1, now()),
 
         /* kipli: resky, jhoni, angga, ruminta, dede, bistok */
         (nextval('dist_object_id_seq'), 1, 29, 71, nextval('links_helper_seq'), 1, now()),
@@ -176,6 +195,7 @@ values
         (nextval('dist_object_id_seq'), 1, 29, 33, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 29, 14, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 29, 12, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 29, 37, nextval('links_helper_seq'), 1, now()),
 
         /* okta: tomo, abe, silvia, ozi, vkc */
         (nextval('dist_object_id_seq'), 1, 30, 66, nextval('links_helper_seq'), 1, now()),
@@ -183,6 +203,7 @@ values
         (nextval('dist_object_id_seq'), 1, 30, 36, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 30, 31, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 30, 69, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 30, 37, nextval('links_helper_seq'), 1, now()),
 
         /* ozi: lucy, irwin, novita, samuel, calista, dede */
         (nextval('dist_object_id_seq'), 1, 31, 67, nextval('links_helper_seq'), 1, now()),
@@ -191,6 +212,7 @@ values
         (nextval('dist_object_id_seq'), 1, 31, 35, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 31, 13, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 31, 14, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 31, 37, nextval('links_helper_seq'), 1, now()),
 
         /* rianita: julius, iman, tiolie, ozi, ian */
         (nextval('dist_object_id_seq'), 1, 32, 65, nextval('links_helper_seq'), 1, now()),
@@ -198,6 +220,7 @@ values
         (nextval('dist_object_id_seq'), 1, 32, 38, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 32, 31, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 32, 21, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 32, 37, nextval('links_helper_seq'), 1, now()),
 
         /* ruminta: jhoni, bistok, kipli, ozi, angga */
         (nextval('dist_object_id_seq'), 1, 33, 64, nextval('links_helper_seq'), 1, now()),
@@ -205,6 +228,7 @@ values
         (nextval('dist_object_id_seq'), 1, 33, 29, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 33, 31, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 33, 11, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 33, 37, nextval('links_helper_seq'), 1, now()),
 
         /* safandhi: yvonne, ade, ervina, bowo, ferdy, iman */
         (nextval('dist_object_id_seq'), 1, 34, 70, nextval('links_helper_seq'), 1, now()),
@@ -213,6 +237,7 @@ values
         (nextval('dist_object_id_seq'), 1, 34, 54, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 34, 27, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 34, 7, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 34, 37, nextval('links_helper_seq'), 1, now()),
 
         /* samuel: lucy, edwin, calista, angga, novita, bistok */
         (nextval('dist_object_id_seq'), 1, 35, 67, nextval('links_helper_seq'), 1, now()),
@@ -221,6 +246,7 @@ values
         (nextval('dist_object_id_seq'), 1, 35, 11, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 35, 28, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 35, 12, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 35, 37, nextval('links_helper_seq'), 1, now()),
 
         /* silvia: yvonne, tomo, abe, ade, ferdy, irul */
         (nextval('dist_object_id_seq'), 1, 36, 70, nextval('links_helper_seq'), 1, now()),
@@ -229,6 +255,7 @@ values
         (nextval('dist_object_id_seq'), 1, 36, 59, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 36, 27, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 36, 10, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 36, 37, nextval('links_helper_seq'), 1, now()),
 
         /* tiolie: julius, rianita, irul, iman, ervina */
         (nextval('dist_object_id_seq'), 1, 38, 65, nextval('links_helper_seq'), 1, now()),
@@ -236,6 +263,7 @@ values
         (nextval('dist_object_id_seq'), 1, 38, 10, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 38, 7, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 38, 19, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 38, 37, nextval('links_helper_seq'), 1, now()),
 
         /* wibi: fenny, nico, safandhi, aldo, haris, echo, didi, diana */
         (nextval('dist_object_id_seq'), 1, 39, 63, nextval('links_helper_seq'), 1, now()),
@@ -246,6 +274,7 @@ values
         (nextval('dist_object_id_seq'), 1, 39, 17, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 39, 16, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 39, 15, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 39, 37, nextval('links_helper_seq'), 1, now()),
 
         /** yuni evalin: yvonne, nicko prasetyo, ervina, silvia, ferdy, denza */
         (nextval('dist_object_id_seq'), 1, 41, 70, nextval('links_helper_seq'), 1, now()),
@@ -254,6 +283,7 @@ values
         (nextval('dist_object_id_seq'), 1, 41, 36, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 41, 27, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 41, 53, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 41, 37, nextval('links_helper_seq'), 1, now()),
 
         /** impola: anita, santi, ozi, dede, ervina, diana, rianita */
         (nextval('dist_object_id_seq'), 1, 43, 42, nextval('links_helper_seq'), 1, now()),
@@ -263,6 +293,7 @@ values
         (nextval('dist_object_id_seq'), 1, 43, 19, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 43, 15, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 43, 32, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 43, 37, nextval('links_helper_seq'), 1, now()),
 
         /** anita: impola, santi, ozi, dede, ervina, diana, rianita */
         (nextval('dist_object_id_seq'), 1, 42, 43, nextval('links_helper_seq'), 1, now()),
@@ -272,6 +303,7 @@ values
         (nextval('dist_object_id_seq'), 1, 42, 19, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 42, 15, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 42, 32, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 42, 37, nextval('links_helper_seq'), 1, now()),
 
         /** santi: impola, anita, ozi, dede, ervina, diana, rianita */
         (nextval('dist_object_id_seq'), 1, 44, 43, nextval('links_helper_seq'), 1, now()),
@@ -281,6 +313,7 @@ values
         (nextval('dist_object_id_seq'), 1, 44, 19, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 44, 15, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 44, 32, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 44, 37, nextval('links_helper_seq'), 1, now()),
 
         /** purwandi: didi, coktra, ghozy, wibi, iman, bistok */
         (nextval('dist_object_id_seq'), 1, 52, 16, nextval('links_helper_seq'), 1, now()),
@@ -288,6 +321,7 @@ values
         (nextval('dist_object_id_seq'), 1, 52, 24, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 52, 39, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 52, 7, nextval('links_helper_seq'), 1, now()),
-        (nextval('dist_object_id_seq'), 1, 52, 12, nextval('links_helper_seq'), 1, now())
+        (nextval('dist_object_id_seq'), 1, 52, 12, nextval('links_helper_seq'), 1, now()),
+        (nextval('dist_object_id_seq'), 1, 52, 37, nextval('links_helper_seq'), 1, now())
 ;
 

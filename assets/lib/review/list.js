@@ -10,7 +10,7 @@
         const $btnReview = document.createElement('button');
 
         fc.addClass($row, 'item');
-        fc.addClass($btnReview, ['button','is-warning','is-small']);
+        fc.addClass($btnReview, ['button','is-link','is-small']);
         fc.addClass($statusSpan, 'tag');
 
         if (status !== 'final') {
@@ -21,7 +21,7 @@
                 window.open(`/mbr/reviews/${this.getAttribute('data-id')}`, '_blank').focus();
             }
             $action.appendChild($btnReview);
-            fc.addClass($statusSpan, 'is-danger');
+            fc.addClass($statusSpan, status === 'draft' ? 'is-warning' : 'is-danger');
         } else {
             fc.addClass($statusSpan, 'is-success');
         }
@@ -41,11 +41,14 @@
         return $row;
     }
 
+    const $containerLoadMore = document.querySelectorAll('.table.items tfoot.load-more');
+    const $loadMoreButton = $containerLoadMore[0].querySelector('.button');
+    const $itemsContainerElement = document.querySelectorAll('.table.items tbody');
+
     const populateItems = () => {
         const limit = 10;
         let page = 1;
-        const $itemsContainerElement = document.querySelectorAll('.table.items tbody');
-        const $displayedItemsElement = $itemsContainerElement[0].querySelector('.item');
+        const $displayedItemsElement = $itemsContainerElement[0].querySelectorAll('.item');
         if (fc.elementExist($displayedItemsElement)) {
             page = ($displayedItemsElement.length / limit) + 1;
         }
@@ -58,6 +61,9 @@
                 if (res.status !== 200) {
                     return;
                 }
+                if (res.content.items.length < limit) {
+                     $containerLoadMore[0].remove();
+                }
                 if (res.content.items.length < 1) {
                     return;
                 }
@@ -68,12 +74,18 @@
                     const recipient = `${elem['recipient_name']}`;
                     const status = `${elem['status']}`;
                     $itemsContainerElement[0].appendChild(createRowElement(id, no, title, recipient, status));
-                })
+                });
+                $loadMoreButton.removeAttribute('disabled');
             }
         )
     }
 
     fc.onDocumentReady(function () {
         populateItems();
+        $loadMoreButton.addEventListener('click', function (e) {
+            e.stopPropagation();
+            this.setAttribute('disabled', "disabled");
+            populateItems();
+        });
     });
 })(fc, ApiBaseUrl);

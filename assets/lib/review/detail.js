@@ -189,11 +189,13 @@
                 function (res) {
                     if (res.status === 200) {
                         fc.toast('Your review has been submitted successfully!', 'is-success');
-                        location.replace('/mbr/review/list');
+                        setTimeout(function () {
+                            location.replace('/mbr/review/list');
+                        }, 700);
                     } else {
-                        fc.toast(res.message, 'is-danger');
+                        fc.toast(res.error.message, 'is-danger');
+                        enableButton(true);
                     }
-                    enableButton(true);
                 }, function (fail) {
                     fc.toast('Your review submission did not complete successfully!', 'is-warning');
                     enableButton(true);
