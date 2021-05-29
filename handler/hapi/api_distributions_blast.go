@@ -359,7 +359,7 @@ usersLoop:
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
-				Code:    "DIST:ERR:QUEUE",
+				Code:    "DIST:ERR:FEED",
 				Message: "Bad Request! Some problems occurred when saving the data.",
 				Reasons: make(map[string]string, 0),
 				Details: make([]interface{}, 0),
@@ -393,7 +393,7 @@ usersLoop:
 			Content: make(map[string]interface{}, 0),
 			Error: &api.ResponseError{
 				Code:    "DIST:ERR:QUEUE",
-				Message: "Bad Request! Some problems occurred when searching the data.",
+				Message: "Bad Request! Some problems occurred when inserting into queue.",
 				Reasons: make(map[string]string, 0),
 				Details: make([]interface{}, 0),
 			},
