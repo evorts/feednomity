@@ -29,5 +29,3 @@ ENV TZ=Asia/Jakarta
 WORKDIR /go/bin/
 
 USER appuser
-
-CMD ["./app"]

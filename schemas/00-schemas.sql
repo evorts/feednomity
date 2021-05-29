@@ -44,6 +44,56 @@ $$;
 create
     extension if not exists pgcrypto;
 
+/* create sequence for users role id */
+create sequence if not exists users_role_id_seq
+    start with 1
+    increment by 1
+    minvalue 1
+    no maxvalue
+    cache 1;
+
+alter sequence users_role_id_seq restart with 1;
+
+/* create sequence for users id */
+create sequence if not exists users_id_seq
+    start with 1
+    increment by 1
+    minvalue 1
+    no maxvalue
+    cache 1;
+
+alter sequence users_id_seq restart with 1;
+
+/* create sequence for links id */
+create sequence if not exists links_id_seq
+    start with 1
+    increment by 1
+    minvalue 1
+    no maxvalue
+    cache 1;
+
+alter sequence links_id_seq restart with 1;
+
+/* create sequence for links hash */
+create sequence if not exists links_helper_seq
+    start with 1
+    increment by 1
+    minvalue 1
+    no maxvalue
+    cache 1;
+
+alter sequence links_helper_seq restart with 1;
+
+/* create sequence for users id */
+create sequence if not exists dist_object_id_seq
+    start with 1
+    increment by 1
+    minvalue 1
+    no maxvalue
+    cache 1;
+
+alter sequence dist_object_id_seq restart with 1;
+
 /** for admin dashboard **/
 /** could be utilise as company **/
 create table users_organization

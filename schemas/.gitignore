@@ -1,1 +1,3 @@
-01-data-*.sql
+01-data-users.sql
+02-data-links.sql
+03-data-distributions.sql

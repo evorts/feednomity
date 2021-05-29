@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"github.com/go-redis/redis/v8"
+	"log"
 	"time"
 )
 
@@ -146,7 +147,7 @@ func (r *redisManager) DeleteHash(ctx context.Context, key, hash string) error {
 
 func (r *redisManager) MustConnect(ctx context.Context) {
 	if err := r.Connect(ctx); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 

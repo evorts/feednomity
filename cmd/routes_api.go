@@ -18,7 +18,7 @@ import (
 	"net/http"
 )
 
-const apiPrefix = "/api"
+const apiPrefix = "/rest"
 const apiVersionPrefix = "/v1"
 
 func routingApi(
