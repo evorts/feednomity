@@ -16,6 +16,8 @@
         repo: git@github.com:evorts/feednomity.git
         dest: "{{src_dir}}"
         single_branch: yes
+      tags:
+        - deployment
     - name: Build docker image
       community.docker.docker_image:
         name: "{{docker_image_name}}"
@@ -24,15 +26,18 @@
           path: "{{src_dir}}/Dockerfile"
         source: build
         state: present
+      tags:
+        - deployment
     - name: Stop and remove docker container
       community.docker.docker_container:
         name:
           - "{{web_docker_name}}"
           - "{{api_docker_name}}"
-          - "{{blaster_docker_name}}"
         state: absent
         container_default_behavior: no_defaults
         auto_remove: yes
+      tags:
+        - deployment
     - name: Run docker for web
       community.docker.docker_container:
         name: "{{web_docker_name}}"
@@ -42,6 +47,8 @@
         restart: yes
         ports:
           - 3700:3700
+      tags:
+        - deployment
     - name: Run docker for api
       community.docker.docker_container:
         name: "{{api_docker_name}}"
@@ -51,9 +58,41 @@
         restart: yes
         ports:
           - 3701:3701
+      tags:
+        - deployment
+    # blaster section
+    - name: Stop and remove blaster docker container
+      community.docker.docker_container:
+        name:
+          - "{{blaster_docker_name}}"
+        state: absent
+        container_default_behavior: no_defaults
+        auto_remove: yes
+      tags:
+        - deployment
+        - scheduler
     - name: Run docker for blaster
       community.docker.docker_container:
-        name: "{{api_docker_name}}"
+        name: "{{blaster_docker_name}}"
         image: "{{docker_image_name}}:{{docker_image_tag}}"
         command: "./app blaster"
         state: stopped
+      tags:
+        - deployment
+        - scheduler
+    - name: Starting blaster container
+      community.docker.docker_container:
+        name: "{{blaster_docker_name}}"
+        state: started
+        restart: yes
+      tags:
+        - scheduler
+        - start_scheduler
+    - name: Stopping blaster container
+      community.docker.docker_container:
+        name: "{{blaster_docker_name}}"
+        state: stopped
+        restart: yes
+      tags:
+        - scheduler
+        - stop_scheduler
