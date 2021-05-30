@@ -50,8 +50,22 @@ func ApiDistributionBlast(w http.ResponseWriter, r *http.Request) {
 	// let's do validation
 	errs := make(map[string]string, 0)
 
-	if len(payload.Ids) < 1 || len(payload.ObjectIds) < 1 {
+	if len(payload.Ids) < 1 && len(payload.ObjectIds) < 1 {
 		errs["ids"] = "Not a valid items id"
+	}
+
+	if len(errs) > 0 {
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "LNK:ERR:VAL",
+				Message: "Bad Request! Your request resulting validation error.",
+				Reasons: make(map[string]string, 0),
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
 	}
 
 	datasource := req.GetContext().Get("db").(database.IManager)
@@ -347,7 +361,7 @@ usersLoop:
 			},
 		})
 	}
-	if len(queueItems) < 1 || len(feeds) < 1 {
+	if len(queueItems) < 1 && len(feeds) < 1 {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
@@ -363,6 +377,7 @@ usersLoop:
 	feedDomain := feedbacks.NewFeedbackDomain(datasource)
 	successItems, err2 := feedDomain.UpsertMultiple(req.GetContext().Value(), feeds)
 	if err2 != nil {
+		log.Log("blast_save_feedback", err2.Error())
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),

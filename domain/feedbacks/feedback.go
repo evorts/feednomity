@@ -601,7 +601,8 @@ func (m *manager) UpsertMultiple(ctx context.Context, items []*Feedback) (succes
 			ON CONFLICT (
 				distribution_id, distribution_object_id, respondent_id, recipient_id
 			)
-			DO UPDATE SET 
+			DO 
+			UPDATE SET 
 				distribution_topic = EXCLUDED.distribution_topic,
 				respondent_role = EXCLUDED.respondent_role,
 				respondent_assignment = EXCLUDED.respondent_assignment,
@@ -611,13 +612,12 @@ func (m *manager) UpsertMultiple(ctx context.Context, items []*Feedback) (succes
 				range_end = EXCLUDED.range_end,
 				content = EXCLUDED.content,
 				updated_at = NOW()
-			WHERE %s."status" != 'final'::feedback_status
+			WHERE %s."status" = 'not-started'::feedback_status
 			RETURNING id, distribution_id, distribution_object_id, respondent_id, recipient_id;
 		`, q, strings.Join(placeholders, ","), tableFeedback))
 	var rows database.Rows
 	rows, err = m.dbm.Query(ctx, q, values...)
 	if err != nil {
-		err = errors.Wrap(err, "failed saving feedbacks. some errors in constraint or data.")
 		return
 	}
 	successItems = make([][]int64, 0)
