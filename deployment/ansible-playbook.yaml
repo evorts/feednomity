@@ -4,18 +4,56 @@
   remote_user: steven
   vars:
     - src_dir: /home/steven/apps/feednomity-src
+    - docker_image_name: evorts/feednomity
     - docker_image_tag: 1.0.0
+    - docker_container_tag: ansible_date_time.epoch
+    - web_docker_name: feednomity_web
+    - api_docker_name: feednomity_api
+    - blaster_docker_name: feednomity_blaster
   tasks:
     - name: Ensure pulled the latest source code
       ansible.builtin.git:
         repo: git@github.com:evorts/feednomity.git
         dest: "{{src_dir}}"
         single_branch: yes
-        #branch: master
-    #- name: Build docker image
-    #  docker_image:
-    #    name: "evorts/feednomity:{{docker_image_tag}}"
-    #    build:
-    #      path: "{{src_dir}}/Dockerfile"
-    #      source: build
-    #    state: present
+    - name: Build docker image
+      community.docker.docker_image:
+        name: "{{docker_image_name}}"
+        tag: "{{docker_image_tag}}"
+        build:
+          path: "{{src_dir}}/Dockerfile"
+        source: build
+        state: present
+    - name: Stop and remove docker container
+      community.docker.docker_container:
+        name:
+          - "{{web_docker_name}}"
+          - "{{api_docker_name}}"
+          - "{{blaster_docker_name}}"
+        state: absent
+        container_default_behavior: no_defaults
+        auto_remove: yes
+    - name: Run docker for web
+      community.docker.docker_container:
+        name: "{{web_docker_name}}"
+        image: "{{docker_image_name}}:{{docker_image_tag}}"
+        command: "./app web"
+        state: started
+        restart: yes
+        ports:
+          - 3700:3700
+    - name: Run docker for api
+      community.docker.docker_container:
+        name: "{{api_docker_name}}"
+        image: "{{docker_image_name}}:{{docker_image_tag}}"
+        command: "./app api"
+        state: started
+        restart: yes
+        ports:
+          - 3701:3701
+    - name: Run docker for blaster
+      community.docker.docker_container:
+        name: "{{api_docker_name}}"
+        image: "{{docker_image_name}}:{{docker_image_tag}}"
+        command: "./app blaster"
+        state: stopped
