@@ -30,6 +30,8 @@ func ApiDistributionBlast(w http.ResponseWriter, r *http.Request) {
 			ForceRedistribution bool    `json:"force_redistribution"`
 			Ids                 []int64 `json:"ids"`
 			ObjectIds           []int64 `json:"object_ids"`
+			IsolateRespondents  []int64 `json:"isolate_respondents"`
+			IsolateRecipients   []int64 `json:"isolate_recipients"`
 		}
 	)
 
@@ -269,6 +271,14 @@ usersLoop:
 		}
 		if len(cfg.GetConfig().App.ReviewWhitelistRespondent) > 0 &&
 			!utils.InArray(utils.ArrayInt64(cfg.GetConfig().App.ReviewWhitelistRespondent).ToArrayInterface(), obj.RespondentId) {
+			continue
+		}
+		if len(payload.IsolateRespondents) > 0 &&
+			!utils.InArray(utils.ArrayInt64(payload.IsolateRespondents).ToArrayInterface(), obj.RespondentId) {
+			continue
+		}
+		if len(payload.IsolateRecipients) > 0 &&
+			!utils.InArray(utils.ArrayInt64(payload.IsolateRecipients).ToArrayInterface(), obj.RecipientId) {
 			continue
 		}
 		link := ""
