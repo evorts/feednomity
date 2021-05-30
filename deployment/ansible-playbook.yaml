@@ -1,0 +1,21 @@
+---
+- name: Build and deploy web, api and mail blaster
+  hosts: appserver
+  remote_user: steven
+  vars:
+    - src_dir: /home/steven/apps/feednomity-src
+    - docker_image_tag: 1.0.0
+  tasks:
+    - name: Ensure pulled the latest source code
+      ansible.builtin.git:
+        repo: git@github.com:evorts/feednomity.git
+        dest: "{{src_dir}}"
+        single_branch: yes
+        #branch: master
+    #- name: Build docker image
+    #  docker_image:
+    #    name: "evorts/feednomity:{{docker_image_tag}}"
+    #    build:
+    #      path: "{{src_dir}}/Dockerfile"
+    #      source: build
+    #    state: present
