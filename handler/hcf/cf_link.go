@@ -77,7 +77,7 @@ func Link(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now()
-	if link.ExpiredAt != nil && link.ExpiredAt.After(now) {
+	if link.ExpiredAt != nil && now.After(*link.ExpiredAt) {
 		log.Log("cf_link_expired", fmt.Sprintf("link hash %s has expired", linkHash))
 		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
 			"PageTitle": "Page Not Found",
