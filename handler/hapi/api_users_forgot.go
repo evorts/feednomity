@@ -98,7 +98,7 @@ func ApiForgotPassword(w http.ResponseWriter, r *http.Request) {
 	// set expiration of fp hash -- 5 minute
 	_ = mem.Set(req.GetContext().Value(), fmt.Sprintf("fp_%s", fpHash), user.Id, 5*60)
 	// send email forgot password
-	content := utils.ReadFile(fmt.Sprintf("%s/%s", cfg.GetConfig().App.MailTemplateDirectory, "forgot-password.tpl"))
+	content := utils.ReadFile(fmt.Sprintf("%s/%s", cfg.GetConfig().App.MailTemplateDirectory, "forgot-password.html"))
 	_, err = mail.SendHtml(
 		req.GetContext().Value(),
 		[]mailer.Target{{Name: user.DisplayName, Email: user.Email}},
