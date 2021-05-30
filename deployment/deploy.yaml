@@ -96,3 +96,15 @@
       tags:
         - scheduler
         - stop_scheduler
+    # restart service
+    - name: Run docker for api
+      community.docker.docker_container:
+        name: "{{api_docker_name}}"
+        image: "{{docker_image_name}}:{{docker_image_tag}}"
+        command: "./app api"
+        state: started
+        restart: yes
+        ports:
+          - 3701:3701
+      tags:
+        - deployment
