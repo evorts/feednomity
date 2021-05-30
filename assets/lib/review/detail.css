@@ -1,7 +1,7 @@
 .navbar {
-    -webkit-box-shadow: 0 .5em 1em -.125em rgba(10,10,10,.1),0 0 0 1px rgba(10,10,10,.02);
-    -moz-box-shadow: 0 .5em 1em -.125em rgba(10,10,10,.1),0 0 0 1px rgba(10,10,10,.02);
-    box-shadow: 0 .5em 1em -.125em rgba(10,10,10,.1),0 0 0 1px rgba(10,10,10,.02);
+    -webkit-box-shadow: 0 .5em 1em -.125em rgba(10, 10, 10, .1), 0 0 0 1px rgba(10, 10, 10, .02);
+    -moz-box-shadow: 0 .5em 1em -.125em rgba(10, 10, 10, .1), 0 0 0 1px rgba(10, 10, 10, .02);
+    box-shadow: 0 .5em 1em -.125em rgba(10, 10, 10, .1), 0 0 0 1px rgba(10, 10, 10, .02);
 }
 
 .tab-contents .tabs:not(:last-child) {
@@ -17,11 +17,11 @@
     display: block;
 }
 
-.btn-float{
+.btn-float {
     background-color: #f9d71e;
-    position:fixed;
-    bottom:40px;
-    right:40px;
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
 }
 
 .score, .score-subtotal, .score-total, .score-rating {
@@ -32,7 +32,7 @@
     color: #223aff;
 }
 
-.score-rating  {
+.score-rating {
     text-transform: uppercase;
 }
 
@@ -62,7 +62,7 @@
 .checkmark {
     position: absolute;
     top: 1em;
-    left:0;
+    left: 2px;
     height: 1.3rem;
     width: 1.3rem;
     background-color: #eee;
@@ -109,19 +109,24 @@
 th:first-child {
     width: 2rem;
 }
+
 th:nth-child(2) {
     width: 10rem;
 }
+
 th:nth-child(3) {
     width: 20rem;
 }
+
 th:nth-child(4) {
     width: 3rem;
 }
+
 th.hrating {
     width: 3rem;
-    text-align: center!important;
+    text-align: center !important;
 }
+
 th.hscore {
     width: 3rem;
 }

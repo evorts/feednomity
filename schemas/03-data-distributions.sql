@@ -9,9 +9,9 @@ from distributions;
 insert into distributions(id, topic, distribution_limit, distribution_count, range_start, range_end, created_by,
                           for_group_id, created_at)
 
-values (1, '360 Review - Beyond Banking (Des 2020 ~ May 2021)', 5, 0, to_date('20201201', 'YYYYMMDD'),
+values (1, '360 Review BIN (Des 2020 ~ May 2021)', 5, 0, to_date('20201201', 'YYYYMMDD'),
         to_date('20210531', 'YYYYMMDD'), 1, 2, now()),
-       (2, '360 Review - Beyond Banking (Jun 2021 ~ Nov 2021)', 5, 0, to_date('20210601', 'YYYYMMDD'),
+       (2, '360 Review BIN (Jun 2021 ~ Nov 2021)', 5, 0, to_date('20210601', 'YYYYMMDD'),
         to_date('20211130', 'YYYYMMDD'), 1, 2, now())
 ;
 

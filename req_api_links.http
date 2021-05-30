@@ -1,13 +1,13 @@
 POST {{api_base_url}}/links/list
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 ###
 POST {{api_base_url}}/links/create
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "disable_auto_generate_hash": false,
@@ -25,8 +25,8 @@ Referer: https://anonymity.evorts.com
 ###
 PUT {{api_base_url}}/links/update
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "regenerate_hash": true,
@@ -39,8 +39,8 @@ Referer: https://anonymity.evorts.com
 ###
 DELETE {{api_base_url}}/links/delete
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "ids": [1,2,3]

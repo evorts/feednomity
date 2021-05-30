@@ -253,6 +253,10 @@ usersLoop:
 		if !ok {
 			continue
 		}
+		if len(cfg.GetConfig().App.ReviewWhitelistRespondent) > 0 &&
+			!utils.InArray(utils.ArrayInt64(cfg.GetConfig().App.ReviewWhitelistRespondent).ToArrayInterface(), obj.RespondentId) {
+			continue
+		}
 		link := ""
 		linkHash := ""
 		linkExpiredAt := ""
@@ -289,7 +293,7 @@ usersLoop:
 			}
 		}
 		recipientName := utils.IIf(len(recipient.DisplayName) < 1, strings.Title(recipient.Username), recipient.DisplayName)
-		subject := fmt.Sprintf("Req. Review for: %s | %s", recipientName, d.Topic)
+		subject := fmt.Sprintf("Request 360 Review for: %s | %s", recipientName, d.Topic)
 		feeds = append(feeds, &feedbacks.Feedback{
 			DistributionId:       obj.DistributionId,
 			DistributionTopic:    distributionsMap[obj.DistributionId].Topic,
@@ -304,6 +308,8 @@ usersLoop:
 			RespondentGroupName:  groupRespondent.Name,
 			RespondentOrgId:      orgRespondent.Id,
 			RespondentOrgName:    orgRespondent.Name,
+			RespondentAssignment: respondent.Assignment,
+			RespondentRole:       respondent.JobRole,
 			RecipientId:          recipient.Id,
 			RecipientUsername:    recipient.Username,
 			RecipientName:        recipient.DisplayName,
@@ -312,6 +318,8 @@ usersLoop:
 			RecipientGroupName:   groupRecipient.Name,
 			RecipientOrgId:       orgRecipient.Id,
 			RecipientOrgName:     orgRecipient.Name,
+			RecipientAssignment:  recipient.Assignment,
+			RecipientRole:        recipient.JobRole,
 			LinkId:               obj.LinkId,
 			Hash:                 linkHash,
 			Status:               feedbacks.StatusNotStarted,

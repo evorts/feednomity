@@ -1,21 +1,21 @@
 POST {{api_base_url}}/reviews/list
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {}
 
 ###
 GET {{api_base_url}}/reviews/detail/7
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 ###
 POST {{api_base_url}}/reviews/submit
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "item": {

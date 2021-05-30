@@ -18,7 +18,7 @@ func parseToken(jw jwe.IManager, value string) (status int, code, message string
 		return http.StatusForbidden, "ACC:PERM:DND", "Permission denied!", pub, pri
 	}
 	if pub.Expiry.Time().Before(time.Now()) {
-		return http.StatusBadRequest, "ACC:PERM:EXP", "token has expired!", pub, pri
+		return http.StatusUnauthorized, "ACC:PERM:EXP", "token has expired!", pub, pri
 	}
 	return http.StatusContinue, "", "", pub, pri
 }

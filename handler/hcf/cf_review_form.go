@@ -145,12 +145,13 @@ func ReviewDetail(w http.ResponseWriter, r *http.Request) {
 		"Assessments": assessments.Item{
 			Recipient: assessments.Client{
 				Name:         feed.RecipientName,
-				Organization: feed.RecipientOrgName,
+				Organization: feed.RecipientGroupName,
 				Role:         feed.RecipientRole,
 				Assignment:   feed.RecipientAssignment,
 			},
 			Respondent: assessments.Client{
 				Name:       feed.RespondentName,
+				Organization: feed.RespondentGroupName,
 				Role:       feed.RespondentRole,
 				Assignment: feed.RespondentAssignment,
 			},

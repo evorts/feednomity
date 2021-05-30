@@ -1,15 +1,15 @@
 POST {{api_base_url}}/organizations/list
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {}
 
 ###
 POST {{api_base_url}}/organizations/create
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "orgs": [
@@ -23,8 +23,8 @@ Referer: https://anonymity.evorts.com
 ###
 PUT {{api_base_url}}/organizations/update
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "org": {
@@ -37,8 +37,8 @@ Referer: https://anonymity.evorts.com
 ###
 DELETE {{api_base_url}}/organizations/delete
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "ids": [3]

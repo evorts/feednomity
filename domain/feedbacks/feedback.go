@@ -47,8 +47,10 @@ func (m *manager) FindByIds(ctx context.Context, ids ...int64) ([]*Feedback, err
 			id, distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
 			respondent_id, respondent_username, respondent_name, respondent_email, 
 			respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+			respondent_role, respondent_assignment,
 			recipient_id, recipient_username, recipient_name, recipient_email, 
 			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+			recipient_role, recipient_assignment,
 			link_id, hash, status, content, created_at, updated_at 
 		FROM %s WHERE id IN (%s)`, tableFeedback, strings.TrimRight(strings.Repeat("?,", len(ids)), ","))
 	rows, err := m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), utils.ArrayInt64(ids).ToArrayInterface()...)
@@ -63,34 +65,14 @@ func (m *manager) FindByIds(ctx context.Context, ids ...int64) ([]*Feedback, err
 			item Feedback
 		)
 		err = rows.Scan(
-			&item.Id,
-			&item.DistributionId,
-			&item.DistributionTopic,
-			&item.DistributionObjectId,
-			&item.RangeStart,
-			&item.RangeEnd,
-			&item.RespondentId,
-			&item.RespondentUsername,
-			&item.RespondentName,
-			&item.RespondentEmail,
-			&item.RespondentGroupId,
-			&item.RespondentGroupName,
-			&item.RespondentOrgId,
-			&item.RespondentOrgName,
-			&item.RecipientId,
-			&item.RecipientUsername,
-			&item.RecipientName,
-			&item.RecipientEmail,
-			&item.RecipientGroupId,
-			&item.RecipientGroupName,
-			&item.RecipientOrgId,
-			&item.RecipientOrgName,
-			&item.LinkId,
-			&item.Hash,
-			&item.Status,
-			&item.Content,
-			&item.CreatedAt,
-			&item.UpdatedAt,
+			&item.Id, &item.DistributionId, &item.DistributionTopic, &item.DistributionObjectId, &item.RangeStart, &item.RangeEnd,
+			&item.RespondentId, &item.RespondentUsername, &item.RespondentName, &item.RespondentEmail,
+			&item.RespondentGroupId, &item.RespondentGroupName, &item.RespondentOrgId, &item.RespondentOrgName,
+			&item.RespondentRole, &item.RespondentAssignment,
+			&item.RecipientId, &item.RecipientUsername, &item.RecipientName, &item.RecipientEmail,
+			&item.RecipientGroupId, &item.RecipientGroupName, &item.RecipientOrgId, &item.RecipientOrgName,
+			&item.RecipientRole, &item.RecipientAssignment,
+			&item.LinkId, &item.Hash, &item.Status, &item.Content, &item.CreatedAt, &item.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
@@ -107,8 +89,10 @@ func (m *manager) FindByDistId(ctx context.Context, distId, distObjId int64) ([]
 			id, distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
 			respondent_id, respondent_username, respondent_name, respondent_email, 
 			respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+			respondent_role, respondent_assignment,
 			recipient_id, recipient_username, recipient_name, recipient_email, 
 			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+			recipient_role, recipient_assignment,
 			link_id, hash, status, content, created_at, updated_at 
 		FROM %s WHERE distribution_id = ? AND distribution_object_id = ?`, tableFeedback,
 	)
@@ -142,6 +126,8 @@ func (m *manager) FindByDistId(ctx context.Context, distId, distObjId int64) ([]
 			&item.RespondentGroupName,
 			&item.RespondentOrgId,
 			&item.RespondentOrgName,
+			&item.RespondentRole,
+			&item.RespondentAssignment,
 			&item.RecipientId,
 			&item.RecipientUsername,
 			&item.RecipientName,
@@ -150,6 +136,8 @@ func (m *manager) FindByDistId(ctx context.Context, distId, distObjId int64) ([]
 			&item.RecipientGroupName,
 			&item.RecipientOrgId,
 			&item.RecipientOrgName,
+			&item.RecipientRole,
+			&item.RecipientAssignment,
 			&item.LinkId,
 			&item.Hash,
 			&item.Status,
@@ -180,8 +168,10 @@ func (m *manager) FindByGroupId(ctx context.Context, id int64, page, limit int) 
 			id, distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
 			respondent_id, respondent_username, respondent_name, respondent_email, 
 			respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+			respondent_role, respondent_assignment,
 			recipient_id, recipient_username, recipient_name, recipient_email, 
 			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+			recipient_role, recipient_assignment,
 			link_id, hash, status, content, created_at, updated_at 
 		FROM %s 
 		JOIN (VALUES ('%s'::feedback_status, 1), ('%s'::feedback_status, 2), ('%s'::feedback_status, 3)) AS x(value, order_number) on %s.status = x.value
@@ -215,6 +205,8 @@ func (m *manager) FindByGroupId(ctx context.Context, id int64, page, limit int) 
 			&item.RespondentGroupName,
 			&item.RespondentOrgId,
 			&item.RespondentOrgName,
+			&item.RespondentRole,
+			&item.RespondentAssignment,
 			&item.RecipientId,
 			&item.RecipientUsername,
 			&item.RecipientName,
@@ -223,6 +215,8 @@ func (m *manager) FindByGroupId(ctx context.Context, id int64, page, limit int) 
 			&item.RecipientGroupName,
 			&item.RecipientOrgId,
 			&item.RecipientOrgName,
+			&item.RecipientRole,
+			&item.RecipientAssignment,
 			&item.LinkId,
 			&item.Hash,
 			&item.Status,
@@ -253,8 +247,10 @@ func (m *manager) FindByOrgId(ctx context.Context, id int64, page, limit int) (i
 			id, distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
 			respondent_id, respondent_username, respondent_name, respondent_email, 
 			respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+			respondent_role, respondent_assignment,
 			recipient_id, recipient_username, recipient_name, recipient_email, 
 			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+			recipient_role, recipient_assignment,
 			link_id, hash, status, content, created_at, updated_at 
 		FROM %s
 		JOIN (VALUES ('%s'::feedback_status, 1), ('%s'::feedback_status, 2), ('%s'::feedback_status, 3)) AS x(value, order_number) on %s.status = x.value
@@ -288,6 +284,8 @@ func (m *manager) FindByOrgId(ctx context.Context, id int64, page, limit int) (i
 			&item.RespondentGroupName,
 			&item.RespondentOrgId,
 			&item.RespondentOrgName,
+			&item.RespondentRole,
+			&item.RespondentAssignment,
 			&item.RecipientId,
 			&item.RecipientUsername,
 			&item.RecipientName,
@@ -296,6 +294,8 @@ func (m *manager) FindByOrgId(ctx context.Context, id int64, page, limit int) (i
 			&item.RecipientGroupName,
 			&item.RecipientOrgId,
 			&item.RecipientOrgName,
+			&item.RecipientRole,
+			&item.RecipientAssignment,
 			&item.LinkId,
 			&item.Hash,
 			&item.Status,
@@ -326,8 +326,10 @@ func (m *manager) FindByRespondentId(ctx context.Context, id int64, page, limit 
 			id, distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
 			respondent_id, respondent_username, respondent_name, respondent_email, 
 			respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+			respondent_role, respondent_assignment,
 			recipient_id, recipient_username, recipient_name, recipient_email, 
 			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+			recipient_role, recipient_assignment,
 			link_id, hash, status, content, created_at, updated_at 
 		FROM %s
 		JOIN (VALUES ('%s'::feedback_status, 1), ('%s'::feedback_status, 2), ('%s'::feedback_status, 3)) AS x(value, order_number) on %s.status = x.value
@@ -348,34 +350,14 @@ func (m *manager) FindByRespondentId(ctx context.Context, id int64, page, limit 
 			item Feedback
 		)
 		err = rows.Scan(
-			&item.Id,
-			&item.DistributionId,
-			&item.DistributionTopic,
-			&item.DistributionObjectId,
-			&item.RangeStart,
-			&item.RangeEnd,
-			&item.RespondentId,
-			&item.RespondentUsername,
-			&item.RespondentName,
-			&item.RespondentEmail,
-			&item.RespondentGroupId,
-			&item.RespondentGroupName,
-			&item.RespondentOrgId,
-			&item.RespondentOrgName,
-			&item.RecipientId,
-			&item.RecipientUsername,
-			&item.RecipientName,
-			&item.RecipientEmail,
-			&item.RecipientGroupId,
-			&item.RecipientGroupName,
-			&item.RecipientOrgId,
-			&item.RecipientOrgName,
-			&item.LinkId,
-			&item.Hash,
-			&item.Status,
-			&item.Content,
-			&item.CreatedAt,
-			&item.UpdatedAt,
+			&item.Id, &item.DistributionId, &item.DistributionTopic, &item.DistributionObjectId, &item.RangeStart, &item.RangeEnd,
+			&item.RespondentId, &item.RespondentUsername, &item.RespondentName, &item.RespondentEmail,
+			&item.RespondentGroupId, &item.RespondentGroupName, &item.RespondentOrgId, &item.RespondentOrgName,
+			&item.RespondentRole, &item.RespondentAssignment,
+			&item.RecipientId, &item.RecipientUsername, &item.RecipientName, &item.RecipientEmail,
+			&item.RecipientGroupId, &item.RecipientGroupName, &item.RecipientOrgId, &item.RecipientOrgName,
+			&item.RecipientRole, &item.RecipientAssignment,
+			&item.LinkId, &item.Hash, &item.Status, &item.Content, &item.CreatedAt, &item.UpdatedAt,
 		)
 		if err != nil {
 			return
@@ -391,8 +373,10 @@ func (m *manager) FindItem(ctx context.Context, distId, distObjId, recipientId, 
 			id, distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
 			respondent_id, respondent_username, respondent_name, respondent_email, 
 			respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+			respondent_role, respondent_assignment,
 			recipient_id, recipient_username, recipient_name, recipient_email, 
 			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+			recipient_role, recipient_assignment,
 			link_id, hash, status, content, created_at, updated_at 
 		FROM %s WHERE 
 			distribution_id = ? 
@@ -420,6 +404,8 @@ func (m *manager) FindItem(ctx context.Context, distId, distObjId, recipientId, 
 		&item.RespondentGroupName,
 		&item.RespondentOrgId,
 		&item.RespondentOrgName,
+		&item.RespondentRole,
+		&item.RespondentAssignment,
 		&item.RecipientId,
 		&item.RecipientUsername,
 		&item.RecipientName,
@@ -428,6 +414,8 @@ func (m *manager) FindItem(ctx context.Context, distId, distObjId, recipientId, 
 		&item.RecipientGroupName,
 		&item.RecipientOrgId,
 		&item.RecipientOrgName,
+		&item.RecipientRole,
+		&item.RecipientAssignment,
 		&item.LinkId,
 		&item.Hash,
 		&item.Status,
@@ -455,8 +443,10 @@ func (m *manager) FindAll(ctx context.Context, page, limit int) (items []*Feedba
 						id, distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
 						respondent_id, respondent_username, respondent_name, respondent_email, 
 						respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+						respondent_role, respondent_assignment,
 						recipient_id, recipient_username, recipient_name, recipient_email, 
 						recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+						recipient_role, recipient_assignment,
 						link_id, hash, status, content, created_at, updated_at
 					FROM %s
 					JOIN (VALUES ('%s'::feedback_status, 1), ('%s'::feedback_status, 2), ('%s'::feedback_status, 3)) AS x(value, order_number) on %s.status = x.value
@@ -490,6 +480,8 @@ func (m *manager) FindAll(ctx context.Context, page, limit int) (items []*Feedba
 			&item.RespondentGroupName,
 			&item.RespondentOrgId,
 			&item.RespondentOrgName,
+			&item.RespondentRole,
+			&item.RespondentAssignment,
 			&item.RecipientId,
 			&item.RecipientUsername,
 			&item.RecipientName,
@@ -498,6 +490,8 @@ func (m *manager) FindAll(ctx context.Context, page, limit int) (items []*Feedba
 			&item.RecipientGroupName,
 			&item.RecipientOrgId,
 			&item.RecipientOrgName,
+			&item.RecipientRole,
+			&item.RecipientAssignment,
 			&item.LinkId,
 			&item.Hash,
 			&item.Status,
@@ -532,17 +526,22 @@ func (m *manager) InsertMultiple(ctx context.Context, items []*Feedback) error {
 				?, ?, ?, ?, ?, 
 				?, ?, ?, ?,
 				?, ?, ?, ?,
+				?, ?,
 				?, ?, ?, ?,
 				?, ?, ?, ?,
-				?, ?, ?, ?, NOW()
+				?, ?, ?, ?, 
+				?, ?, 
+				NOW()
 			)`,
 		)
 		values = append(values,
 			&item.DistributionId, &item.DistributionTopic, &item.DistributionObjectId, &item.RangeStart, &item.RangeEnd,
 			&item.RespondentId, &item.RespondentUsername, &item.RespondentName, &item.RespondentEmail,
 			&item.RespondentGroupId, &item.RespondentGroupName, &item.RespondentOrgId, &item.RespondentOrgName,
+			&item.RespondentRole, &item.RespondentAssignment,
 			&item.RecipientId, &item.RecipientUsername, &item.RecipientName, &item.RecipientEmail,
 			&item.RecipientGroupId, &item.RecipientGroupName, &item.RecipientOrgId, &item.RecipientOrgName,
+			&item.RecipientRole, &item.RecipientAssignment,
 			&item.LinkId, &item.Hash, &item.Status, &item.Content,
 		)
 	}
@@ -563,8 +562,10 @@ func (m *manager) UpsertMultiple(ctx context.Context, items []*Feedback) (succes
 			distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
 			respondent_id, respondent_username, respondent_name, respondent_email, 
 			respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+			respondent_role, respondent_assignment,
 			recipient_id, recipient_username, recipient_name, recipient_email, 
 			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+			recipient_role, recipient_assignment,
 			link_id, hash, status, content, created_at
 		) VALUES`, tableFeedback)
 	placeholders := make([]string, 0)
@@ -576,17 +577,22 @@ func (m *manager) UpsertMultiple(ctx context.Context, items []*Feedback) (succes
 				?, ?, ?, ?, ?, 
 				?, ?, ?, ?,
 				?, ?, ?, ?,
+				?, ?,
 				?, ?, ?, ?,
 				?, ?, ?, ?,
-				?, ?, ?, ?, NOW()
+				?, ?,
+				?, ?, ?, ?,
+				NOW()
 			)`,
 		)
 		values = append(values,
 			&item.DistributionId, &item.DistributionTopic, &item.DistributionObjectId, &item.RangeStart, &item.RangeEnd,
 			&item.RespondentId, &item.RespondentUsername, &item.RespondentName, &item.RespondentEmail,
 			&item.RespondentGroupId, &item.RespondentGroupName, &item.RespondentOrgId, &item.RespondentOrgName,
+			&item.RespondentRole, &item.RespondentAssignment,
 			&item.RecipientId, &item.RecipientUsername, &item.RecipientName, &item.RecipientEmail,
 			&item.RecipientGroupId, &item.RecipientGroupName, &item.RecipientOrgId, &item.RecipientOrgName,
+			&item.RecipientRole, &item.RecipientAssignment,
 			&item.LinkId, &item.Hash, &item.Status, &item.Content,
 		)
 	}
@@ -597,6 +603,10 @@ func (m *manager) UpsertMultiple(ctx context.Context, items []*Feedback) (succes
 			)
 			DO UPDATE SET 
 				distribution_topic = EXCLUDED.distribution_topic,
+				respondent_role = EXCLUDED.respondent_role,
+				respondent_assignment = EXCLUDED.respondent_assignment,
+				recipient_role = EXCLUDED.recipient_role,
+				recipient_assignment = EXCLUDED.recipient_assignment,
 				range_start = EXCLUDED.range_start,
 				range_end = EXCLUDED.range_end,
 				content = EXCLUDED.content,
@@ -635,40 +645,25 @@ func (m *manager) Update(ctx context.Context, item Feedback) error {
 		&item.DistributionId, &item.DistributionTopic, &item.DistributionObjectId, &item.RangeStart, &item.RangeEnd,
 		&item.RespondentId, &item.RespondentUsername, &item.RespondentName, &item.RespondentEmail,
 		&item.RespondentGroupId, &item.RespondentGroupName, &item.RespondentOrgId, &item.RespondentOrgName,
+		&item.RespondentRole, &item.RespondentAssignment,
 		&item.RecipientId, &item.RecipientUsername, &item.RecipientName, &item.RecipientEmail,
 		&item.RecipientGroupId, &item.RecipientGroupName, &item.RecipientOrgId, &item.RecipientOrgName,
+		&item.RecipientRole, &item.RecipientAssignment,
 		&item.LinkId, &item.Hash, &item.Status, &item.Content,
 	}
 	args = append(args, item.Id)
 	q := fmt.Sprintf(`
 		UPDATE %s 
 		SET 
-			distribution_id = ?, 
-			distribution_topic = ?, 
-			distribution_object_id = ?, 
-			range_start = ?, 
-			range_end = ?,
-			respondent_id = ?, 
-			respondent_username = ?, 
-			respondent_name = ?, 
-			respondent_email = ?, 
-			respondent_group_id = ?, 
-			respondent_group_name = ?, 
-			respondent_org_id = ?, 
-			respondent_org_name = ?,
-			recipient_id = ?, 
-			recipient_username = ?, 
-			recipient_name = ?, 
-			recipient_email = ?, 
-			recipient_group_id = ?, 
-			recipient_group_name = ?, 
-			recipient_org_id = ?, 
-			recipient_org_name = ?,
-			link_id = ?, 
-			hash = ?, 
-			status = ?, 
-			content = ?, 
-			updated_at = NOW()
+			distribution_id = ?, distribution_topic = ?, distribution_object_id = ?, 
+			range_start = ?, range_end = ?,
+			respondent_id = ?,  respondent_username = ?, respondent_name = ?, respondent_email = ?, 
+			respondent_group_id = ?,  respondent_group_name = ?, respondent_org_id = ?, respondent_org_name = ?,
+			respondent_role = ?, respondent_assignment = ?,
+			recipient_id = ?, recipient_username = ?, recipient_name = ?, recipient_email = ?, 
+			recipient_group_id = ?, recipient_group_name = ?, recipient_org_id = ?, recipient_org_name = ?,
+			recipient_role = ?, recipient_assignment = ?,
+			link_id = ?, hash = ?, status = ?, content = ?, updated_at = NOW()
 		WHERE id = ?`, tableFeedback)
 	q = m.dbm.Rebind(ctx, q)
 	cmd, err2 := m.dbm.Exec(ctx, q, args...)

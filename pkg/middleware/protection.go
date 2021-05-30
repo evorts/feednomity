@@ -26,7 +26,7 @@ func WithSessionProtection(sm session.IManager, vm view.ITemplateManager, acc ac
 		var (
 			userData reqio.UserData
 			jweToken string
-			err error
+			err      error
 		)
 		ctx := r.Context()
 		err = sm.GetJson(ctx, "user", &userData)
@@ -51,7 +51,7 @@ func WithSessionProtection(sm session.IManager, vm view.ITemplateManager, acc ac
 						Expires: time.Unix(0, 0),
 					})
 					render(
-						status, api.NewResponseError(code, message, nil, nil),
+						status, api.NewResponse(status, nil, api.NewResponseError(code, message, nil, nil)),
 						w, forbiddenTemplate, vm,
 					)
 					return
@@ -78,7 +78,8 @@ func WithSessionProtection(sm session.IManager, vm view.ITemplateManager, acc ac
 		}
 		if userData.Id < 1 {
 			render(
-				http.StatusForbidden, api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil),
+				http.StatusForbidden,
+				api.NewResponse(http.StatusForbidden, nil, api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil)),
 				w, forbiddenTemplate, vm,
 			)
 			return
@@ -88,7 +89,11 @@ func WithSessionProtection(sm session.IManager, vm view.ITemplateManager, acc ac
 		allowed, accessScope := acc.IsAllowed(userData.Id, r.Method, r.URL.Path)
 		if !allowed {
 			render(
-				http.StatusForbidden, api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil),
+				http.StatusForbidden,
+				api.NewResponse(
+					http.StatusForbidden, nil,
+					api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil),
+				),
 				w, forbiddenTemplate, vm,
 			)
 			return
@@ -121,7 +126,8 @@ func WithTokenProtection(
 		jweToken := strings.Trim(r.Header.Get("X-Authorization"), " ")
 		status, code, message, _, pri := parseToken(jw, jweToken)
 		if len(message) > 0 {
-			_ = vm.RenderJson(w, status, api.NewResponseError(code, message, nil, nil))
+			_ = vm.RenderJson(w, status,
+				api.NewResponse(status, nil, api.NewResponseError(code, message, nil, nil)))
 			return
 		}
 		userData = reqio.UserData{
@@ -142,7 +148,13 @@ func WithTokenProtection(
 		//render template when violate permission
 		allowed, accessScope := acc.IsAllowed(userData.Id, method, r.URL.Path)
 		if !allowed {
-			_ = vm.RenderJson(w, http.StatusForbidden, api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil))
+			_ = vm.RenderJson(
+				w, http.StatusForbidden,
+				api.NewResponse(
+					http.StatusForbidden, nil,
+					api.NewResponseError("ACC:PERM:DND", "Permission denied!", nil, nil),
+				),
+			)
 			return
 		}
 		ctx = context.WithValue(ctx, "user", userData)

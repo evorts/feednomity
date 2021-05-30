@@ -1,6 +1,6 @@
 POST {{api_base_url}}/distributions/publish
 X-Authorization: {{auth_token}}
-Content-Type: application/json
+Content-Type: {{content_type}}
 Referer: {{referer}}
 
 {
@@ -12,16 +12,16 @@ Referer: {{referer}}
 ###
 POST {{api_base_url}}/distributions/list
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {}
 
 ###
 POST {{api_base_url}}/distributions/create
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "items": [
@@ -38,7 +38,7 @@ Referer: https://anonymity.evorts.com
 ###
 PUT {{api_base_url}}/distributions/update
 X-Authorization: {{auth_token}}
-Content-Type: application/json
+Content-Type: {{content_type}}
 Referer: {{referer}}
 
 {
@@ -52,8 +52,8 @@ Referer: {{referer}}
 ###
 DELETE {{api_base_url}}/distributions/delete
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "ids": [3]

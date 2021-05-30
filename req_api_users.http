@@ -1,30 +1,31 @@
 POST {{api_base_url}}/users/forgot-password
-Content-Type: application/json
+Content-Type: {{content_type}}
 Referer: {{referer}}
-X-Client-Id: web
-X-Authorization: Token adnsdfknslgksdngooiniosdvnsldkgnsdg
+X-Client-Id: {{client_id}}
 
 {
-  "user": "test.account1@mailinator.com"
+  "user": "test.account1@mailinator.com",
+  "hash": "ldnflksdnfklsngsdlkgnd"
 }
 
 ###
 POST {{api_base_url}}/users/create-password
-Content-Type: application/json
+Content-Type: {{content_type}}
 Referer: {{referer}}
-X-Client-Id: web
+X-Client-Id: {{client_id}}
 X-Authorization: Token adnsdfknslgksdngooiniosdvnsldkgnsdg
 
 {
   "pass": "test@22",
-  "confirm": "test@33"
+  "confirm": "test@33",
+  "hash": "ldnflksdnfklsngsdlkgnd"
 }
 
 ###
 POST {{api_base_url}}/users/login
-Content-Type: application/json
+Content-Type: {{content_type}}
 Referer: {{referer}}
-X-Client-Id: web
+X-Client-Id: {{client_id}}
 
 {
   "username": "dev@evorts.com",
@@ -35,9 +36,9 @@ X-Client-Id: web
 
 ###
 POST {{api_base_url}}/users/change-password
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
-X-Client-Id: web
+Content-Type: {{content_type}}
+Referer: {{referer}}
+X-Client-Id: {{client_id}}
 X-Authorization: {{auth_token}}
 
 {
@@ -49,16 +50,16 @@ X-Authorization: {{auth_token}}
 ### list
 POST {{api_base_url}}/users/list
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {}
 
 ### create
 POST {{api_base_url}}/users/create
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "users": [
@@ -84,8 +85,8 @@ Referer: https://anonymity.evorts.com
 ### update
 PUT {{api_base_url}}/users/update
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "user": {
@@ -110,8 +111,8 @@ Referer: https://anonymity.evorts.com
 ### delete
 DELETE {{api_base_url}}/users/delete
 X-Authorization: {{auth_token}}
-Content-Type: application/json
-Referer: https://anonymity.evorts.com
+Content-Type: {{content_type}}
+Referer: {{referer}}
 
 {
   "ids": [3]

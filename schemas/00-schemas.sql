@@ -339,7 +339,7 @@ create table feedbacks
     respondent_org_id      int,
     respondent_org_name    varchar(50),
     respondent_role        varchar(50),
-    respondent_assigment   varchar(50),
+    respondent_assignment   varchar(50),
     recipient_id           int,
     recipient_username     varchar(100),
     recipient_name         varchar(100),

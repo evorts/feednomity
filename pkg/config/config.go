@@ -9,7 +9,7 @@ import (
 	"path"
 )
 
-type MailProvider map[string] string
+type MailProvider map[string]string
 
 func (m MailProvider) Get(key string) string {
 	if v, ok := m[key]; ok {
@@ -43,18 +43,19 @@ func (m MapMemoryProvider) Get(key string) MemoryProvider {
 }
 
 type App struct {
-	Port               int    `yaml:"port"`
-	PortApi            int    `yaml:"port_api"`
-	BaseUrlWeb         string `yaml:"base_url_web"`
-	BaseUrlApi         string `yaml:"base_url_api"`
-	ReviewMailTemplate string `yaml:"review_mail_template"`
-	HashSalt           string `yaml:"hash_salt"`
-	AESSalt            string `yaml:"aes_salt"`
-	HashExpire         int    `yaml:"hash_expire"`
-	SessionExpiration  int64  `yaml:"session_expire"`
-	CookieDomain       string `yaml:"cookie_domain"`
-	CookieSecure       int    `yaml:"cookie_secure"`
-	Cors               struct {
+	Port                      int     `yaml:"port"`
+	PortApi                   int     `yaml:"port_api"`
+	BaseUrlWeb                string  `yaml:"base_url_web"`
+	BaseUrlApi                string  `yaml:"base_url_api"`
+	ReviewMailTemplate        string  `yaml:"review_mail_template"`
+	ReviewWhitelistRespondent []int64 `yaml:"review_whitelist_respondent"`
+	HashSalt                  string  `yaml:"hash_salt"`
+	AESSalt                   string  `yaml:"aes_salt"`
+	HashExpire                int     `yaml:"hash_expire"`
+	SessionExpiration         int64   `yaml:"session_expire"`
+	CookieDomain              string  `yaml:"cookie_domain"`
+	CookieSecure              int     `yaml:"cookie_secure"`
+	Cors                      struct {
 		AllowedMethods []string `yaml:"allowed_methods"`
 		AllowedOrigins []string `yaml:"allowed_origins"`
 	} `yaml:"cors"`
