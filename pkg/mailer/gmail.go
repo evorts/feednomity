@@ -1,14 +1,17 @@
 package mailer
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 	"net/smtp"
 	"strings"
 )
 
 type gmailManager struct {
 	user, pass, address string
+	tpl                 *template.Template
 	manager
 }
 
@@ -17,6 +20,7 @@ func NewGmail(user, pass, address string) IMailer {
 		user:    user,
 		pass:    pass,
 		address: address,
+		tpl:     template.New("gmail_template"),
 	}
 }
 
@@ -32,21 +36,27 @@ func (g *gmailManager) SetReplyTo(name, email string) IMailer {
 	return g
 }
 
-func (g *gmailManager) SendHtml(ctx context.Context, to []Target, subject, html string, data map[string]string) ([]byte, error) {
-	if err := validate(to, subject, html); err != nil {
+func (g *gmailManager) SendHtml(ctx context.Context, targets []Target, subject, html string, data map[string]string) ([]byte, error) {
+	if err := validate(targets, subject, html); err != nil {
 		return nil, err
 	}
-	message := make([]string, 0)
 	tos := make([]string, 0)
-	for _, v := range to {
+	for _, v := range targets {
 		tos = append(tos, fmt.Sprintf("%s", v.Email))
 	}
-	message = append(message, fmt.Sprintf("From: %s", g.senderEmail))
-	message = append(message, fmt.Sprintf("To: %s", strings.Join(tos, ",")))
-	message = append(message, fmt.Sprintf("Subject: %s", subject))
-	message = append(message, fmt.Sprintf("MIME Version: 1.0; Content-Type: text/html; charset=utf-8;\n"))
-	message = append(message, bindDataToTemplate(data, html))
-	return g.call([]byte(strings.Join(message, "\n")), map[string]interface{}{
+	from := fmt.Sprintf("From: %s\n", g.senderEmail)
+	to := fmt.Sprintf("To: %s\n", strings.Join(tos, ","))
+	subject = fmt.Sprintf("Subject: %s\n", subject)
+	mime := fmt.Sprintf("MIME Version: 1.0; \nContent-Type: text/html; charset=utf-8;\n\n")
+	t, err := g.tpl.Parse(bindDataToTemplate(data, html))
+	if err != nil {
+		return nil, err
+	}
+	buf := new(bytes.Buffer)
+	if err = t.Execute(buf, data); err != nil {
+		return nil, err
+	}
+	return g.call([]byte(from + to + subject + mime + "\n" + buf.String()), map[string]interface{}{
 		"dest": tos,
 	})
 }

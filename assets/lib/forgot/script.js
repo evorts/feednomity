@@ -13,7 +13,7 @@
                 function (res) {
                     $this.removeAttribute('disabled');
                     if (res.status === 200) {
-                        fc.toast('Request forgot password sent! Check your email.', 'is-success');
+                        fc.toast('Request forgot password sent! Check your email. Redirecting to login page...', 'is-success');
                         setTimeout(function () {
                             window.location.replace(RedirectUrl);
                         }, 700);
