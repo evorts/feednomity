@@ -25,12 +25,19 @@ var (
 	today      *time.Time
 	todayLimit int
 )
+func isInstantiated() bool {
+	return cfg != nil && ds != nil && m != nil
+}
 var Blaster = &cli.Command{
 	Description: "Mail blaster command line, cron job style",
 	Run: func(cmd *cli.Command, args []string) {
 		fmt.Println("mail blaster command running...")
-		initLib.Do(instantiateLib)
-		fmt.Println("libraries instantiated")
+		if !isInstantiated() {
+			fmt.Println("library aren't instantiated yet. executing instantiation...")
+			instantiateLib()
+			fmt.Println("libraries instantiated")
+		}
+		//initLib.Do(instantiateLib)
 		c := cron.New()
 		entryId, err2 := c.AddFunc(cfg.GetConfig().CronJobs.Blaster.Schedule, runCronBlaster)
 		if err2 != nil {
