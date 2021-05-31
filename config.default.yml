@@ -1,12 +1,31 @@
 app:
-  port: 3500
-  salt: ""
+  port: 3700
+  port_api: 3701
+  base_url_web: ""
+  base_url_api: ""
+  review_mail_template: "review-360-mail.html"
+  review_whitelist_respondent: []
+  hash_salt: ""
+  # must be 32 character length
+  aes_salt: ""
+  # default expire of hash link: 12 hour
+  hash_expire: 43200
   # session expiration in second
   session_expire: 3600
   cookie_domain: ".domain.local"
   cookie_secure: 0
-  template_dir: ""
-  asset_dir: ""
+  cors:
+    allowed_methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+    allowed_origins:
+      - "localhost:3700"
+  template_dir: "/tmpl"
+  mail_template_dir: "/tmpl_mail"
+  asset_dir: "/assets"
   logo:
     favicon: "/assets/favicon.png"
     url: ""
@@ -17,28 +36,36 @@ app:
       - ""
       - ""
     address: ""
-# users login, combination of username and sha1 pass
-# can use https://passwordsgenerator.net/sha1-hash-generator/ to generate
-users:
-  - uname: ""
-    pass: ""
-groups:
-  - name: "Monitoring Tools"
-    links:
-      - title: ""
-        subtitle: ""
-        icon: ""
-        url: ""
-        git_url: ""
-  - name: "API Documentation"
-    links:
-      - title: "Service A"
-        subtitle: ""
-        icon: ""
-        url: ""
-        git_url: ""
-      - title: "Service B"
-        subtitle: ""
-        icon: ""
-        url: ""
-        git_url: ""
+jwe:
+  key: ""
+  expire: 10
+db:
+  dsn: "host=localhost port=5432 user=postgres password=psqlpass dbname=feednomity sslmode=disable"
+  max_connection_lifetime: 0
+  max_idle_connection: 0
+  max_open_connection: 0
+memory:
+  redis:
+    address: "localhost:6379"
+    password: ""
+    db: 0
+mailer:
+  daily_limit: 300
+  sender_name: ""
+  sender_email: ""
+  providers:
+    #limit send in blue = 300 per day
+    send_in_blue:
+      api_key: ""
+      key: ""
+      api_url: "https://api.sendinblue.com/v3/smtp/email"
+    #limit mail chimp = 10,000 mail per month
+    gmail:
+      user: ""
+      pass: ""
+      address: "smtp.gmail.com:587"
+cron_jobs:
+  blaster:
+    #ref: https://pkg.go.dev/github.com/robfig/cron
+    schedule: "@every 20s"
+    batch_rows: 2

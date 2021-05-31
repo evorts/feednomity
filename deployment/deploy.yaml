@@ -3,19 +3,36 @@
   hosts: appserver
   remote_user: steven
   vars:
-    - src_dir: /home/steven/apps/feednomity-src
-    - docker_image_name: evorts/feednomity
-    - docker_image_tag: 1.0.0
+    - config_filename: "config.ansible.yml"
+    - src_dir: "../"
+    - dest_dir: "/home/steven/apps/feednomity-src"
+    - git_repo: "git@github.com:evorts/feednomity.git"
+    - docker_image_name: "evorts/feednomity"
+    - docker_image_tag: 1.0.1
     - docker_container_tag: ansible_date_time.epoch
     - web_docker_name: feednomity_web
     - api_docker_name: feednomity_api
     - blaster_docker_name: feednomity_blaster
   tasks:
+    - name: Ensure target directory exist
+      ansible.builtin.file:
+        path: "{{dest_dir}}"
+        state: directory
+        mode: '0755'
+      tags:
+        - deployment
     - name: Ensure pulled the latest source code
       ansible.builtin.git:
-        repo: git@github.com:evorts/feednomity.git
-        dest: "{{src_dir}}"
+        repo: "{{git_repo}}"
+        dest: "{{dest_dir}}"
         single_branch: yes
+      tags:
+        - deployment
+    - name: Copy necessary configurations
+      ansible.builtin.copy:
+        src: "{{src_dir}}/config.docker.prod.yml"
+        dest: "{{dest_dir}}/config.docker.yml"
+        mode: '0644'
       tags:
         - deployment
     - name: Build docker image
@@ -23,7 +40,8 @@
         name: "{{docker_image_name}}"
         tag: "{{docker_image_tag}}"
         build:
-          path: "{{src_dir}}/Dockerfile"
+          path: "{{dest_dir}}"
+        dockerfile: "Dockerfile"
         source: build
         state: present
       tags:
@@ -58,6 +76,13 @@
         restart: yes
         ports:
           - 3701:3701
+      tags:
+        - deployment
+    # cleanup
+    - name: Cleanup source directory
+      file:
+        state: absent
+        path: "{{dest_dir}}"
       tags:
         - deployment
     # blaster section
