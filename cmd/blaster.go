@@ -32,12 +32,13 @@ var Blaster = &cli.Command{
 	Description: "Mail blaster command line, cron job style",
 	Run: func(cmd *cli.Command, args []string) {
 		fmt.Println("mail blaster command running...")
-		if !isInstantiated() {
+		/*if !isInstantiated() {
 			fmt.Println("library aren't instantiated yet. executing instantiation...")
 			instantiateLib()
 			fmt.Println("libraries instantiated")
-		}
-		//initLib.Do(instantiateLib)
+		}*/
+		fmt.Println("libraries instantiation...")
+		initLib.Do(instantiateLib)
 		c := cron.New()
 		entryId, err2 := c.AddFunc(cfg.GetConfig().CronJobs.Blaster.Schedule, runCronBlaster)
 		if err2 != nil {
@@ -46,7 +47,7 @@ var Blaster = &cli.Command{
 			l.Fatal(err2)
 			return
 		}
-		fmt.Println("mail blaster starter with id..", entryId)
+		fmt.Println("mail blaster started with id: ", entryId)
 		c.Run()
 	},
 }
@@ -82,7 +83,6 @@ func instantiateLib() {
 
 func runCronBlaster() {
 	l.Log("cron_phase_start", "cron for email blasting started...")
-	initLib.Do(instantiateLib)
 	now := time.Now()
 	if today == nil || today.Day() != now.Day() {
 		today = &now
@@ -108,7 +108,7 @@ func runCronBlaster() {
 	objectIds := make([]int64, 0)
 	templates := make(map[string]string, 0)
 	for _, item := range items {
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 		respondentName := ""
 		if v, ok := item.Arguments["respondent_name"]; ok {
 			respondentName = v.(string)

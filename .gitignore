@@ -1,6 +1,6 @@
 .DS_Store
 .git
 .idea
-config.docker.yml
+config.docker.yml.bak
 config.live.yml
 config.yml
