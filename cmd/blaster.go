@@ -30,6 +30,7 @@ var Blaster = &cli.Command{
 	Run: func(cmd *cli.Command, args []string) {
 		fmt.Println("mail blaster command running...")
 		initLib.Do(instantiateLib)
+		fmt.Println("libraries instantiated")
 		c := cron.New()
 		entryId, err2 := c.AddFunc(cfg.GetConfig().CronJobs.Blaster.Schedule, runCronBlaster)
 		if err2 != nil {
@@ -51,6 +52,7 @@ func instantiateLib() {
 		l.Fatal("error reading configuration")
 		return
 	}
+	fmt.Println("config instantiated")
 	ds = database.NewDB(
 		cfg.GetConfig().DB.Dsn,
 		cfg.GetConfig().DB.MaxConnectionLifetime,
@@ -59,6 +61,7 @@ func instantiateLib() {
 		false,
 	)
 	ds.MustConnect(context.Background())
+	fmt.Println("datasource instantiated")
 	m = mailer.NewSendInBlue(
 		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").Get("api_url"),
 		cfg.GetConfig().Mailer.Providers.Get("send_in_blue").Get("api_key"),
@@ -67,6 +70,7 @@ func instantiateLib() {
 		cfg.GetConfig().Mailer.SenderName,
 		cfg.GetConfig().Mailer.SenderEmail,
 	)
+	fmt.Println("mail blaster instantiated")
 }
 
 func runCronBlaster() {
