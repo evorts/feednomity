@@ -92,7 +92,7 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	// ensure the user and password are correct
 	passCrypt := hash.RenewHash().HashWithoutSalt(payload.Password)
-	if strings.ToLower(passCrypt) != strings.ToLower(strings.TrimLeft(user.Password, "\\x")) {
+	if len(strings.Trim(user.Password, " ")) < 1 || strings.ToLower(passCrypt) != strings.ToLower(strings.TrimLeft(user.Password, "\\x")) {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,
 			Content: make(map[string]interface{}, 0),
