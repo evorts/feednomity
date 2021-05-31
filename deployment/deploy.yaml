@@ -8,7 +8,7 @@
     - dest_dir: "/home/steven/apps/feednomity-src"
     - git_repo: "git@github.com:evorts/feednomity.git"
     - docker_image_name: "evorts/feednomity"
-    - docker_image_tag: 1.0.2
+    - docker_image_tag: 1.0.4
     - docker_container_tag: ansible_date_time.epoch
     - web_docker_name: feednomity_web
     - api_docker_name: feednomity_api
@@ -42,7 +42,7 @@
         mode: '0644'
       tags:
         - deployment
-    - name: Build docker image
+    - name: "Build docker image {{docker_image_name}}:{{docker_image_tag}}"
       community.docker.docker_image:
         name: "{{docker_image_name}}"
         tag: "{{docker_image_tag}}"
@@ -52,14 +52,9 @@
         state: present
       tags:
         - deployment
-    - name: Stop and remove docker container
-      community.docker.docker_container:
-        name:
-          - "{{web_docker_name}}"
-          - "{{api_docker_name}}"
-        state: absent
-        container_default_behavior: no_defaults
-        auto_remove: yes
+    - name: Stop and remove docker containers
+      ansible.builtin.shell: "docker rm -f $(docker ps -q -a)"
+      ignore_errors: yes
       tags:
         - deployment
     - name: Run docker for web
@@ -92,16 +87,6 @@
       tags:
         - deployment
     # blaster section
-    - name: Stop and remove blaster docker container
-      community.docker.docker_container:
-        name:
-          - "{{blaster_docker_name}}"
-        state: absent
-        container_default_behavior: no_defaults
-        auto_remove: yes
-      tags:
-        - deployment
-        - scheduler
     - name: Run docker for blaster
       community.docker.docker_container:
         name: "{{blaster_docker_name}}"
