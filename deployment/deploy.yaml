@@ -8,12 +8,19 @@
     - dest_dir: "/home/steven/apps/feednomity-src"
     - git_repo: "git@github.com:evorts/feednomity.git"
     - docker_image_name: "evorts/feednomity"
-    - docker_image_tag: 1.0.1
+    - docker_image_tag: 1.0.2
     - docker_container_tag: ansible_date_time.epoch
     - web_docker_name: feednomity_web
     - api_docker_name: feednomity_api
     - blaster_docker_name: feednomity_blaster
   tasks:
+    # cleanup
+    - name: Cleanup destination directory
+      file:
+        state: absent
+        path: "{{dest_dir}}"
+      tags:
+        - deployment
     - name: Ensure target directory exist
       ansible.builtin.file:
         path: "{{dest_dir}}"
@@ -41,7 +48,6 @@
         tag: "{{docker_image_tag}}"
         build:
           path: "{{dest_dir}}"
-        dockerfile: "Dockerfile"
         source: build
         state: present
       tags:
@@ -79,7 +85,7 @@
       tags:
         - deployment
     # cleanup
-    - name: Cleanup source directory
+    - name: Cleanup destination directory
       file:
         state: absent
         path: "{{dest_dir}}"
