@@ -7,8 +7,8 @@ Referer: {{referer}}
   "force_redistribution": true,
   "ids": [1],
   "object_ids": [],
-  "isolate_respondents": [37],
-  "isolate_recipients": [12]
+  "isolate_respondents": [],
+  "isolate_recipients": []
 }
 
 ###
