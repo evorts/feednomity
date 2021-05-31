@@ -31,12 +31,14 @@ var Blaster = &cli.Command{
 		fmt.Println("mail blaster command running...")
 		initLib.Do(instantiateLib)
 		c := cron.New()
-		_, err2 := c.AddFunc(cfg.GetConfig().CronJobs.Blaster.Schedule, runCronBlaster)
+		entryId, err2 := c.AddFunc(cfg.GetConfig().CronJobs.Blaster.Schedule, runCronBlaster)
 		if err2 != nil {
 			c.Stop()
+			fmt.Println("fatal error when starting the cron job")
 			l.Fatal(err2)
 			return
 		}
+		fmt.Println("mail blaster starter with id..", entryId)
 		c.Run()
 	},
 }
