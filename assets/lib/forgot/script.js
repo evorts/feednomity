@@ -15,7 +15,7 @@
                     if (res.status === 200) {
                         fc.toast('Request forgot password sent! Check your email.', 'is-success');
                         setTimeout(function () {
-                            // window.location.replace(RedirectUrl);
+                            window.location.replace(RedirectUrl);
                         }, 700);
                         return;
                     }
