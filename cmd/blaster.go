@@ -33,8 +33,8 @@ var Blaster = &cli.Command{
 		c := cron.New()
 		_, err2 := c.AddFunc(cfg.GetConfig().CronJobs.Blaster.Schedule, runCronBlaster)
 		if err2 != nil {
-			fmt.Println(err2)
 			c.Stop()
+			l.Fatal(err2)
 			return
 		}
 		c.Run()
