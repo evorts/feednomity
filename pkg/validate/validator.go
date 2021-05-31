@@ -7,7 +7,7 @@ import (
 
 var (
 	usernamePattern = regexp.MustCompile("[a-zA-Z0-9.-]+")
-	emailPattern = regexp.MustCompile("\\w+@\\w+.[a-zA-Z]{2,3}")
+	emailPattern = regexp.MustCompile("\\w+[._]\\w+@\\w+.[a-zA-Z]{2,3}")
 	phonePattern = regexp.MustCompile("(\\+\\d{2}|0)([1-9]+\\d{5,10})")
 	passwordPattern = regexp.MustCompile("[\\w\\d@$%&^!~()]+")
 	hashPattern = regexp.MustCompile("[\\w\\d@$%&^!~()]{10,128}")
