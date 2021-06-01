@@ -79,6 +79,8 @@ type IRequest interface {
 	GetClientId() string
 	GetPath() string
 	GetPathLastValue() string
+	GetUserAgent() string
+	GetUrl() *url.URL
 
 	getUserAccessScopeFromContext() acl.AccessScope
 	getUserAccessScopeFromSession() acl.AccessScope
@@ -159,6 +161,14 @@ func (req *request) GetPath() string {
 
 func (req *request) GetPathLastValue() string {
 	return path.Base(req.GetPath())
+}
+
+func (req *request) GetUserAgent() string {
+	return req.r.Header.Get("User-Agent")
+}
+
+func (req *request) GetUrl() *url.URL {
+	return req.url
 }
 
 func (req *request) GetQueryParam(field string) string {

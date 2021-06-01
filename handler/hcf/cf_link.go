@@ -42,7 +42,7 @@ func Link(w http.ResponseWriter, r *http.Request) {
 	}
 	linkDomain := distribution.NewLinksDomain(ds)
 	link, err := linkDomain.FindByHash(req.GetContext().Value(), linkHash)
-	if err != nil || link.Disabled {
+	if err != nil || link.Id < 1 || link.Disabled {
 		log.Log(
 			"cf_link_query_error",
 			fmt.Sprintf("link error or disabled. error: %v", err),
@@ -95,6 +95,9 @@ func Link(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	_ = linkDomain.RecordLinkVisitor(req.GetContext().Value(), link, obj.RespondentId, usersData[0].Username, req.GetUserAgent(), map[string]interface{}{
+		"ref": req.GetUrl().String(),
+	})
 	if usersData[0].Disabled {
 		log.Log("cf_link_users_disabled", fmt.Sprintf("link users respondent are disabled. id: %v", usersData[0].Id))
 		_ = vm.Render(w, http.StatusBadRequest, "404.html", map[string]interface{}{
