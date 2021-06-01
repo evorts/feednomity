@@ -1,4 +1,3 @@
-// jQuery Plugin section
 (function ($) {
     $.fn.serializeObject = function () {
         let obj = {};

@@ -1,7 +1,7 @@
 {{ template "layout_member" . }}
 {{ define "title" }} {{ .PageTitle }} {{ end }}
 {{ define "styles" }}
-    <link href="/assets/lib/login/style.css" rel="stylesheet">
+    <link href="/assets/lib/login/style.min.css" rel="stylesheet">
 {{ end }}
 {{ define "scripts" }}
     <script type="text/javascript">
@@ -9,7 +9,7 @@
     </script>
 {{ end }}
 {{ define "body_scripts" }}
-    <script src="/assets/lib/login/script.js" type="text/javascript"></script>
+    <script src="/assets/lib/login/script.min.js" type="text/javascript"></script>
 {{ end }}
 {{ define "sign-in" }}
     <div class="navbar-item is-hoverable">

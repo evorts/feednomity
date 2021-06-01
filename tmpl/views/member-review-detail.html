@@ -1,7 +1,7 @@
 {{ template "layout_member" . }}
 {{ define "title" }} {{ .PageTitle }} {{ end }}
 {{ define "styles" }}
-    <link href="/assets/lib/review/detail.css" rel="stylesheet">
+    <link href="/assets/lib/review/detail.min.css" rel="stylesheet">
 {{ end }}
 {{ define "scripts" }}
     {{ with $r := . }}
@@ -11,7 +11,7 @@
     {{ end }}
 {{ end }}
 {{ define "body_scripts" }}
-    <script type="module" src="/assets/lib/review/detail.js"></script>
+    <script type="module" src="/assets/lib/review/detail.min.js"></script>
 {{ end }}
 {{ define "header"}}
     <nav class="navbar is-white" role="navigation">

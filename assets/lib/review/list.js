@@ -48,6 +48,7 @@
     const populateItems = () => {
         const limit = 10;
         let page = 1;
+
         const $displayedItemsElement = $itemsContainerElement[0].querySelectorAll('.item');
         if (fc.elementExist($displayedItemsElement)) {
             page = ($displayedItemsElement.length / limit) + 1;

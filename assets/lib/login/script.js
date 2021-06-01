@@ -7,6 +7,7 @@
             $this.setAttribute('disabled', "disabled");
             e.preventDefault();
             const data = fc.getFormData(form);
+
             fc.call(
                 "login", "POST", `${apiUrl}/v1/users/login`,
                 JSON.stringify(data),

@@ -2,6 +2,7 @@
     fc.onDocumentReady(function () {
         const form = document.getElementById('crpForm');
         const btnLogin = document.getElementById('submitPassword');
+
         btnLogin.addEventListener('click', function (e) {
             const $this = this;
             $this.setAttribute('disabled', "disabled");

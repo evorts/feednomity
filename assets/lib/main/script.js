@@ -1,6 +1,4 @@
 const fc = (function () {
-    const sessionKey = "feednomisess";
-
     const getCookieDomain = () => {
         const hName = location.hostname;
         if (hName.indexOf(".") < 0) {
@@ -44,7 +42,7 @@ const fc = (function () {
     const removeCookie = (key) => {
         document.cookie = `${key}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
     }
-
+    const sessionKey = "feednomisess";
     const getRequestHeaders = () => {
         return [
             ['X-Authorization', getCookie(sessionKey)]

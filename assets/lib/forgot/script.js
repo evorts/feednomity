@@ -6,6 +6,7 @@
             const $this = this;
             $this.setAttribute('disabled', "disabled");
             e.preventDefault();
+
             const data = fc.getFormData(form);
             fc.call(
                 "fp", "POST", `${apiUrl}/v1/users/forgot-password`,
