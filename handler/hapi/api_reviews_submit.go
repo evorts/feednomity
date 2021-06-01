@@ -2,6 +2,7 @@ package hapi
 
 import (
 	"encoding/json"
+	"github.com/evorts/feednomity/domain/distribution"
 	"github.com/evorts/feednomity/domain/feedbacks"
 	"github.com/evorts/feednomity/pkg/api"
 	"github.com/evorts/feednomity/pkg/database"
@@ -152,6 +153,22 @@ func ApiReviewSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	feed = feeds[0]
+	// find out whether the distribution still enabled or not
+	var dists []*distribution.Distribution
+	distDomain := distribution.NewDistributionDomain(ds)
+	dists, err = distDomain.FindByIds(req.GetContext().Value(), feed.DistributionId)
+	if err != nil || len(dists) < 1 || dists[0].Disabled {
+		_ = vm.RenderJson(w, http.StatusBadRequest,
+			api.NewResponse(
+				http.StatusBadRequest, nil,
+				api.NewResponseError(
+					"SUB:ERR:DIST",
+					"Distribution no longer modifiable!", nil, nil,
+				),
+			),
+		)
+		return
+	}
 	var cByte []byte
 	cByte, err = json.Marshal(payload)
 	feed.Content = map[string]interface{}{
