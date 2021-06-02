@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	throttlingEmail = 2 * 60
+	throttlingEmail = 5 * 60
 	hashDefaultExpiration = 5 * 60
 )
 func ApiForgotPassword(w http.ResponseWriter, r *http.Request) {

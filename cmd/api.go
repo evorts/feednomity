@@ -62,10 +62,14 @@ var Api = &cli.Command{
 			return
 		}
 		jwx := jwe.NewJWE(pk, cfg.GetConfig().Jwe.Expire)
-		m = mailer.NewGmail(
+		/*m = mailer.NewGmail(
 			cfg.GetConfig().Mailer.Providers.Get("gmail").Get("user"),
 			cfg.GetConfig().Mailer.Providers.Get("gmail").Get("pass"),
 			cfg.GetConfig().Mailer.Providers.Get("gmail").Get("address"),
+		)*/
+		m = mailer.NewSendInBlue(
+			cfg.GetConfig().Mailer.Providers.Get("send_in_blue").Get("api_url"),
+			cfg.GetConfig().Mailer.Providers.Get("send_in_blue").Get("api_key"),
 		)
 		m.SetSender(
 			cfg.GetConfig().Mailer.SenderName,
