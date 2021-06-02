@@ -53,7 +53,7 @@ func (g *gmailManager) SendHtml(ctx context.Context, targets []Target, subject, 
 		return nil, err
 	}
 	buf := new(bytes.Buffer)
-	if err = t.Execute(buf, data); err != nil {
+	if err = t.Execute(buf, nil); err != nil {
 		return nil, err
 	}
 	return g.call([]byte(from + to + subject + mime + "\n" + buf.String()), map[string]interface{}{
