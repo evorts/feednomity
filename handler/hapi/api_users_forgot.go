@@ -18,6 +18,10 @@ import (
 	"strings"
 )
 
+const (
+	throttlingEmail = 5 * 60
+	hashDefaultExpiration = 5 * 60
+)
 func ApiForgotPassword(w http.ResponseWriter, r *http.Request) {
 	req := reqio.NewRequest(w, r).PrepareRestful()
 	log := req.GetContext().Get("logger").(logger.IManager)
@@ -55,8 +59,8 @@ func ApiForgotPassword(w http.ResponseWriter, r *http.Request) {
 		errs["username"] = "Not a valid username or email!"
 	}
 	payload.Hash = strings.Trim(payload.Hash, " ")
-	if !validate.ValidHash(payload.Hash) || mem.GetString(req.GetContext().Value(), payload.Hash, "") != "" {
-		errs["global"] = "Cannot proceed your request due to limitation!"
+	if !validate.ValidHash(payload.Hash) {
+		errs["global"] = "Invalid request session!"
 	}
 	if len(errs) > 0 {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
@@ -65,6 +69,19 @@ func ApiForgotPassword(w http.ResponseWriter, r *http.Request) {
 			Error: &api.ResponseError{
 				Code:    "FOG:ERR:VAL",
 				Message: "Bad Request! Validation error.",
+				Reasons: errs,
+				Details: make([]interface{}, 0),
+			},
+		})
+		return
+	}
+	if mem.GetString(req.GetContext().Value(), payload.Hash, "") != "" {
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "FOG:ERR:VAL",
+				Message: fmt.Sprintf("Bad Request! You have requested multiple times. Please wait another %d minutes.", throttlingEmail/60),
 				Reasons: errs,
 				Details: make([]interface{}, 0),
 			},
@@ -96,7 +113,7 @@ func ApiForgotPassword(w http.ResponseWriter, r *http.Request) {
 	// generate forgot password hash
 	fpHash := hash.RenewHash().HashWithoutSalt(fmt.Sprintf("%s:%s", user.Email, payload.Hash))
 	// set expiration of fp hash -- 5 minute
-	_ = mem.Set(req.GetContext().Value(), fmt.Sprintf("fp_%s", fpHash), user.Id, 5*60)
+	_ = mem.Set(req.GetContext().Value(), fmt.Sprintf("fp_%s", fpHash), user.Id, hashDefaultExpiration)
 	// send email forgot password
 	content := utils.ReadFile(fmt.Sprintf("%s/%s", cfg.GetConfig().App.MailTemplateDirectory, "forgot-password.html"))
 	_, err = mail.SendHtml(
