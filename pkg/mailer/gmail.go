@@ -1,6 +1,7 @@
 package mailer
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"html/template"
@@ -53,11 +54,13 @@ func (g *gmailManager) SendHtml(ctx context.Context, targets []Target, subject, 
 	//if err != nil {
 	//	return nil, err
 	//}
-	//buf := new(bytes.Buffer)
+	buf := new(bytes.Buffer)
+	buf.Write([]byte(from + to + subject + mime + "\n"))
+	buf.Write([]byte(template.HTML(resultHtml)))
 	//if err = t.Execute(buf, nil); err != nil {
 	//	return nil, err
 	//}
-	return g.call([]byte(from + to + subject + mime + "\n" + resultHtml), map[string]interface{}{
+	return g.call(buf.Bytes(), map[string]interface{}{
 		"dest": tos,
 	})
 }
