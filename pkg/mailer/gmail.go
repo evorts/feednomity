@@ -1,7 +1,6 @@
 package mailer
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"html/template"
@@ -47,18 +46,18 @@ func (g *gmailManager) SendHtml(ctx context.Context, targets []Target, subject, 
 	from := fmt.Sprintf("From: %s\n", g.senderEmail)
 	to := fmt.Sprintf("To: %s\n", strings.Join(tos, ","))
 	subject = fmt.Sprintf("Subject: %s\n", subject)
-	mime := fmt.Sprintf("MIME Version: 1.0; \nContent-Type: text/html; charset=utf-8;\n\n")
+	mime := fmt.Sprintf("MIME Version: 1.0; \nContent-Type: text/plain; charset=utf-8;\n\n")
 	resultHtml := bindDataToTemplate(data, html)
-	fmt.Println(resultHtml)
-	t, err := g.tpl.Parse(resultHtml)
-	if err != nil {
-		return nil, err
-	}
-	buf := new(bytes.Buffer)
-	if err = t.Execute(buf, nil); err != nil {
-		return nil, err
-	}
-	return g.call([]byte(from + to + subject + mime + "\n" + buf.String()), map[string]interface{}{
+	//fmt.Println(resultHtml)
+	//t, err := g.tpl.Parse(resultHtml)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//buf := new(bytes.Buffer)
+	//if err = t.Execute(buf, nil); err != nil {
+	//	return nil, err
+	//}
+	return g.call([]byte(from + to + subject + mime + "\n" + resultHtml), map[string]interface{}{
 		"dest": tos,
 	})
 }
