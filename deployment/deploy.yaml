@@ -8,7 +8,7 @@
     - dest_dir: "/home/steven/apps/feednomity-src"
     - git_repo: "git@github.com:evorts/feednomity.git"
     - docker_image_name: "evorts/feednomity"
-    - docker_image_tag: 1.0.13
+    - docker_image_tag: 1.0.14
     - docker_container_tag: ansible_date_time.epoch
     - web_docker_name: feednomity_web
     - api_docker_name: feednomity_api
