@@ -47,7 +47,7 @@ func (g *gmailManager) SendHtml(ctx context.Context, targets []Target, subject, 
 	from := fmt.Sprintf("From: %s\n", g.senderEmail)
 	to := fmt.Sprintf("To: %s\n", strings.Join(tos, ","))
 	subject = fmt.Sprintf("Subject: %s\n", subject)
-	mime := fmt.Sprintf("MIME Version: 1.0; \nContent-Type: text/plain; charset=utf-8;\n\n")
+	mime := fmt.Sprintf("MIME Version: 1.0; \nContent-Type: text/html; charset=utf-8;\n\n")
 	t, err := g.tpl.Parse(html)
 	if err != nil {
 		return nil, err
