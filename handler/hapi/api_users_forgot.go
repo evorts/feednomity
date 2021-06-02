@@ -122,8 +122,8 @@ func ApiForgotPassword(w http.ResponseWriter, r *http.Request) {
 		"Forgot Password Request",
 		content,
 		map[string]string{
-			"requester_name": utils.IIf(len(user.DisplayName) > 0, user.DisplayName, user.Username),
-			"recovery_link":  fmt.Sprintf("%s/crp/%s", cfg.GetConfig().App.BaseUrlWeb, fpHash),
+			"RequesterName": utils.IIf(len(user.DisplayName) > 0, user.DisplayName, user.Username),
+			"RecoveryLink":  fmt.Sprintf("%s/crp/%s", cfg.GetConfig().App.BaseUrlWeb, fpHash),
 		},
 	)
 	if err != nil {

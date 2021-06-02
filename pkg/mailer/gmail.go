@@ -49,18 +49,15 @@ func (g *gmailManager) SendHtml(ctx context.Context, targets []Target, subject, 
 	subject = fmt.Sprintf("Subject: %s\n", subject)
 	mime := fmt.Sprintf("MIME Version: 1.0; \nContent-Type: text/plain; charset=utf-8;\n\n")
 	resultHtml := bindDataToTemplate(data, html)
-	//fmt.Println(resultHtml)
-	//t, err := g.tpl.Parse(resultHtml)
-	//if err != nil {
-	//	return nil, err
-	//}
+	t, err := g.tpl.Parse(resultHtml)
+	if err != nil {
+		return nil, err
+	}
 	buf := new(bytes.Buffer)
-	buf.Write([]byte(from + to + subject + mime + "\n"))
-	buf.Write([]byte(template.HTML(resultHtml)))
-	//if err = t.Execute(buf, nil); err != nil {
-	//	return nil, err
-	//}
-	return g.call(buf.Bytes(), map[string]interface{}{
+	if err = t.Execute(buf, data); err != nil {
+		return nil, err
+	}
+	return g.call([]byte(from + to + subject + mime + "\n" + buf.String()), map[string]interface{}{
 		"dest": tos,
 	})
 }
