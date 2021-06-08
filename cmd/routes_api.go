@@ -37,6 +37,7 @@ func routingApi(
 	routes := make([]reqio.Route, 0)
 	prefix := fmt.Sprintf("%s%s", apiPrefix, apiVersionPrefix)
 	routes = append(routes, routesApiMaintenance(apiPrefix, cfg, view, db, accessControl, jwx, log)...)
+	routes = append(routes, routesApiSummaries(prefix, cfg, view, db, accessControl, jwx, aes, log)...)
 	routes = append(routes, routesApiFeedbacks(prefix, cfg, view, db, accessControl, jwx, aes, log)...)
 	routes = append(routes, routesApiDistribution(prefix, cfg, view, db, accessControl, jwx, aes, log)...)
 	routes = append(routes, routesApiUsers(prefix, cfg, view, db, accessControl, jwx, hash, log, mail, mem)...)
@@ -47,6 +48,48 @@ func routingApi(
 	reqio.NewRoutes(routes).ExecRoutes(o)
 }
 
+func routesApiSummaries(
+	pathPrefix string,
+	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,
+	jwx jwe.IManager, aes crypt.ICryptAES, log logger.IManager,
+) []reqio.Route {
+	return []reqio.Route{
+		{
+			Pattern: fmt.Sprintf("%s/summary/distributions", pathPrefix),
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx, view,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiSummaryDistributionList),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: fmt.Sprintf("%s/summary/reviews", pathPrefix),
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx, view,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiSummaryReviews),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+					},
+				),
+			),
+		},
+	}
+}
 func routesApiFeedbacks(
 	pathPrefix string,
 	cfg config.IManager, view view.IManager, db database.IManager, accessControl acl.IManager,

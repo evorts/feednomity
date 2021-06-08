@@ -1,5 +1,7 @@
 package utils
 
+import "strconv"
+
 type ArrayInteger []int
 
 func (a ArrayInteger) ToArrayInterface() []interface{} {
@@ -19,6 +21,15 @@ func (a ArrayInt64) ToArrayInterface() []interface{} {
 	}
 	return rs
 }
+
+func (a ArrayInt64) ToArrayString() []string {
+	rs := make([]string, 0)
+	for _, v := range a {
+		rs = append(rs, strconv.FormatInt(v, 10))
+	}
+	return rs
+}
+
 
 type ArrayString []string
 
@@ -41,6 +52,17 @@ func (a ArrayString) ToArrayInterface() []interface{} {
 	return rs
 }
 
+type ArrayInterface []interface{}
+
+func (a ArrayInterface) ToArrayString() ArrayString {
+	rs := make(ArrayString, 0)
+	for _, v := range a {
+		if vv, ok := v.(string); ok {
+			rs = append(rs, vv)
+		}
+	}
+	return rs
+}
 
 func InArray(arr []interface{}, v interface{}) bool  {
 	for _, av := range arr {

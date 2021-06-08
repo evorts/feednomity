@@ -46,7 +46,7 @@ func transformDistribution(createdBy int64, items []*DistributionRequest, exclud
 		item := &distribution.Distribution{
 			CreatedBy: createdBy,
 		}
-		if err := utils.TransformStructWithExcludes(item, fv, excludeFields); err == nil {
+		if err := utils.TransformStructWithExcludes(item, fv, excludeFields, false); err == nil {
 			rs = append(rs, item)
 		}
 	}

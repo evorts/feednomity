@@ -18,7 +18,7 @@ type Error struct {
 }
 
 type FeedbackRequest struct {
-	Id             string            `json:"id"`
+	Id             string           `json:"id"`
 	SubmissionType feedbacks.Status `json:"submission_type"`
 
 	Productivity  ItemValue `json:"productivity"`
@@ -84,9 +84,10 @@ func transformFeedbacksReverse(f []*feedbacks.Feedback) (t []*FeedbackResponse) 
 	t = make([]*FeedbackResponse, 0)
 	for _, fv := range f {
 		u := &FeedbackResponse{}
-		if err := utils.TransformStructWithExcludes(u, fv, []string{"content"}); err == nil {
+		if err := utils.TransformStructWithExcludes(u, fv, []string{"content"}, false); err == nil {
 			t = append(t, u)
 		}
 	}
 	return
 }
+

@@ -72,10 +72,10 @@ func MergeStruct(dst interface{}, src interface{}, skipFieldsOnEmpty []string) e
 }
 
 func TransformStruct(dst interface{}, src interface{}) error {
-	return TransformStructWithExcludes(dst, src, make([]string, 0))
+	return TransformStructWithExcludes(dst, src, make([]string, 0), false)
 }
 
-func TransformStructWithExcludes(dst interface{}, src interface{}, excludes []string) error {
+func TransformStructWithExcludes(dst interface{}, src interface{}, excludes []string, skipOnEmpty bool) error {
 	var v1, v2 reflect.Value
 	var t1, t2 reflect.Type
 
@@ -114,6 +114,10 @@ func TransformStructWithExcludes(dst interface{}, src interface{}, excludes []st
 			case reflect.Ptr, reflect.Interface:
 				if fv.IsNil() {
 					break
+				}
+			case reflect.String:
+				if skipOnEmpty && len(fv.String()) < 1 {
+					continue
 				}
 			}
 			v1.Field(i).Set(v2.Field(j))

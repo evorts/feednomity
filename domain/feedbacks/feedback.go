@@ -21,12 +21,16 @@ type manager struct {
 
 type IFeedback interface {
 	FindByIds(ctx context.Context, ids ...int64) ([]*Feedback, error)
-	FindByDistId(ctx context.Context, distId, distObjId int64) ([]*Feedback, error)
+	FindByDistId(ctx context.Context, distId int64) ([]*Feedback, error)
+	FindByDistAndObjectId(ctx context.Context, distId, distObjId int64) ([]*Feedback, error)
 	FindByGroupId(ctx context.Context, id int64, page, limit int) (items []*Feedback, total int, err error)
 	FindByOrgId(ctx context.Context, id int64, page, limit int) (items []*Feedback, total int, err error)
 	FindByRespondentId(ctx context.Context, id int64, page, limit int) (items []*Feedback, total int, err error)
+	FindByRecipientId(ctx context.Context, id int64, page, limit int) (items []*Feedback, total int, err error)
+	FindAllWithFilter(ctx context.Context, filter map[string]interface{}, withContent bool) (items []*Feedback, total int, err error)
 	FindItem(ctx context.Context, distId, distObjId, recipientId, respondentId int64) (*Feedback, error)
 	FindAll(ctx context.Context, page, limit int) (items []*Feedback, total int, err error)
+	SummaryByDistribution(ctx context.Context, page, limit int, filter map[string]interface{}) (items []*Feedback, total int, err error)
 
 	InsertMultiple(ctx context.Context, items []*Feedback) error
 	// UpsertMultiple success items format [ [feedbackId, distributionId, distObjectId, respondentId, recipientId] ]
@@ -82,7 +86,78 @@ func (m *manager) FindByIds(ctx context.Context, ids ...int64) ([]*Feedback, err
 	return items, nil
 }
 
-func (m *manager) FindByDistId(ctx context.Context, distId, distObjId int64) ([]*Feedback, error) {
+func (m *manager) FindByDistId(ctx context.Context, distId int64) ([]*Feedback, error) {
+	items := make([]*Feedback, 0)
+	q := fmt.Sprintf(`
+		SELECT 
+			id, distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
+			respondent_id, respondent_username, respondent_name, respondent_email, 
+			respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+			respondent_role, respondent_assignment,
+			recipient_id, recipient_username, recipient_name, recipient_email, 
+			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+			recipient_role, recipient_assignment,
+			link_id, hash, status, content, created_at, updated_at 
+		FROM %s WHERE distribution_id = ?`, tableFeedback,
+	)
+	rows, err := m.dbm.Query(
+		ctx,
+		m.dbm.Rebind(ctx, q),
+		[]interface{}{distId}...,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return items, nil
+		}
+		return nil, err
+	}
+	for rows.Next() {
+		var (
+			item Feedback
+		)
+		err = rows.Scan(
+			&item.Id,
+			&item.DistributionId,
+			&item.DistributionTopic,
+			&item.DistributionObjectId,
+			&item.RangeStart,
+			&item.RangeEnd,
+			&item.RespondentId,
+			&item.RespondentUsername,
+			&item.RespondentName,
+			&item.RespondentEmail,
+			&item.RespondentGroupId,
+			&item.RespondentGroupName,
+			&item.RespondentOrgId,
+			&item.RespondentOrgName,
+			&item.RespondentRole,
+			&item.RespondentAssignment,
+			&item.RecipientId,
+			&item.RecipientUsername,
+			&item.RecipientName,
+			&item.RecipientEmail,
+			&item.RecipientGroupId,
+			&item.RecipientGroupName,
+			&item.RecipientOrgId,
+			&item.RecipientOrgName,
+			&item.RecipientRole,
+			&item.RecipientAssignment,
+			&item.LinkId,
+			&item.Hash,
+			&item.Status,
+			&item.Content,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, &item)
+	}
+	return items, nil
+}
+
+func (m *manager) FindByDistAndObjectId(ctx context.Context, distId, distObjId int64) ([]*Feedback, error) {
 	items := make([]*Feedback, 0)
 	q := fmt.Sprintf(`
 		SELECT 
@@ -367,6 +442,130 @@ func (m *manager) FindByRespondentId(ctx context.Context, id int64, page, limit 
 	return
 }
 
+func (m *manager) FindByRecipientId(ctx context.Context, id int64, page, limit int) (items []*Feedback, total int, err error) {
+	var rows database.Rows
+	items = make([]*Feedback, 0)
+	q := fmt.Sprintf(`SELECT count(id) FROM %s WHERE recipient_id = $1`, tableFeedback)
+	err = m.dbm.QueryRowAndBind(ctx, q, []interface{}{id}, &total)
+	if err != nil || total < 1 {
+		err = errors.Wrap(err, "It looks like the data is not exist")
+		return
+	}
+	items = make([]*Feedback, 0)
+	q = fmt.Sprintf(`
+		SELECT 
+			id, distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
+			respondent_id, respondent_username, respondent_name, respondent_email, 
+			respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+			respondent_role, respondent_assignment,
+			recipient_id, recipient_username, recipient_name, recipient_email, 
+			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+			recipient_role, recipient_assignment,
+			link_id, hash, status, content, created_at, updated_at 
+		FROM %s
+		JOIN (VALUES ('%s'::feedback_status, 1), ('%s'::feedback_status, 2), ('%s'::feedback_status, 3)) AS x(value, order_number) on %s.status = x.value
+		WHERE recipient_id = ?
+		ORDER BY distribution_id desc, x.order_number, recipient_name asc, created_at, updated_at desc 
+		LIMIT %d OFFSET %d
+		`, tableFeedback, StatusDraft, StatusNotStarted, StatusFinal, tableFeedback, limit, (page-1)*limit,
+	)
+	rows, err = m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return items, total, nil
+		}
+		return
+	}
+	for rows.Next() {
+		var (
+			item Feedback
+		)
+		err = rows.Scan(
+			&item.Id, &item.DistributionId, &item.DistributionTopic, &item.DistributionObjectId, &item.RangeStart, &item.RangeEnd,
+			&item.RespondentId, &item.RespondentUsername, &item.RespondentName, &item.RespondentEmail,
+			&item.RespondentGroupId, &item.RespondentGroupName, &item.RespondentOrgId, &item.RespondentOrgName,
+			&item.RespondentRole, &item.RespondentAssignment,
+			&item.RecipientId, &item.RecipientUsername, &item.RecipientName, &item.RecipientEmail,
+			&item.RecipientGroupId, &item.RecipientGroupName, &item.RecipientOrgId, &item.RecipientOrgName,
+			&item.RecipientRole, &item.RecipientAssignment,
+			&item.LinkId, &item.Hash, &item.Status, &item.Content, &item.CreatedAt, &item.UpdatedAt,
+		)
+		if err != nil {
+			return
+		}
+		items = append(items, &item)
+	}
+	return
+}
+
+func (m *manager) FindAllWithFilter(ctx context.Context, filter map[string]interface{}, withContent bool) (items []*Feedback, total int, err error) {
+	var (
+		where, qq = "", ""
+		args      []interface{}
+	)
+	if filter != nil && len(filter) > 0 {
+		qq, args = utils.GenerateFilters(filter)
+		where = fmt.Sprintf(" WHERE %s", qq)
+	}
+	var rows database.Rows
+	items = make([]*Feedback, 0)
+	q := m.dbm.Rebind(ctx, fmt.Sprintf(`SELECT count(id) FROM %s %s`, tableFeedback, where))
+	err = m.dbm.QueryRow(ctx, q, args...).Scan(&total)
+	if err != nil || total < 1 {
+		err = errors.Wrap(err, "It looks like the data is not exist")
+		return
+	}
+	items = make([]*Feedback, 0)
+	q = fmt.Sprintf(`
+		SELECT 
+			id, distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
+			respondent_id, respondent_username, respondent_name, respondent_email, 
+			respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+			respondent_role, respondent_assignment,
+			recipient_id, recipient_username, recipient_name, recipient_email, 
+			recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+			recipient_role, recipient_assignment, 
+			link_id, hash, status, content, created_at, updated_at %s
+		FROM %s
+		JOIN (VALUES ('%s'::feedback_status, 1), ('%s'::feedback_status, 2), ('%s'::feedback_status, 3)) AS x(value, order_number) on %s.status = x.value
+		%s
+		ORDER BY distribution_id desc, x.order_number, recipient_name asc, created_at, updated_at desc 
+		`, utils.IIf(withContent, ",content", ""), tableFeedback, StatusDraft, StatusNotStarted, StatusFinal, tableFeedback, where,
+	)
+	rows, err = m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), args...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return items, total, nil
+		}
+		return
+	}
+	for rows.Next() {
+		var (
+			item Feedback
+			dest []interface{}
+		)
+		dest = []interface{}{
+			&item.Id, &item.DistributionId, &item.DistributionTopic, &item.DistributionObjectId, &item.RangeStart, &item.RangeEnd,
+			&item.RespondentId, &item.RespondentUsername, &item.RespondentName, &item.RespondentEmail,
+			&item.RespondentGroupId, &item.RespondentGroupName, &item.RespondentOrgId, &item.RespondentOrgName,
+			&item.RespondentRole, &item.RespondentAssignment,
+			&item.RecipientId, &item.RecipientUsername, &item.RecipientName, &item.RecipientEmail,
+			&item.RecipientGroupId, &item.RecipientGroupName, &item.RecipientOrgId, &item.RecipientOrgName,
+			&item.RecipientRole, &item.RecipientAssignment,
+			&item.LinkId, &item.Hash, &item.Status, &item.Content, &item.CreatedAt, &item.UpdatedAt,
+		}
+		if withContent {
+			dest = append(dest, &item.Content)
+		}
+		err = rows.Scan(dest...)
+		if err != nil {
+			return
+		}
+		items = append(items, &item)
+	}
+	return
+}
+
 func (m *manager) FindItem(ctx context.Context, distId, distObjId, recipientId, respondentId int64) (*Feedback, error) {
 	q := fmt.Sprintf(`
 		SELECT 
@@ -496,6 +695,126 @@ func (m *manager) FindAll(ctx context.Context, page, limit int) (items []*Feedba
 			&item.Hash,
 			&item.Status,
 			&item.Content,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+		)
+		if err != nil {
+			return
+		}
+		items = append(items, &item)
+	}
+	return
+}
+
+func (m *manager) SummaryByDistribution(ctx context.Context, page, limit int, filter map[string]interface{}) (items []*Feedback, total int, err error) {
+	var (
+		rows      database.Rows
+		where, qq = "", ""
+		args      = make([]interface{}, 0)
+	)
+	q := fmt.Sprintf(`SELECT COUNT(DISTINCT distribution_id) as subtotal FROM %s GROUP BY distribution_id`, tableFeedback)
+	err = m.dbm.QueryRowAndBind(ctx, q, nil, &total)
+	if err != nil || total < 1 {
+		err = errors.Wrap(err, "It looks like the data is not exist")
+		return
+	}
+	if filter != nil && len(filter) > 0 {
+		qq, args = utils.GenerateFilters(filter)
+		where = fmt.Sprintf(" WHERE %s", qq)
+		qq = fmt.Sprintf(" AND %s", qq)
+	}
+	q = fmt.Sprintf(`
+		SELECT distribution_id, count(id) as subtotal 
+		FROM %s 
+		%s
+		GROUP BY distribution_id
+		ORDER BY distribution_id DESC
+		LIMIT %d OFFSET %d`,
+		tableFeedback, where, limit, (page-1)*limit,
+	)
+	items = make([]*Feedback, 0)
+	rows, err = m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), args...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return items, 0, nil
+		}
+		return
+	}
+	distIds := make([]int64, 0)
+	for rows.Next() {
+		var distId, subtotal sql.NullInt64
+		if err = rows.Scan(&distId, &subtotal); err != nil {
+			return
+		}
+		if !utils.InArray(utils.ArrayInt64(distIds).ToArrayInterface(), distId.Int64) {
+			distIds = append(distIds, distId.Int64)
+		}
+	}
+	if len(distIds) < 1 {
+		err = errors.New("nothing found")
+		total = 0
+		return
+	}
+	q = fmt.Sprintf(
+		`SELECT 
+						id, distribution_id, distribution_topic, distribution_object_id, range_start, range_end,
+						respondent_id, respondent_username, respondent_name, respondent_email, 
+						respondent_group_id, respondent_group_name, respondent_org_id, respondent_org_name,
+						respondent_role, respondent_assignment,
+						recipient_id, recipient_username, recipient_name, recipient_email, 
+						recipient_group_id, recipient_group_name, recipient_org_id, recipient_org_name,
+						recipient_role, recipient_assignment,
+						link_id, hash, status, created_at, updated_at
+					FROM %s
+					WHERE distribution_id IN (%s) %s
+					ORDER BY distribution_id desc, recipient_name asc, created_at, updated_at desc
+			`,
+		tableFeedback,
+		strings.TrimRight(strings.Repeat("?,", len(distIds)), ","),
+		qq,
+	)
+	args = append(utils.ArrayInt64(distIds).ToArrayInterface(), args...)
+	rows, err = m.dbm.Query(ctx, m.dbm.Rebind(ctx, q), args...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return items, total, nil
+		}
+		return
+	}
+	for rows.Next() {
+		var (
+			item Feedback
+		)
+		err = rows.Scan(
+			&item.Id,
+			&item.DistributionId,
+			&item.DistributionTopic,
+			&item.DistributionObjectId,
+			&item.RangeStart,
+			&item.RangeEnd,
+			&item.RespondentId,
+			&item.RespondentUsername,
+			&item.RespondentName,
+			&item.RespondentEmail,
+			&item.RespondentGroupId,
+			&item.RespondentGroupName,
+			&item.RespondentOrgId,
+			&item.RespondentOrgName,
+			&item.RespondentRole,
+			&item.RespondentAssignment,
+			&item.RecipientId,
+			&item.RecipientUsername,
+			&item.RecipientName,
+			&item.RecipientEmail,
+			&item.RecipientGroupId,
+			&item.RecipientGroupName,
+			&item.RecipientOrgId,
+			&item.RecipientOrgName,
+			&item.RecipientRole,
+			&item.RecipientAssignment,
+			&item.LinkId,
+			&item.Hash,
+			&item.Status,
 			&item.CreatedAt,
 			&item.UpdatedAt,
 		)

@@ -2,7 +2,6 @@ package hapi
 
 import (
 	"github.com/evorts/feednomity/domain/feedbacks"
-	"github.com/evorts/feednomity/pkg/acl"
 	"github.com/evorts/feednomity/pkg/api"
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
@@ -31,27 +30,10 @@ func ApiReviewList(w http.ResponseWriter, r *http.Request) {
 		total int
 		err error
 	)
-	switch req.GetUserAccessScope() {
-	case acl.AccessScopeGlobal:
-		feeds, total, err = feedDomain.FindAll(
-			req.GetContext().Value(), payload.Page.Value(), payload.Limit.Value(),
-		)
-	case acl.AccessScopeOrg:
-		feeds, total, err = feedDomain.FindByOrgId(
-			req.GetContext().Value(), req.GetUserData().OrgId,
-			payload.Page.Value(), payload.Limit.Value(),
-		)
-	case acl.AccessScopeGroup:
-		feeds, total, err = feedDomain.FindByGroupId(
-			req.GetContext().Value(), req.GetUserData().GroupId,
-			payload.Page.Value(), payload.Limit.Value(),
-		)
-	default:
-		feeds, total, err = feedDomain.FindByRespondentId(
-			req.GetContext().Value(), req.GetUserData().Id,
-			payload.Page.Value(), payload.Limit.Value(),
-		)
-	}
+	feeds, total, err = feedDomain.FindByRespondentId(
+		req.GetContext().Value(), req.GetUserData().Id,
+		payload.Page.Value(), payload.Limit.Value(),
+	)
 	if err != nil {
 		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
 			Status:  http.StatusBadRequest,

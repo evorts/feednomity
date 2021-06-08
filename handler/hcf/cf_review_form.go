@@ -139,8 +139,8 @@ func ReviewDetail(w http.ResponseWriter, r *http.Request) {
 		"Seq": func(i int) int {
 			return i + 1
 		},
-		"ShowButton": feed.Status != feedbacks.StatusFinal,
-		"Id": feed.Id,
+		"ShowButton":         feed.Status != feedbacks.StatusFinal,
+		"Id":                 feed.Id,
 		"ApiReviewSubmitUrl": fmt.Sprintf("%s/v1/reviews/submit", cfg.GetConfig().App.BaseUrlApi),
 		"Assessments": assessments.Item{
 			Recipient: assessments.Client{
@@ -150,10 +150,10 @@ func ReviewDetail(w http.ResponseWriter, r *http.Request) {
 				Assignment:   feed.RecipientAssignment,
 			},
 			Respondent: assessments.Client{
-				Name:       feed.RespondentName,
+				Name:         feed.RespondentName,
 				Organization: feed.RespondentGroupName,
-				Role:       feed.RespondentRole,
-				Assignment: feed.RespondentAssignment,
+				Role:         feed.RespondentRole,
+				Assignment:   feed.RespondentAssignment,
 			},
 			PeriodSince:      feed.RangeStart,
 			PeriodUntil:      feed.RangeEnd,

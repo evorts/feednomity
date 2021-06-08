@@ -37,7 +37,7 @@ func transformDistributionObjects(createdBy int64, items []*DistributionObjectRe
 		item := &distribution.Object{
 			CreatedBy: createdBy,
 		}
-		if err := utils.TransformStructWithExcludes(item, fv, excludeFields); err == nil {
+		if err := utils.TransformStructWithExcludes(item, fv, excludeFields, false); err == nil {
 			if fi+1 <= len(linksId) {
 				item.LinkId = linksId[fi]
 			}

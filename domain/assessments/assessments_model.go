@@ -1,6 +1,7 @@
 package assessments
 
 import (
+	"github.com/evorts/feednomity/pkg/utils"
 	"html/template"
 	"time"
 )
@@ -13,6 +14,44 @@ type Factor struct {
 	Rating      int           `db:"rating"`
 	Note        string        `db:"note"`
 	Items       []*Factor     `db:"items"`
+}
+
+func (f *Factor) Update(key string, rating int, note string) bool {
+	if f.Key == key {
+		f.Rating = rating
+		f.Note = note
+		return true
+	}
+	if len(f.Items) < 1 {
+		return false
+	}
+	for _, item := range f.Items {
+		if item.Update(key, rating, note) {
+			return true
+		}
+	}
+	return false
+}
+
+func BindToFeedbackFactors(parentKey string, value map[string]interface{}, factors *Factor) {
+	if len(parentKey) > 0 {
+		vr, ok := value["rating"]
+		if ok {
+			rating, ok2 := vr.(float64)
+			if !ok2 {
+				return
+			}
+			factors.Update(parentKey, int(rating), utils.IIf(value["note"] == nil, "", value["note"].(string)))
+			return
+		}
+	}
+	for k, v := range value {
+		vv, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		BindToFeedbackFactors(k, vv, factors)
+	}
 }
 
 type Client struct {
@@ -42,8 +81,9 @@ type Item struct {
 
 type Template struct {
 	Ratings struct {
-		Values []int    `yaml:"values" db:"values"`
-		Labels []string `yaml:"labels" db:"labels"`
+		Values    []int      `yaml:"values" db:"values"`
+		Labels    []string   `yaml:"labels" db:"labels"`
+		Threshold [][]string `yaml:"threshold" db:"threshold"`
 	} `yaml:"ratings" db:"ratings"`
 	StrengthsFieldCount    int     `yaml:"strengths_field_count" db:"strengths_field_count"`
 	ImprovementsFieldCount int     `yaml:"improvements_field_count" db:"improvements_field_count"`

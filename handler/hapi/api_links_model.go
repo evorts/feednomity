@@ -25,7 +25,7 @@ func transformLinks(items []*Link, expireAt *time.Time, excludeFields []string) 
 			ExpiredAt: expireAt,
 			Hash:      ksuid.New().String(),
 		}
-		if err := utils.TransformStructWithExcludes(item, fv, excludeFields); err == nil {
+		if err := utils.TransformStructWithExcludes(item, fv, excludeFields, false); err == nil {
 			rs = append(rs, item)
 		}
 	}

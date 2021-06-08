@@ -1,7 +1,8 @@
 review360:
   ratings:
-    values: [1,2,3,4,5]
-    labels: ["Poor", "Need Improvement", "Meet Expectation", "Above Expectation", "Perfect"]
+    values: [ 1,2,3,4,5 ]
+    labels: [ "Poor", "Need Improvement", "Meet Expectation", "Above Expectation", "Perfect" ]
+    threshold: [ [ "<1.5" ],[ ">=1.5","<2.5" ],[ ">=2.5","<3.5" ],[ ">=3.5","<4.5" ],[ ">=4.5" ] ]
   strengths_field_count: 5
   improvements_field_count: 5
   factors:

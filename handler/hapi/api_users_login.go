@@ -106,6 +106,8 @@ func ApiLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//@todo: check multi-device login limitation
+
 	// find out the organizations
 	var (
 		g        []*users.Group
