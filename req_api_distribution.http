@@ -5,8 +5,8 @@ Referer: {{referer}}
 
 {
   "force_redistribution": true,
-  "ids": [1],
-  "object_ids": [],
+  "ids": [],
+  "object_ids": [261,262,263,264,265,266,267,268,269,270],
   "isolate_respondents": [],
   "isolate_recipients": []
 }

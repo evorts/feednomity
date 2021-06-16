@@ -170,7 +170,7 @@ values
         (nextval('dist_object_id_seq'), 1, 24, 73, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 24, 37, nextval('links_helper_seq'), 1, now()),
 
-        /* rifqi: ghozy */
+        /* rifqi: ghozy, komang */
         (nextval('dist_object_id_seq'), 1, 25, 24, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 25, 37, nextval('links_helper_seq'), 1, now()),
 

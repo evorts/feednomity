@@ -430,7 +430,10 @@ func (m *manager) InsertMultiple(ctx context.Context, items []*User) error {
 	values := make([]interface{}, 0)
 	for _, usv := range items {
 		var pwdArg, pinArg = "?", "?"
-		var disabledAt, pwd, pin interface{} = nil, nil, nil
+		var phone, disabledAt, pwd, pin interface{} = nil, nil, nil, nil
+		if len(usv.Phone) > 0 {
+			phone = usv.Phone
+		}
 		if len(usv.Password) > 0 {
 			pwdArg = "digest(?, 'sha1')"
 			pwd = usv.Password
@@ -451,7 +454,7 @@ func (m *manager) InsertMultiple(ctx context.Context, items []*User) error {
 			disabledAt = "NOW()"
 		}
 		values = append(
-			values, usv.Username, usv.DisplayName, usv.Attributes, usv.Email, usv.Phone,
+			values, usv.Username, usv.DisplayName, usv.Attributes, usv.Email, phone,
 			pwd, pin, usv.AccessRole, usv.JobRole, usv.Assignment, usv.GroupId,
 			usv.Disabled, disabledAt,
 		)

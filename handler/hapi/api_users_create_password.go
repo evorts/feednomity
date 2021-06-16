@@ -85,8 +85,6 @@ func ApiCreatePassword(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	// remove hash
-	_ = mem.Delete(req.GetContext().Value(), hash)
 	// change password
 	err = usersDomain.UpdatePasswordById(req.GetContext().Value(), items[0].Id, payload.Pass)
 	if err != nil {
@@ -102,6 +100,8 @@ func ApiCreatePassword(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	// remove hash
+	_ = mem.Delete(req.GetContext().Value(), hash)
 	_ = vm.RenderJson(w, http.StatusOK, api.Response{
 		Status:  http.StatusOK,
 		Content: make(map[string]interface{}, 0),

@@ -15,8 +15,8 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	log.Log("dashboard_handler", "request received")
 
 	if !req.IsLoggedIn() {
-		//http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		//return
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
 	}
 
 	// render dashboard page
