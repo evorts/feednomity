@@ -51,8 +51,8 @@
         build:
           path: "{{dest_dir}}"
           args:
-            USER_ID: $(id -u)
-            GROUP_ID: $(id -g)
+            USER_ID: 1001
+            GROUP_ID: 1000
         source: build
         state: present
       tags:
@@ -100,8 +100,8 @@
       file:
         state: absent
         path: "{{dest_dir}}"
-      tags:
-        - deployment
+      #tags:
+      #  - deployment
     # blaster section
     - name: Run docker for blaster
       community.docker.docker_container:

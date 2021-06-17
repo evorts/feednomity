@@ -26,14 +26,21 @@ COPY --from=builder /apps/assets /go/bin/assets
 COPY --from=builder /apps/forms /go/bin/forms
 COPY --from=builder /apps/config.docker.yml /go/bin/config.yml
 
-RUN mkdir -p /go/bin/exports
-RUN chmod 777 /go/bin/exports
-
 WORKDIR /go/bin/
 
-RUN addgroup --gid $GROUP_ID user
-RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID user
-USER user
+ENV USER=appuser
+ENV UID=1001
+ENV GID=1000
+RUN addgroup --gid "$GID" "$USER"
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "$(pwd)" \
+    --ingroup "$USER" \
+    --no-create-home \
+    --uid "$UID" \
+    "$USER"
+USER "$USER"
 
 ENV TZ=Asia/Jakarta
 
