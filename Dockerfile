@@ -26,7 +26,8 @@ COPY --from=builder /apps/forms /go/bin/forms
 COPY --from=builder /apps/config.docker.yml /go/bin/config.yml
 
 RUN mkdir -p /go/bin/exports
-RUN chown appuser /go/bin
+RUN chmod 777 /go/bin/exports
+RUN chown -R appuser:appuser /go/bin
 
 ENV TZ=Asia/Jakarta
 
