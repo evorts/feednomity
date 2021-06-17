@@ -2,7 +2,6 @@ package hapi
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/evorts/feednomity/domain/assessments"
 	"github.com/evorts/feednomity/domain/feedbacks"
 	"github.com/evorts/feednomity/handler/helpers"
@@ -24,9 +23,6 @@ func generateReviewSummaryData(feeds []*feedbacks.Feedback, factors *assessments
 					continue loopFeed
 				}
 			}
-		}
-		if feed.Status != feedbacks.StatusFinal {
-			fmt.Println(feed.Id, feed.RecipientUsername, feed.RespondentUsername, feed.Status)
 		}
 		cnt, okc := feed.Content["raw"]
 		if !okc || cnt == nil {

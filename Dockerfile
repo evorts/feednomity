@@ -4,8 +4,6 @@ LABEL Maintainer="Evorts Technology"
 
 RUN apk update && apk add --no-cache git ca-certificates && update-ca-certificates
 
-RUN adduser -D -g '' appuser
-
 WORKDIR /apps/
 
 COPY go.* ./
@@ -16,8 +14,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflag
 
 FROM alpine:latest
 
+ARG USER_ID
+ARG GROUP_ID
+
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /etc/passwd /etc/passwd
+#COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /go/bin/app /go/bin/app
 COPY --from=builder /apps/tmpl /go/bin/tmpl
 COPY --from=builder /apps/tmpl_mail /go/bin/tmpl_mail
@@ -28,8 +29,12 @@ COPY --from=builder /apps/config.docker.yml /go/bin/config.yml
 RUN mkdir -p /go/bin/exports
 RUN chmod 777 /go/bin/exports
 
-ENV TZ=Asia/Jakarta
-
 WORKDIR /go/bin/
 
-USER appuser
+RUN addgroup --gid $GROUP_ID user
+RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID user
+USER user
+
+ENV TZ=Asia/Jakarta
+
+
