@@ -16,7 +16,7 @@ type Factor struct {
 	Items       []*Factor     `db:"items"`
 }
 
-func (f *Factor) Update(key string, rating int, note string) bool {
+func UpdateFactor(f *Factor, key string, rating int, note string) bool {
 	if f.Key == key {
 		f.Rating = rating
 		f.Note = note
@@ -26,7 +26,7 @@ func (f *Factor) Update(key string, rating int, note string) bool {
 		return false
 	}
 	for _, item := range f.Items {
-		if item.Update(key, rating, note) {
+		if UpdateFactor(item, key, rating, note) {
 			return true
 		}
 	}
@@ -41,7 +41,7 @@ func BindToFeedbackFactors(parentKey string, value map[string]interface{}, facto
 			if !ok2 {
 				return
 			}
-			factors.Update(parentKey, int(rating), utils.IIf(value["note"] == nil, "", value["note"].(string)))
+			UpdateFactor(factors, parentKey, int(rating), utils.IIf(value["note"] == nil, "", value["note"].(string)))
 			return
 		}
 	}

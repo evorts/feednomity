@@ -1,3 +1,17 @@
+###
+POST {{api_base_url}}/summary/reviews/export
+Content-Type: {{content_type}}
+Referer: {{referer}}
+X-Client-Id: {{client_id}}
+X-Authorization: {{auth_token}}
+
+{
+  "distribution_id": 1,
+  "exclude_status": ["not-started"],
+  "file_type": "xlsx"
+}
+
+###
 POST {{api_base_url}}/summary/distributions
 Content-Type: {{content_type}}
 Referer: {{referer}}
@@ -10,7 +24,7 @@ X-Authorization: {{auth_token}}
 }
 
 ###
-POST {{api_base_url}}/summary/reviews
+POST {{api_base_url}}/summary/reviews/data
 Content-Type: {{content_type}}
 Referer: {{referer}}
 X-Client-Id: {{client_id}}

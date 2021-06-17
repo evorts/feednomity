@@ -1,18 +1,14 @@
 package hapi
 
 import (
-	"encoding/json"
 	"github.com/evorts/feednomity/domain/assessments"
 	"github.com/evorts/feednomity/domain/feedbacks"
-	"github.com/evorts/feednomity/handler/helpers"
 	"github.com/evorts/feednomity/pkg/api"
 	"github.com/evorts/feednomity/pkg/database"
 	"github.com/evorts/feednomity/pkg/logger"
 	"github.com/evorts/feednomity/pkg/reqio"
-	"github.com/evorts/feednomity/pkg/utils"
 	"github.com/evorts/feednomity/pkg/view"
 	"net/http"
-	"sort"
 )
 
 func ApiSummaryReviews(w http.ResponseWriter, r *http.Request) {
@@ -105,83 +101,21 @@ func ApiSummaryReviews(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	var (
-		mapByRecipient = make(map[int64]*FeedbackSummaryResponseItem, 0) // map by recipient
-		responseItems  = make([]*FeedbackSummaryResponseItem, 0)
-		eval           = utils.NewEval()
-	)
-	for _, feed := range feeds {
-		cnt, okc := feed.Content["raw"]
-		if !okc || cnt == nil {
-			continue
-		}
-		var cntB []byte
-		cntB, err = json.Marshal(cnt)
-		if err != nil {
-			continue
-		}
-		var content map[string]interface{}
-		err = json.Unmarshal(cntB, &content)
-		if err != nil {
-			continue
-		}
-		if _, ok := mapByRecipient[feed.RecipientId]; !ok {
-			mapByRecipient[feed.RecipientId] = &FeedbackSummaryResponseItem{
-				DistributionId: feed.DistributionId,
-				Recipient: Person{
-					Id:         feed.RecipientId,
-					Name:       feed.RecipientName,
-					GroupId:    feed.RecipientGroupId,
-					GroupName:  feed.RecipientGroupName,
-					OrgId:      feed.RecipientOrgId,
-					OrgName:    feed.RecipientOrgName,
-					Role:       feed.RecipientRole,
-					Assignment: feed.RecipientAssignment,
-				},
-				TotalScore: 0,
-				Rating:     "",
-				RangeStart: feed.RangeStart,
-				RangeEnd:   feed.RangeEnd,
-				Items:      make([]*FeedbackItem, 0),
-			}
-		}
-		assessments.BindToFeedbackFactors("", content, factors.Factors)
-		score := helpers.CalculateScore(factors.Factors)
-		mapByRecipient[feed.RecipientId].TotalScore = (mapByRecipient[feed.RecipientId].TotalScore + score) /
-			utils.IIfF64(mapByRecipient[feed.RecipientId].TotalScore == 0, 1, 2)
-		mapByRecipient[feed.RecipientId].Rating = helpers.GetRating(
-			eval, factors.Ratings.Labels, factors.Ratings.Threshold,
-			mapByRecipient[feed.RecipientId].TotalScore,
-		)
-		mapByRecipient[feed.RecipientId].Items = append(mapByRecipient[feed.RecipientId].Items, &FeedbackItem{
-			Id: feed.Id,
-			Respondent: Person{
-				Id:         feed.RespondentId,
-				Name:       feed.RespondentName,
-				GroupId:    feed.RespondentGroupId,
-				GroupName:  feed.RespondentGroupName,
-				OrgId:      feed.RespondentOrgId,
-				OrgName:    feed.RespondentOrgName,
-				Role:       feed.RespondentRole,
-				Assignment: feed.RespondentAssignment,
+	var responseItems []*FeedbackSummaryResponseItem
+	responseItems, err = generateReviewSummaryData(feeds, factors)
+	if err != nil {
+		_ = vm.RenderJson(w, http.StatusBadRequest, api.Response{
+			Status:  http.StatusBadRequest,
+			Content: make(map[string]interface{}, 0),
+			Error: &api.ResponseError{
+				Code:    "SMR:ERR:GEN",
+				Message: "Internal error. Could not transform data.",
+				Reasons: errs,
+				Details: make([]interface{}, 0),
 			},
-			DistributionObjectId: feed.DistributionObjectId,
-			Score:                score,
-			Rating:               helpers.GetRating(eval, factors.Ratings.Labels, factors.Ratings.Threshold, score),
-			Factors:              factors.Factors,
-			Strengths:            utils.ArrayInterface(content["strengths"].([]interface{})).ToArrayString().Reduce(),
-			NeedImprovements:     utils.ArrayInterface(content["improves"].([]interface{})).ToArrayString().Reduce(),
-			Status:               feed.Status,
-			UpdatedAt:            feed.UpdatedAt,
 		})
+		return
 	}
-	//map to array
-	for _, item := range mapByRecipient {
-		responseItems = append(responseItems, item)
-	}
-	sort.Slice(responseItems, func(i, j int) bool {
-		return responseItems[i].Recipient.Name < responseItems[j].Recipient.Name
-	})
 	_ = vm.RenderJson(w, http.StatusOK, api.Response{
 		Status: http.StatusOK,
 		Content: map[string]interface{}{

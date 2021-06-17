@@ -16,8 +16,8 @@ Referer: {{referer}}
   "items": [
     {
       "distribution_id": 1,
-      "recipient_id": 10,
-      "respondent_id": 7
+      "recipient_id": 24,
+      "respondent_id": 82
     }
   ]
 }

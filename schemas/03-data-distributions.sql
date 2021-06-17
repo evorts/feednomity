@@ -164,13 +164,13 @@ values
 
         /* melinda: ? */
 
-        /* ghozy: coktra, purwandi, komang */
+        /* ghozy: coktra, purwandi, komang, steven */
         (nextval('dist_object_id_seq'), 1, 24, 47, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 24, 52, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 24, 73, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 24, 37, nextval('links_helper_seq'), 1, now()),
 
-        /* rifqi: ghozy, komang */
+        /* rifqi: ghozy, steven */
         (nextval('dist_object_id_seq'), 1, 25, 24, nextval('links_helper_seq'), 1, now()),
         (nextval('dist_object_id_seq'), 1, 25, 37, nextval('links_helper_seq'), 1, now()),
 

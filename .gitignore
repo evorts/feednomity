@@ -1,6 +1,7 @@
 .DS_Store
 .git
 .idea
+exports
 config.docker.*
 config.yml
 config.main.yml

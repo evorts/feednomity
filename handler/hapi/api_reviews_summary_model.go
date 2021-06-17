@@ -19,16 +19,17 @@ type Person struct {
 }
 
 type FeedbackItem struct {
-	Id                   int64               `json:"id"`
-	Respondent           Person              `json:"respondent"`
-	DistributionObjectId int64               `json:"distribution_object_id"`
-	Score                float64             `json:"score"`
-	Rating               string              `json:"rating"`
-	Factors              *assessments.Factor `json:"factors"`
-	Strengths            []string            `json:"strengths"`
-	NeedImprovements     []string            `json:"need_improvements"`
-	Status               feedbacks.Status    `json:"status"`
-	UpdatedAt            *time.Time          `json:"updated_at"`
+	Id                   int64                  `json:"id"`
+	Respondent           Person                 `json:"respondent"`
+	DistributionObjectId int64                  `json:"distribution_object_id"`
+	Score                float64                `json:"score"`
+	Rating               string                 `json:"rating"`
+	Factors              *assessments.Factor    `json:"factors"`
+	FactorsRaw           map[string]interface{} `json:"-"`
+	Strengths            []string               `json:"strengths"`
+	NeedImprovements     []string               `json:"need_improvements"`
+	Status               feedbacks.Status       `json:"status"`
+	UpdatedAt            *time.Time             `json:"updated_at"`
 }
 
 type FeedbackSummaryResponseItem struct {

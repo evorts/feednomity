@@ -72,7 +72,7 @@ func routesApiSummaries(
 			),
 		},
 		{
-			Pattern: fmt.Sprintf("%s/summary/reviews", pathPrefix),
+			Pattern: fmt.Sprintf("%s/summary/reviews/data", pathPrefix),
 			Handler: middleware.WithTokenProtection(
 				http.MethodPost,
 				cfg.GetConfig().App.Cors.AllowedMethods,
@@ -80,6 +80,23 @@ func routesApiSummaries(
 				accessControl, jwx, view,
 				middleware.WithInjection(
 					http.HandlerFunc(hapi.ApiSummaryReviews),
+					map[string]interface{}{
+						"logger": log,
+						"view":   view,
+						"db":     db,
+					},
+				),
+			),
+		},
+		{
+			Pattern: fmt.Sprintf("%s/summary/reviews/export", pathPrefix),
+			Handler: middleware.WithTokenProtection(
+				http.MethodPost,
+				cfg.GetConfig().App.Cors.AllowedMethods,
+				cfg.GetConfig().App.Cors.AllowedOrigins,
+				accessControl, jwx, view,
+				middleware.WithInjection(
+					http.HandlerFunc(hapi.ApiSummaryReviewsExport),
 					map[string]interface{}{
 						"logger": log,
 						"view":   view,
